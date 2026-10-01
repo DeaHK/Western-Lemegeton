@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2393afbf5da51614bbd3396f1a690784, type: 3}
+  m_Name: VisualCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.VisualCatalog
+  Icons:
+  - Id: BarrageArt
+    Sprite: {fileID: 21300000, guid: 616e19c0e44a524409f7c68fe0f0477a, type: 2}
+  - Id: BarrageDisabled
+    Sprite: {fileID: 21300000, guid: d5566fd9aa56d994c90ded5df3e8dff8, type: 2}
+  - Id: BarrageIcon
+    Sprite: {fileID: 21300000, guid: ea28e70b8c9ed024c9a365e062fa9f54, type: 2}
+  - Id: BulletIcon
+    Sprite: {fileID: 21300000, guid: 25e8b70c5dd187c429d6c6f163102d14, type: 2}
+  - Id: Enemy
+    Sprite: {fileID: 21300000, guid: 0ddce6e7e1a904246b74885a5e88672a, type: 2}
+  - Id: FireIcon
+    Sprite: {fileID: 21300000, guid: 03431c54a4449fb46aa2bc0c826e6814, type: 2}
+  - Id: Hunter
+    Sprite: {fileID: 21300000, guid: 62a08d28bcfb3c345bc9784fee1a5938, type: 2}
+  - Id: HunterAir
+    Sprite: {fileID: 21300000, guid: dd51f07c5f4767a43b16b364be3830ef, type: 2}
+  - Id: HunterBack
+    Sprite: {fileID: 21300000, guid: 43aee605d5bf02345827a922afd17594, type: 2}
+  - Id: HunterDash
+    Sprite: {fileID: 21300000, guid: 7d668850cf693c2459a36cd280c8119a, type: 2}
+  - Id: NatureIcon
+    Sprite: {fileID: 21300000, guid: 6e20550ff58c2fb45855e01bf6528641, type: 2}
+  - Id: Raven
+    Sprite: {fileID: 21300000, guid: 23412a59ae4ca34458ca495c07011d68, type: 2}
+  - Id: RavenBubble
+    Sprite: {fileID: 21300000, guid: ebde52e2ea512d3458335d6ba753b08f, type: 2}
+  - Id: RavenLink
+    Sprite: {fileID: 21300000, guid: 6a9ee05895f47474da6e03f7e1d7db13, type: 2}
+  - Id: RavenPortrait
+    Sprite: {fileID: 21300000, guid: a3860a2c29510ad42abb2b5d12a6bb50, type: 2}
+  - Id: ShotArt
+    Sprite: {fileID: 21300000, guid: 967e4964f6b8cb64f861e80a901a3fd6, type: 2}
+  - Id: ShotDisabled
+    Sprite: {fileID: 21300000, guid: ad36b44f2c47cbb45a6a19905861338d, type: 2}
+  - Id: ShotIcon
+    Sprite: {fileID: 21300000, guid: 0a79d8d2118b74941abab5ef042a8545, type: 2}
+  - Id: SlamArt
+    Sprite: {fileID: 21300000, guid: 8c920386aac39154e853da914ed63227, type: 2}
+  - Id: SlamDisabled
+    Sprite: {fileID: 21300000, guid: 6818d5f5dd2cb9549927c0821f30b942, type: 2}
+  - Id: SlamIcon
+    Sprite: {fileID: 21300000, guid: 4df489e51a83f584db059cb6cfe5ba6e, type: 2}
+  - Id: SlashArt
+    Sprite: {fileID: 21300000, guid: 60dce7a3d0800374898f0fe1da5b5bc8, type: 2}
+  - Id: SlashIcon
+    Sprite: {fileID: 21300000, guid: 4d64ec7ad13474740aed194d9fcaa2bb, type: 2}
+  - Id: Title
+    Sprite: {fileID: 21300000, guid: 66bf52cafc39f0a449810c97629084ee, type: 2}
+  - Id: WaterIcon
+    Sprite: {fileID: 21300000, guid: 0bfb46985068ece4e9b493b74c67cbd3, type: 2}

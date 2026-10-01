@@ -1,0 +1,113 @@
+{
+  "context": {
+    "projectPath": "C:/Users/user/Documents/ChatGPT/2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트/Verification/EditablePackageImport-20260922/Packages",
+    "unityVersion": "6000.3.17f1"
+  },
+  "inputs": [
+    "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Packages\\manifest.json",
+    "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Packages\\packages-lock.json",
+    "C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.17f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\BuiltInPackagesCombined.sha1"
+  ],
+  "outputs": {
+    "com.unity.ugui@2.0.0": {
+      "name": "com.unity.ugui",
+      "displayName": "uGUI",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.ugui@05e8dec4ac02",
+      "fingerprint": "05e8dec4ac02bfad5f92b1877d7685e930bad8b6",
+      "editorCompatibility": "2019.2.0a1",
+      "version": "2.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.audio@1.0.0": {
+      "name": "com.unity.modules.audio",
+      "displayName": "Audio",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.audio",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.imgui@1.0.0": {
+      "name": "com.unity.modules.imgui",
+      "displayName": "IMGUI",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.imgui",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.jsonserialize@1.0.0": {
+      "name": "com.unity.modules.jsonserialize",
+      "displayName": "JSONSerialize",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.jsonserialize",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.physics2d@1.0.0": {
+      "name": "com.unity.modules.physics2d",
+      "displayName": "Physics 2D",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.physics2d",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.screencapture@1.0.0": {
+      "name": "com.unity.modules.screencapture",
+      "displayName": "Screen Capture",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.screencapture",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.imageconversion@1.0.0": {
+      "name": "com.unity.modules.imageconversion",
+      "displayName": "Image Conversion",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.imageconversion",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.timeline@1.8.12": {
+      "name": "com.unity.timeline",
+      "displayName": "Timeline",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.timeline@8cd8509afae5",
+      "fingerprint": "8cd8509afae5d2655af4657a214db1b563c28425",
+      "editorCompatibility": "2022.3.0a1",
+      "version": "1.8.12",
+      "source": "registry",
+      "testable": false
+    },
+    "com.unity.modules.director@1.0.0": {
+      "name": "com.unity.modules.director",
+      "displayName": "Director",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.director",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.animation@1.0.0": {
+      "name": "com.unity.modules.animation",
+      "displayName": "Animation",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.animation",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.particlesystem@1.0.0": {
+      "name": "com.unity.modules.particlesystem",
+      "displayName": "Particle System",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.particlesystem",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    },
+    "com.unity.modules.ui@1.0.0": {
+      "name": "com.unity.modules.ui",
+      "displayName": "UI",
+      "resolvedPath": "C:\\Users\\user\\Documents\\ChatGPT\\2d 유니티 탑 다운 로그라이크 액션 게임 프로젝트\\Verification\\EditablePackageImport-20260922\\Library\\PackageCache\\com.unity.modules.ui",
+      "version": "1.0.0",
+      "source": "builtin",
+      "testable": false
+    }
+  }
+}
