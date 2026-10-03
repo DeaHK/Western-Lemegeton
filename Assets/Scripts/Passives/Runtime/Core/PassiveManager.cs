@@ -27,16 +27,28 @@ namespace WesternLemegeton.Passives
         [SerializeField] private bool logChanges;
 
         private readonly Dictionary<int, ActivePassive> activePassives = new();
+        private readonly List<int> activeOrder = new();
 
         private PassiveRuntimeContext runtimeContext;
         private PassiveEffectContext effectContext;
 
         public PassiveDatabaseSO Database => database;
+        public int Count => activePassives.Count;
         public PassiveRuntimeContext RuntimeContext => runtimeContext;
 
         public event Action<PassiveInstance> PassiveAdded;
         public event Action<PassiveInstance> PassiveRemoved;
         public event Action<PassiveInstance> PassiveChanged;
+        public event Action<PassiveAcquireResult> PassiveAcquired;
+        public event Action PassivesReset;
+
+        public void CopyActivePassives(List<PassiveInstance> destination)
+        {
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
+            destination.Clear();
+            foreach (int id in activeOrder)
+                if (activePassives.TryGetValue(id, out ActivePassive active)) destination.Add(active.Instance);
+        }
 
         public IEnumerable<PassiveInstance> ActivePassives
         {
@@ -79,6 +91,7 @@ namespace WesternLemegeton.Passives
             {
                 RemovePassive(id);
             }
+            activeOrder.Clear();
 
             if (runtimeContext != null)
             {
@@ -97,6 +110,66 @@ namespace WesternLemegeton.Passives
         public void ResetRun()
         {
             foreach (int id in new List<int>(activePassives.Keys)) RemovePassive(id);
+            activeOrder.Clear();
+            PassivesReset?.Invoke();
+        }
+
+        // Western acquisition policy. Low-level Add/Stack APIs retain donor semantics.
+        public PassiveAcquireResult AcquirePassiveById(int passiveID, PassiveAcquisitionSource source)
+        {
+            if (!Enum.IsDefined(typeof(PassiveAcquisitionSource), source))
+                return FailedAcquisition(source, "Invalid acquisition source.");
+            if (passiveID <= 0)
+                return FailedAcquisition(source, "PassiveID must be positive.");
+            if (database == null)
+                return FailedAcquisition(source, "PassiveDatabase is not assigned.");
+            if (!database.TryGetById(passiveID, out PassiveSO passive) || passive == null || passive.PassiveID != passiveID)
+                return FailedAcquisition(source, $"PassiveID {passiveID} was not found in the database.");
+            return AcquirePassive(passive, source);
+        }
+
+        public PassiveAcquireResult AcquirePassive(PassiveSO passive, PassiveAcquisitionSource source)
+        {
+            if (!Enum.IsDefined(typeof(PassiveAcquisitionSource), source))
+                return FailedAcquisition(source, "Invalid acquisition source.");
+            if (passive == null || passive.PassiveID <= 0)
+                return FailedAcquisition(source, "A PassiveSO with a positive PassiveID is required.");
+            if (runtimeContext == null || effectContext == null)
+                return FailedAcquisition(source, "PassiveManager has not been initialized by Awake.");
+
+            PassiveAcquireResult result;
+            if (TryGetPassive(passive.PassiveID, out PassiveInstance instance))
+            {
+                int previousStack = instance.Stack;
+                // Protect the high-level +1 contract without changing legacy stack arithmetic.
+                if (previousStack == int.MaxValue)
+                    return FailedAcquisition(source, "Passive stack limit reached.", previousStack);
+                if (!AddPassiveStack(passive.PassiveID, 1))
+                    return FailedAcquisition(source, $"PassiveID {passive.PassiveID} could not be reapplied; previous state restoration was attempted.", previousStack);
+                instance.RecordAcquisition(source);
+                result = new PassiveAcquireResult(PassiveAcquireKind.Stacked, instance, source,
+                    previousStack, instance.Stack, string.Empty);
+            }
+            else
+            {
+                if (!AddPassive(passive, source.ToString()))
+                    return FailedAcquisition(source, $"PassiveID {passive.PassiveID} could not be applied. Check the flat stat target or registered effect.");
+                if (!TryGetPassive(passive.PassiveID, out instance))
+                    throw new InvalidOperationException("PassiveAdded subscriber removed a successfully added passive during acquisition.");
+                result = new PassiveAcquireResult(PassiveAcquireKind.Added, instance, source,
+                    0, instance.Stack, string.Empty);
+            }
+
+            // AddPassive/Reconfigure already published PassiveAdded/PassiveChanged.
+            PassiveAcquired?.Invoke(result);
+            return result;
+        }
+
+        private static PassiveAcquireResult FailedAcquisition(PassiveAcquisitionSource source,
+            string error, int previousStack = 0)
+        {
+            return new PassiveAcquireResult(PassiveAcquireKind.Failed, null, source,
+                previousStack, previousStack, error);
         }
 
         public bool AddPassiveById(int passiveID, string source = null)
@@ -151,6 +224,7 @@ namespace WesternLemegeton.Passives
                 return false;
             }
 
+            activeOrder.Add(passive.PassiveID);
             PassiveAdded?.Invoke(active.Instance);
 
             if (logChanges)
@@ -173,6 +247,7 @@ namespace WesternLemegeton.Passives
 
             TryRemoveAppliedEffect(active);
             activePassives.Remove(passiveID);
+            activeOrder.Remove(passiveID);
             PassiveRemoved?.Invoke(active.Instance);
             CleanupEffect(active);
 

@@ -1,6 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using WesternLemegeton.Passives;
 
 namespace WesternLemegeton
 {
@@ -58,9 +60,14 @@ namespace WesternLemegeton
                 if(segment==0){Capture("card-room.png");yield return new WaitForEndOfFrame();}
                 g.Hero.transform.position=g.RoomCenter;Check(g.TryTravel()&&g.State==RunState.CardChoice,"Card stand opens three choices");
                 if(segment==0){Capture("devil-cards.png");yield return new WaitForEndOfFrame();}
-                int cards=g.Build.Passives.Count;float bonus=g.Build.PlayerDamageBonus;
-                Check(g.ClaimCard(0)&&g.Build.Passives.Count==cards+1&&g.Build.PlayerDamageBonus>bonus,"Selected devil card grants a real combat bonus");
-                Check(!g.ClaimCard(1)&&g.Build.Passives.Count==cards+1&&g.Progress.SegmentComplete,"All six rooms complete, no repeated card claim");
+                var offer=g.PassiveOffers.GetOffer(0);Check(offer&&g.PassiveOffers.OfferCount==3,"Card choices contain database definitions");
+                int cards=g.Passives.Count;bool alreadyOwned=g.Passives.TryGetPassive(offer.PassiveID,out var owned);
+                int previousStack=alreadyOwned?owned.Stack:0,cardsAfterChoice=cards+(alreadyOwned?0:1);
+                float bonus=offer.ValueType==PassiveValueType.Raw?g.PassiveStats.GetRawBonus(offer.StatType):g.PassiveStats.GetPercentBonus(offer.StatType);
+                Check(g.ClaimCard(0)&&g.Passives.TryGetPassive(offer.PassiveID,out var claimed)&&claimed.Stack==previousStack+1&&g.Passives.Count==cardsAfterChoice,"Selected card adds or stacks its database passive");
+                float updatedBonus=offer.ValueType==PassiveValueType.Raw?g.PassiveStats.GetRawBonus(offer.StatType):g.PassiveStats.GetPercentBonus(offer.StatType);
+                Check(Mathf.Approximately(updatedBonus,bonus+offer.Value)&&!g.PassiveOffers.HasOffer,"Card applies one definition value and clears the offer");
+                Check(!g.ClaimCard(1)&&g.Passives.Count==cardsAfterChoice&&g.Progress.SegmentComplete,"All six rooms complete, no repeated card claim");
                 Check(g.State==RunState.Exit,"Final room completion never automatically opens route popup");
                 Travel(g,2);yield return null;Travel(g,4);yield return null;Travel(g,5);yield return null;
                 g.Hero.transform.position=g.RoomCenter;g.OpenRoute();Check(!g.RouteTravel,"M map is read-only even after all rooms are cleared");g.CloseRoute();
@@ -72,7 +79,7 @@ namespace WesternLemegeton
                     Check(!g.ChooseRoom(segment+2),"Cannot skip locked stage");
                     float hp=g.Hero.Hp;Check(g.ChooseRoom(segment+1),"Choose next unlocked stage");yield return null;
                     Check(g.State==RunState.Cinematic&&g.Cinematics.Kind==CinematicKind.DungeonEntrance,"New stage starts entrance Timeline");g.Cinematics.Skip();
-                    Check(g.Build.Passives.Count==cards+1&&g.Hero.Hp==hp,"Build and health persist across stages");
+                    Check(g.Passives.Count==cardsAfterChoice&&g.Passives.TryGetPassive(offer.PassiveID,out var retained)&&retained.Stack==previousStack+1&&g.Hero.Hp==hp,"Passives, stacks and health persist across stages");
                 }
                 else{g.FinishExpedition();Check(g.State==RunState.Victory,"Final victory also requires the exit interaction");}
             }
@@ -179,17 +186,20 @@ namespace WesternLemegeton
             yield return new WaitForSeconds(.3f);Check(hud.StackPulse(SeongheunType.Fire)==0,"HUD punch ends after quarter second");
             g.ApplySeongheunStack(SeongheunType.Fire,-2);Check(!build.IsActive(SeongheunType.Fire)&&g.BurnLevel==0&&hud.StackPulse(SeongheunType.Fire)==0,"Removing stacks deactivates effect without gain punch");
             g.ApplySeongheunStack(SeongheunType.Fire,2);
-            Check(g.AcquirePassive("spent_bullet",PassiveRarity.Common,PassiveSource.MonsterDrop),"Drop uses common passive entry");
-            Check(g.AcquirePassive("blue_charm",PassiveRarity.Uncommon,PassiveSource.ShopPurchase),"Shop uses common passive entry");
-            Check(g.AcquirePassive("raven_seal",PassiveRarity.Rare,PassiveSource.EventReward),"Event uses common passive entry");
-            Check(build.Passives.Count==3&&build.Passives[0].Source==PassiveSource.MonsterDrop&&build.Passives[2].Rarity==PassiveRarity.Rare,"Inventory preserves acquisition order and rarity");
+            Check(g.Passives.AcquirePassiveById(1,PassiveAcquisitionSource.MonsterDrop).WasAdded,"Drop uses the new passive acquisition entry");
+            Check(g.Passives.AcquirePassiveById(4,PassiveAcquisitionSource.ShopPurchase).WasAdded,"Shop uses the new passive acquisition entry");
+            Check(g.Passives.AcquirePassiveById(5,PassiveAcquisitionSource.EventReward).WasAdded,"Event uses the new passive acquisition entry");
+            var inventory=new List<PassiveInstance>();g.Passives.CopyActivePassives(inventory);
+            Check(inventory.Count==3&&inventory[0].PassiveID==1&&inventory[1].PassiveID==4&&inventory[2].PassiveID==5&&inventory[0].InitialSource==PassiveAcquisitionSource.MonsterDrop&&inventory[2].Rarity==g.Passives.Database.GetById(5).Rarity,"Inventory preserves acquisition order, source and definition rarity");
             Check(build.Stack(SeongheunType.Fire)==3,"Passive acquisition never changes stigma stacks");
-            Check(!g.AcquirePassive("unknown",PassiveRarity.Rare,PassiveSource.EventReward)&&build.Passives.Count==3,"Unknown item rejected without mutation");
+            Check(!g.Passives.AcquirePassiveById(int.MaxValue,PassiveAcquisitionSource.EventReward).Success&&g.Passives.Count==3,"Unknown ID rejected without mutation");
             Check(hud.PendingPassiveNotices==3,"Rapid acquisitions queue all notices");
+            var stacked=g.Passives.AcquirePassiveById(1,PassiveAcquisitionSource.EventReward);
+            Check(stacked.WasStacked&&stacked.PreviousStack==1&&stacked.NewStack==2&&g.Passives.Count==3&&stacked.Instance.InitialSource==PassiveAcquisitionSource.MonsterDrop&&stacked.Instance.LastSource==PassiveAcquisitionSource.EventReward&&Mathf.Approximately(g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack),30)&&hud.PendingPassiveNotices==4,"Duplicate acquisition updates one stack, modifier and notification");
             yield return new WaitForSeconds(.12f);Capture("build-passives.png");yield return new WaitForSeconds(.2f);
             hud.OpenBuildTree();Check(g.State==RunState.Paused,"Build tree pauses play");yield return new WaitForSeconds(.1f);Capture("build-tree.png");yield return new WaitForEndOfFrame();hud.CloseBuildTree();
             build.SetThreshold(SeongheunType.Fire,1);g.StartRun();yield return null;g.Cinematics.Skip();
-            Check(build.Passives.Count==0&&build.Stack(SeongheunType.Fire)==0&&hud.PendingPassiveNotices==0,"New run clears both systems and notification queue");
+            Check(g.Passives.Count==0&&!g.PassiveOffers.HasOffer&&g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.MoveSpeed)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.RavenAttack)==0&&build.Stack(SeongheunType.Fire)==0&&hud.PendingPassiveNotices==0,"New run clears passives, modifiers, offers, stigma and notification queue");
             var foes=g.Enemies.ToArray();g.Hero.transform.position=Vector2.zero;g.Crow.ResetAt(Vector2.zero);g.Crow.transform.position=new Vector2(-3,0);
             for(int i=0;i<foes.Length;i++){foes[i].enabled=false;foes[i].Hp=foes[i].MaxHp=500;foes[i].transform.position=new Vector2(i+1,0);}
             for(int i=1;i<=4;i++)g.Hero.Hit(foes[0],1,i,900+i);

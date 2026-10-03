@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using WesternLemegeton.Passives;
+using RuntimePassiveRarity = WesternLemegeton.Passives.PassiveRarity;
 
 namespace WesternLemegeton
 {
@@ -40,6 +42,8 @@ namespace WesternLemegeton
 
         readonly Dictionary<string, GameObject> refs = new Dictionary<string, GameObject>();
         readonly List<PassiveSlotView> slots = new List<PassiveSlotView>();
+        readonly List<PassiveInstance> passiveBuffer = new List<PassiveInstance>();
+        readonly List<int> slotIds = new List<int>();
 
         // Existing three stigma definitions (Fire / Nature / Butterfly)
         readonly string[] buildIcons = { "FireIcon", "NatureIcon", "Raven" }, buildNames = { "잿불", "격노", "검은 날개" };
@@ -175,40 +179,58 @@ namespace WesternLemegeton
 
         private void Passives(Dungeon g, GameHUD h)
         {
-            var inventory = g.Build.Passives;
-            Text("PassiveCount", $"획득 패시브 {inventory.Count} · 성흔과 별도");
-            Show("PassiveEmpty", inventory.Count == 0);
-            if (slots.Count > inventory.Count)
+            g.Passives.CopyActivePassives(passiveBuffer);
+            Text("PassiveCount", $"획득 패시브 {g.Passives.Count} · 성흔과 별도");
+            Show("PassiveEmpty", passiveBuffer.Count == 0);
+            bool rebuild = slots.Count != passiveBuffer.Count || slotIds.Count != passiveBuffer.Count;
+            if (!rebuild)
+                for (int i = 0; i < passiveBuffer.Count; i++)
+                    if (!slots[i] || slotIds[i] != passiveBuffer[i].PassiveID) { rebuild = true; break; }
+            if (rebuild)
             {
                 foreach (var slot in slots)
                     if (slot) Destroy(slot.gameObject);
                 slots.Clear();
+                slotIds.Clear();
+                if (PassiveTooltip) PassiveTooltip.gameObject.SetActive(false);
             }
-            while (slots.Count < inventory.Count)
+            while (slots.Count < passiveBuffer.Count && PassivePrefab && PassiveContent)
             {
-                var item = inventory[slots.Count];
+                var item = passiveBuffer[slots.Count];
                 var slot = Instantiate(PassivePrefab, PassiveContent);
-                slot.name = item.Definition.Id;
-                slot.Icon.sprite = Art.Get(item.Definition.Icon);
-                slot.Border.color = RarityColors[(int)item.Rarity];
+                slot.name = "Passive:" + item.PassiveID;
                 slot.Tooltip = PassiveTooltip;
-                slot.Description = item.Definition.Name + " · " + Rarity(item.Rarity) + " · " + Source(item.Source);
                 slots.Add(slot);
+                slotIds.Add(item.PassiveID);
+            }
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var item = passiveBuffer[i];
+                var slot = slots[i];
+                if (slot.Icon) slot.Icon.sprite = PassiveIcon(item.Data);
+                if (slot.Border) slot.Border.color = PassiveRarityColor(item.Rarity);
+                string description = item.Data.NameStringKey + "\n" + Rarity(item.Rarity) + " · " + Source(item.InitialSource) +
+                    $" · STACK {item.Stack} · LEVEL {item.Level}\n" + item.Data.DescriptionStringKey;
+                if (slot.Description != description && PassiveTooltip && PassiveTooltip.gameObject.activeSelf && PassiveTooltip.text == slot.Description)
+                    PassiveTooltip.text = description;
+                slot.Description = description;
             }
             UpdatePassiveToast(g, h);
         }
 
         private void UpdatePassiveToast(Dungeon g, GameHUD h)
         {
-            bool show = h.Toast != null && g.State != RunState.Route && g.State != RunState.Cinematic && !h.SettingsOpen;
+            bool show = h.Toast.HasValue && h.Toast.Value.Instance != null && h.Toast.Value.Instance.Data && g.State != RunState.Route && g.State != RunState.Cinematic && !h.SettingsOpen;
             Panel(ToastPanel, show);
             if (show)
             {
-                Image("ToastIcon", h.Toast.Definition.Icon);
-                Text("ToastName", h.Toast.Definition.Name);
-                Text("ToastDetail", Rarity(h.Toast.Rarity) + " · " + Source(h.Toast.Source));
-                Color("ToastBorder", RarityColors[(int)h.Toast.Rarity]);
-                var group = ToastPanel.GetComponent<CanvasGroup>();
+                var toast = h.Toast.Value;
+                var item = toast.Instance;
+                SetPassiveImage("ToastIcon", PassiveIcon(item.Data));
+                Text("ToastName", item.Data.NameStringKey + (toast.WasStacked ? $" · STACK {toast.PreviousStack} → {toast.NewStack}" : " 획득"));
+                Text("ToastDetail", Rarity(item.Rarity) + " · " + Source(toast.Source));
+                Color("ToastBorder", PassiveRarityColor(item.Rarity));
+                var group = ToastPanel ? ToastPanel.GetComponent<CanvasGroup>() : null;
                 if (group) group.alpha = h.ToastOpacity;
             }
         }
@@ -218,9 +240,24 @@ namespace WesternLemegeton
         {
             for (int n = 0; n < 3; n++)
             {
-                Color("CardBorder" + n, RarityColors[(int)g.CardRarity]);
-                Text("CardRarity" + n, Rarity(g.CardRarity) + " · 악마카드");
-                Text("CardEffect" + n, (n == 0 ? "플레이어 공격력" : n == 1 ? "이동 속도" : "까마귀 공격력") + " +" + ((n == 2 ? .12f : .08f) * (1 + .5f * (int)g.CardRarity)).ToString("P0"));
+                var offer = g.PassiveOffers.GetOffer(n);
+                if (!offer)
+                {
+                    Color("CardBorder" + n, InactiveColor);
+                    Text("CardRarity" + n, ""); Text("CardName" + n, ""); Text("CardEffect" + n, "");
+                    SetPassiveImage("CardIcon" + n, null);
+                    continue;
+                }
+                Color("CardBorder" + n, PassiveRarityColor(offer.Rarity));
+                Text("CardRarity" + n, Rarity(offer.Rarity) + " · 악마카드");
+                bool hasName = Element<Text>("CardName" + n);
+                Text("CardName" + n, offer.NameStringKey);
+                string detail = (hasName ? "" : offer.NameStringKey + "\n") + offer.DescriptionStringKey +
+                    "\n효과: " + offer.StatType + " " + SignedValue(offer.Value, offer.ValueType == PassiveValueType.Percent);
+                if (g.Passives.TryGetPassive(offer.PassiveID, out var owned))
+                    detail += $"\n보유 STACK {owned.Stack} → {(long)owned.Stack + 1}";
+                Text("CardEffect" + n, detail);
+                SetPassiveImage("CardIcon" + n, PassiveIcon(offer));
             }
         }
 
@@ -317,7 +354,7 @@ namespace WesternLemegeton
             Text("RouteProgress", $"방 완료 {g.MapsCleared}/6 · 방문 {g.Progress.VisitedMaps}/6");
             Fill("RouteHP", g.Hero.Hp / 100);
             Text("RouteHPText", $"HP {Mathf.CeilToInt(g.Hero.Hp)} / 100");
-            Text("RouteBuild", $"악마카드 {g.Build.Passives.Count}장\n공격 +{g.Build.PlayerDamageBonus:P0} · 이동 +{g.Build.MoveSpeedBonus:P0}\n까마귀 공격 +{g.Build.RavenDamageBonus:P0}");
+            Text("RouteBuild", $"악마카드 {g.Passives.Count}장\n공격 {PassiveBonus(g, WesternPassiveStatKeys.PlayerAttack)} · 이동 {PassiveBonus(g, WesternPassiveStatKeys.MoveSpeed)}\n까마귀 공격 {PassiveBonus(g, WesternPassiveStatKeys.RavenAttack)}");
             Text("RouteTravelText", g.IsTown ? "황야로 출발" : g.Room == 4 ? "탐험 완료" : "다음 스테이지로 이동");
             Text("RouteHint", g.RouteTravel ? g.Room == 4 && !g.IsTown ? "모든 봉인을 해제했습니다." : "다음: " + Dungeon.RoomNames[g.NextRoom] : "여섯 방을 완료한 뒤 출구 문에서 다음 스테이지로 이동할 수 있습니다.");
         }
@@ -408,9 +445,55 @@ namespace WesternLemegeton
             if (image) image.fillAmount = Mathf.Clamp01(value);
         }
 
-        private static string Rarity(PassiveRarity r) => r == PassiveRarity.Common ? "일반" : r == PassiveRarity.Uncommon ? "희귀" : "레어";
+        private Sprite PassiveIcon(PassiveSO passive)
+        {
+            if (!passive) return null;
+            if (passive.Icon) return passive.Icon;
+            if (!Art) return null;
+            string key = passive.StatType == WesternPassiveStatKeys.PlayerAttack ? "BulletIcon" :
+                passive.StatType == WesternPassiveStatKeys.MoveSpeed ? "WaterIcon" :
+                passive.StatType == WesternPassiveStatKeys.RavenAttack ? "RavenPortrait" : null;
+            return key == null ? null : Art.Get(key);
+        }
 
-        private static string Source(PassiveSource s) => s == PassiveSource.MonsterDrop ? "몬스터 드롭" : s == PassiveSource.ShopPurchase ? "상점 구매" : "이벤트 보상";
+        private void SetPassiveImage(string key, Sprite sprite)
+        {
+            var image = Element<Image>(key);
+            if (image) { image.sprite = sprite; image.enabled = sprite != null; }
+        }
+
+        private Color PassiveRarityColor(RuntimePassiveRarity rarity)
+        {
+            int index = (int)rarity;
+            if (index < 0 || index > 3) return InactiveColor;
+            if (RarityColors != null && index < RarityColors.Length) return RarityColors[index];
+            return rarity == RuntimePassiveRarity.Legendary ? new Color(1f, .72f, .18f) : InactiveColor;
+        }
+
+        private static string Rarity(RuntimePassiveRarity rarity) => rarity switch
+        {
+            RuntimePassiveRarity.Common => "일반", RuntimePassiveRarity.Uncommon => "희귀",
+            RuntimePassiveRarity.Rare => "레어", RuntimePassiveRarity.Legendary => "전설", _ => "등급 미상"
+        };
+
+        private static string Source(PassiveAcquisitionSource source) => source switch
+        {
+            PassiveAcquisitionSource.EntranceChoice => "던전 입구", PassiveAcquisitionSource.ShopPurchase => "상점 구매",
+            PassiveAcquisitionSource.MonsterDrop => "몬스터 드롭", PassiveAcquisitionSource.BossReward => "보스 보상",
+            PassiveAcquisitionSource.EventReward => "이벤트 보상", PassiveAcquisitionSource.Debug => "디버그 지급", _ => "출처 미상"
+        };
+
+        private static string SignedValue(float value, bool percent = false) =>
+            (value >= 0 ? "+" : "") + value.ToString("0.##") + (percent ? "%" : "");
+
+        private static string PassiveBonus(Dungeon g, string statType)
+        {
+            float raw = g.PassiveStats.GetRawBonus(statType), percent = g.PassiveStats.GetPercentBonus(statType);
+            if (raw == 0 && percent == 0) return "+0";
+            if (raw == 0) return SignedValue(percent, true);
+            if (percent == 0) return SignedValue(raw);
+            return SignedValue(raw) + " / " + SignedValue(percent, true);
+        }
 
         #endregion
     }

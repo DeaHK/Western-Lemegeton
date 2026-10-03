@@ -13,11 +13,15 @@ namespace WesternLemegeton.Passives
         public int Level => level;
         public int Stack => stack;
         public string Source { get; }
+        public PassiveAcquisitionSource InitialSource { get; }
+        public PassiveAcquisitionSource LastSource { get; private set; }
+        public PassiveRarity Rarity => data != null ? data.Rarity : PassiveRarity.Common;
 
-        // Runtime effects should read Value from the instance rather than Data.Value.
-        // For now it returns the base Excel value. When the upgrade table is added,
-        // upgrade scaling can be resolved here without changing every effect script.
-        public float Value => data != null ? data.Value : 0f;
+        // Stack counts acquisitions of the same passive. Level belongs to a separate
+        // upgrade system: current Value scales only with Stack; Level scaling is not implemented.
+        public float BaseValue => data != null ? data.Value : 0f;
+        public float Value => BaseValue * Stack;
+
         public PassiveValueType ValueType =>
             data != null ? data.ValueType : PassiveValueType.None;
 
@@ -32,8 +36,28 @@ namespace WesternLemegeton.Passives
         {
             data = passive;
             Source = source;
+            InitialSource = ParseAcquisitionSource(source);
+            LastSource = InitialSource;
             level = Math.Max(1, initialLevel);
             stack = Math.Max(1, initialStack);
+        }
+
+        internal PassiveInstance(PassiveSO passive, PassiveAcquisitionSource source,
+            int initialLevel = 1, int initialStack = 1)
+            : this(passive, initialLevel, initialStack, source.ToString())
+        {
+        }
+
+        internal void RecordAcquisition(PassiveAcquisitionSource source)
+        {
+            LastSource = source;
+        }
+
+        private static PassiveAcquisitionSource ParseAcquisitionSource(string source)
+        {
+            return Enum.TryParse(source, true, out PassiveAcquisitionSource parsed) &&
+                Enum.IsDefined(typeof(PassiveAcquisitionSource), parsed)
+                ? parsed : PassiveAcquisitionSource.Unknown;
         }
 
         internal void SetLevel(int newLevel)

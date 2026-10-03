@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using WesternLemegeton.Passives;
 namespace WesternLemegeton
 {
  public sealed class AuthoringSmoke:MonoBehaviour
@@ -29,9 +30,10 @@ namespace WesternLemegeton
    Click("Map_Button");yield return null;yield return new WaitForEndOfFrame();Check(ui.RoutePanel.activeInHierarchy&&!g.RouteTravel,"HUD map is read-only");Click("Route_Close");yield return null;yield return new WaitForEndOfFrame();
    Click("Inspect_Stigma0");yield return null;yield return new WaitForEndOfFrame();Check(ui.SigilPanel.activeInHierarchy&&!g.Running,"HUD opens build tree");Click("Sigil_Select_4");Check(hud.SelectedSigil==2,"Persistent button parameter selects Butterfly");Click("Sigil_Close");yield return null;
    g.ApplySeongheunStack(SeongheunType.Fire,2);Check(hud.StackPulse(SeongheunType.Fire)>0,"Stack event starts punch immediately");yield return null;yield return new WaitForEndOfFrame();Check(ui.Element<Text>("Stack0").text=="\uAC01\uC778 2","Stack event updates native text: "+ui.Element<Text>("Stack0").text);
-   for(int i=0;i<3;i++)Check(g.AcquirePassive(new[]{"spent_bullet","blue_charm","raven_seal"}[i],(PassiveRarity)i,(PassiveSource)i),"Common acquisition path "+i);
+   int[] passiveIds={1,4,5};var sources=new[]{PassiveAcquisitionSource.MonsterDrop,PassiveAcquisitionSource.ShopPurchase,PassiveAcquisitionSource.EventReward};
+   for(int i=0;i<3;i++)Check(g.Passives.AcquirePassiveById(passiveIds[i],sources[i]).WasAdded,"Database acquisition path "+i);
    yield return null;yield return new WaitForEndOfFrame();Check(ui.PassiveContent.childCount==3&&ui.ToastPanel.activeInHierarchy,"Prefab inventory slots and toast created");
-   for(int i=0;i<3;i++)Check(ui.PassiveContent.GetChild(i).GetComponent<PassiveSlotView>().Border.color==ui.RarityColors[i],"Rarity color "+i);
+   for(int i=0;i<3;i++){var rarity=g.Passives.Database.GetById(passiveIds[i]).Rarity;int index=(int)rarity;var expected=index<ui.RarityColors.Length?ui.RarityColors[index]:rarity==PassiveRarity.Legendary?new Color(1f,.72f,.18f):ui.InactiveColor;Check(ui.PassiveContent.GetChild(i).GetComponent<PassiveSlotView>().Border.color==expected,"Definition rarity color "+i);}
    g.Hero.transform.position=RoomAuthoring.Point(g.Scene.Hirva.TownExit);Check(g.TryTravel(),"Authored town exit opens route");yield return null;yield return new WaitForEndOfFrame();Click("RouteTravel");yield return null;g.Cinematics.Skip();
    Check(g.Scene.Rooms[0]==originalRoom&&originalRoom.gameObject.activeInHierarchy&&g.Hero==originalHunter,"Stage uses saved objects and keeps player identity");
    foreach(var enemy in g.Enemies){Check(enemy.AuthoredArt&&enemy.GetComponent<ActorPresentation>()&&enemy.GetComponentInChildren<PaperCard>(),"Enemy spawned from editable prefab");enemy.enabled=false;}

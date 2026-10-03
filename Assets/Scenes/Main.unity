@@ -1008,6 +1008,10 @@ GameObject:
   - component: {fileID: 1954788950}
   - component: {fileID: 1954788949}
   - component: {fileID: 1954788948}
+  - component: {fileID: 1954788956}
+  - component: {fileID: 1954788957}
+  - component: {fileID: 1954788958}
+  - component: {fileID: 1954788959}
   m_Layer: 0
   m_Name: Game_Systems
   m_TagString: Untagged
@@ -1502,6 +1506,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc57520a97b334442afa2815d27cdc62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomAuthoring
+--- !u!114 &1954788956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33f50a60d28f6ae469a893e2a71593a3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.StatModifierContainer
+--- !u!114 &1954788957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49411bdf01bd55645a61d8b1b0534c6e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveRuntimeContext
+  defaultFlatStatTarget: {fileID: 1954788956}
+--- !u!114 &1954788958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20f4177101304284abc01fb607fc8122, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveManager
+  database: {fileID: 11400000, guid: 66126f42dae10244eb1177695eecb3ae, type: 2}
+  effectRegistryOverride: {fileID: 0}
+  startingPassives: []
+  logChanges: 0
+--- !u!114 &1954788959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3cab0748d1842d88c354d367bff7886, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveOfferService
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

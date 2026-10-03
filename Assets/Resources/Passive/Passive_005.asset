@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa51749e33fe3164f9de2cb9281e17cd, type: 3}
+  m_Name: Passive_005
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveSO
+  passiveID: 5
+  passiveIconResource: 
+  icon: {fileID: 0}
+  nameStringKey: "\uD30C\uD2B8\uB108\uC640\uC758 \uC2E0\uB8B0"
+  descriptionStringKey: "\uAE4C\uB9C8\uADC0\uC758 \uC131\uD754 \uACF5\uACA9\uB825\uC774
+    10 \uC99D\uAC00\uD55C\uB2E4."
+  rarity: 0
+  statType: CrowATK
+  category: 0
+  value: 10
+  hasValue: 1
+  valueType: 1
+  scriptName: 

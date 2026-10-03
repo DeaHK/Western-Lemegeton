@@ -19,14 +19,14 @@ namespace WesternLemegeton.Passives.Editor
             public Type Type;
         }
 
-        private const string DataFolder = "Assets/Resources/Passive";
+        private const string DataFolder = WesternPassiveDataGeneration.OutputFolder;
         private const string GeneratedEffectFolder = DataFolder + "/Effects/_Generated";
-        private const string RegistryAssetPath = DataFolder + "/PassiveEffectRegistry.asset";
-        private const string DatabaseAssetPath = DataFolder + "/PassiveDatabase.asset";
+        private const string RegistryAssetPath = WesternPassiveDataGeneration.RegistryAssetPath;
+        private const string DatabaseAssetPath = WesternPassiveDataGeneration.DatabaseAssetPath;
 
         
 
-        [MenuItem("Tools/Passive/Rebuild Effect Registry")]
+        [MenuItem("Tools/Western Lemegeton/Passive/Rebuild Effect Registry")]
         public static void RebuildMenu()
         {
             if (Rebuild(out int count, true))
@@ -43,11 +43,11 @@ namespace WesternLemegeton.Passives.Editor
             errors = new List<string>();
 
             Dictionary<string, Type> keys = new(StringComparer.Ordinal);
-            IEnumerable<Type> types = TypeCache.GetTypesDerivedFrom<PassiveEffectScript>();
+            IEnumerable<Type> types = TypeCache.GetTypesWithAttribute<PassiveEffectAttribute>();
 
             foreach (Type type in types.OrderBy(t => t.FullName, StringComparer.Ordinal))
             {
-                if (type == null || type.IsAbstract)
+                if (type == null)
                 {
                     continue;
                 }
@@ -57,6 +57,13 @@ namespace WesternLemegeton.Passives.Editor
 
                 if (attribute == null)
                 {
+                    continue;
+                }
+
+                if (!type.IsClass || type.IsAbstract || type.ContainsGenericParameters ||
+                    !typeof(PassiveEffectScript).IsAssignableFrom(type))
+                {
+                    errors.Add($"{type.FullName}: PassiveEffect requires a concrete, closed PassiveEffectScript type.");
                     continue;
                 }
 

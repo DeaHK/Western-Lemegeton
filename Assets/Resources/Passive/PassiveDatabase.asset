@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2b02c738ac8538438e935811138b0c8, type: 3}
+  m_Name: PassiveDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveDatabaseSO
+  passives:
+  - {fileID: 11400000, guid: 52b732cfc874e4c44a83042aece84e63, type: 2}
+  - {fileID: 11400000, guid: 11753f345c0783447b93e15cb4d75d3a, type: 2}
+  - {fileID: 11400000, guid: bd821a2acf3c613478619be3fe5cb190, type: 2}
+  - {fileID: 11400000, guid: 9f41529f62644074a89535595fd6b262, type: 2}
+  - {fileID: 11400000, guid: 426764c353e33c74c98d1b2120d047af, type: 2}
+  - {fileID: 11400000, guid: 9e26ee76a43a91d4095838bcf5d40f40, type: 2}
+  - {fileID: 11400000, guid: c64af442aea5afc4fa53f48953da4adf, type: 2}
+  - {fileID: 11400000, guid: b0e9162ae9cbadb4c8c3cac7e7416f61, type: 2}
+  - {fileID: 11400000, guid: 0c65e339869262a498362be75d8f4310, type: 2}
+  - {fileID: 11400000, guid: e136c786d6c72184887fdd392e41241d, type: 2}
+  - {fileID: 11400000, guid: 9bcdd13e3f25fbc41a412929b0121dfc, type: 2}
+  - {fileID: 11400000, guid: cd8bebead6e9dba46ab558a282bb0c9f, type: 2}
+  - {fileID: 11400000, guid: 6862ae3eece1f5149af9afcd68af6c5d, type: 2}
+  - {fileID: 11400000, guid: f966248e028a3ef43b4b5c0940436aef, type: 2}
+  - {fileID: 11400000, guid: c3291a3a1e560434cb365632a31a062a, type: 2}
+  - {fileID: 11400000, guid: 08db3b6c3ed70d94ab3e46bc92e6fe83, type: 2}
+  - {fileID: 11400000, guid: 609fee5ba979ebe469b0c3604f845e4c, type: 2}
+  - {fileID: 11400000, guid: cd29e2c910516f248926ad49c428b244, type: 2}
+  effectRegistry: {fileID: 11400000, guid: 2a95e801e1e016c4cab569ccf9fc1d0b, type: 2}

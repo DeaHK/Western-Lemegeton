@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa51749e33fe3164f9de2cb9281e17cd, type: 3}
+  m_Name: Passive_018
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveSO
+  passiveID: 18
+  passiveIconResource: 
+  icon: {fileID: 0}
+  nameStringKey: Name_18
+  descriptionStringKey: "\uD30C\uD2B8\uB108\uC778 \uAE4C\uB9C8\uADC0\uAC00 \uB2E4\uB978
+    \uBAA8\uC2B5\uC73C\uB85C \uBCC0\uD55C\uB2E4."
+  rarity: 3
+  statType: 
+  category: 2
+  value: 0
+  hasValue: 0
+  valueType: 0
+  scriptName: Legendary01

@@ -1,4 +1,5 @@
 using UnityEngine;
+using WesternLemegeton.Passives;
 
 namespace WesternLemegeton
 {
@@ -12,7 +13,9 @@ namespace WesternLemegeton
         float invulnerable;
         public bool Invulnerable => invulnerable > 0;
         public int DamageEvents { get; private set; }
-        public float DamageScale => 1 + Dungeon.I.Build.PlayerDamageBonus + (Fury > 0 ? .18f + .12f * Dungeon.I.FuryLevel : 0);
+        // Compatibility multiplier: Raw ATK is applied only by EvaluateOutgoingDamage.
+        public float DamageScale => (1 + Dungeon.I.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack) / 100f) * FuryMultiplier;
+        private float FuryMultiplier => 1 + (Fury > 0 ? .18f + .12f * Dungeon.I.FuryLevel : 0);
 
         // Weapon / Ammo / Reload
         public int Weapon, Ammo = 6;
@@ -130,7 +133,7 @@ namespace WesternLemegeton
                 TickDash(dt);
             }
             else if (!ActionLocked && !(skill == 1 && elapsed < HunterMotion.SlashEnd))
-                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * (skill == 4 ? 3.1f : WalkHeld ? 2.8f : 5.6f) * (1 + Dungeon.I.Build.MoveSpeedBonus) * dt, .38f);
+                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, skill == 4 ? 3.1f : WalkHeld ? 2.8f : 5.6f) * dt, .38f);
         }
 
         #endregion
@@ -168,6 +171,11 @@ namespace WesternLemegeton
 
         #region Health / Damage / Invulnerability
 
+        private float EvaluateOutgoingDamage(float baseDamage)
+        {
+            return Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.PlayerAttack, baseDamage) * FuryMultiplier;
+        }
+
         public void Hit(Enemy e, float damage, int stage = 0, long attack = 0, bool isSkill = false)
         {
             if (!Dungeon.I.Running || !e || e.Dead) return;
@@ -175,7 +183,7 @@ namespace WesternLemegeton
             bool chain = stage > 0 && tracker.Hit(e.GetInstanceID(), stage, attack, g.RunTime);
             // Mark before damage; offer links and combo follow-ups after damage.
             g.Crow.Mark(e);
-            e.TakeDamage(damage * DamageScale, g.BurnLevel > 0);
+            e.TakeDamage(EvaluateOutgoingDamage(damage), g.BurnLevel > 0);
             DamageEvents++;
             HitCombo++;
             hitTime = 3;

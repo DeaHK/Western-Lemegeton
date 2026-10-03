@@ -26,7 +26,17 @@ namespace WesternLemegeton.Passives.Editor
                 new(StringComparer.OrdinalIgnoreCase);
         }
 
-        public static SheetData ReadSheet(string filePath, string preferredSheetName)
+        public static SheetData ReadSheet(string filePath, string preferredSheetName) =>
+            ReadSheetInternal(filePath, preferredSheetName, false);
+
+        public static SheetData ReadRequiredSheet(string filePath, string requiredSheetName)
+        {
+            if (string.IsNullOrWhiteSpace(requiredSheetName))
+                throw new ArgumentException("A required sheet name must be supplied.", nameof(requiredSheetName));
+            return ReadSheetInternal(filePath, requiredSheetName, true);
+        }
+
+        private static SheetData ReadSheetInternal(string filePath, string preferredSheetName, bool requireExactSheet)
         {
             using FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using ZipArchive archive = new(stream, ZipArchiveMode.Read);
@@ -51,9 +61,16 @@ namespace WesternLemegeton.Passives.Editor
                 s => string.Equals(
                     (string)s.Attribute("name"),
                     preferredSheetName,
-                    StringComparison.OrdinalIgnoreCase
+                    requireExactSheet ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase
                 )
-            ) ?? sheetElements[0];
+            );
+
+            if (selectedSheet == null)
+            {
+                if (requireExactSheet)
+                    throw new InvalidDataException($"Required worksheet '{preferredSheetName}' was not found.");
+                selectedSheet = sheetElements[0];
+            }
 
             string relationshipId = (string)selectedSheet.Attribute(relNs + "id");
 

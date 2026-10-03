@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using WesternLemegeton.Passives;
 
 namespace WesternLemegeton
 {
@@ -16,6 +17,9 @@ namespace WesternLemegeton
         public Raven Crow;
         GameHUD hud;
         public RunBuild Build { get; private set; }
+        public PassiveManager Passives { get; private set; }
+        public PassiveOfferService PassiveOffers { get; private set; }
+        public StatModifierContainer PassiveStats { get; private set; }
 
         // Enemy tracking
         public readonly List<Enemy> Enemies = new List<Enemy>();
@@ -81,6 +85,14 @@ namespace WesternLemegeton
             I = this;
             if (!Scene) throw new System.InvalidOperationException("GameSceneBindings is required. Open the authored Main scene.");
             Build = GetComponent<RunBuild>();
+            Passives = GetComponent<PassiveManager>();
+            PassiveOffers = GetComponent<PassiveOfferService>();
+            PassiveStats = GetComponent<StatModifierContainer>();
+            if (!Passives || !PassiveOffers || !PassiveStats)
+                throw new System.InvalidOperationException("Game_Systems requires PassiveManager, PassiveOfferService and StatModifierContainer.");
+            if (!Passives.Database || !GetComponent<PassiveRuntimeContext>() ||
+                GetComponent<PassiveRuntimeContext>().DefaultFlatStatTarget != PassiveStats)
+                throw new System.InvalidOperationException("Assign the passive database and Game_Systems flat stat target.");
             hud = GetComponent<GameHUD>();
             Application.targetFrameRate = 120;
             Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
@@ -187,6 +199,8 @@ namespace WesternLemegeton
             Cinematics.Cancel();
             DestroyTrackedEnemies();
             ClearTransient();
+            PassiveOffers.ResetRun();
+            Passives.ResetRun();
             Hero.ResetForRun();
             Crow.ResetForRun();
             Build.ResetRun();
@@ -377,6 +391,13 @@ namespace WesternLemegeton
                     Tell("이 방의 보상은 이미 선택했습니다");
                     return false;
                 }
+                if (CurrentKind == ExplorationRoomKind.DevilCards &&
+                    !PassiveOffers.PrepareOffer(PassiveAcquisitionSource.EventReward, Seed, Room, MapIndex, 3))
+                {
+                    Tell("카드 선택지를 준비하지 못했습니다 · 패시브 데이터 연결을 확인하세요");
+                    Debug.LogError("Card room offer preparation failed; room state was preserved.", this);
+                    return false;
+                }
                 State = CurrentKind == ExplorationRoomKind.Sigil ? RunState.SigilChoice : RunState.CardChoice;
                 return true;
             }
@@ -387,7 +408,6 @@ namespace WesternLemegeton
 
         #region Service Room Interaction
 
-        public PassiveRarity CardRarity => (PassiveRarity)Mathf.Min(2, Room / 2);
 
         private void HandleServiceInput()
         {
@@ -412,8 +432,12 @@ namespace WesternLemegeton
         public bool ClaimCard(int choice)
         {
             if (State != RunState.CardChoice || CurrentKind != ExplorationRoomKind.DevilCards || Progress.MapComplete || choice < 0 || choice > 2) return false;
-            string[] ids = { "spent_bullet", "blue_charm", "raven_seal" };
-            if (!AcquirePassive(ids[choice], CardRarity, PassiveSource.EventReward)) return false;
+            if (!PassiveOffers.TryClaim(choice, out PassiveAcquireResult result) || !result.Success)
+            {
+                Tell("카드 획득 실패 · " + result.Error);
+                Debug.LogError("Card acquisition failed: " + result.Error, this);
+                return false;
+            }
             Progress.CompleteService();
             State = RunState.Exit;
             Tell("악마카드 획득 · 카드 효과가 이번 런에 적용됩니다");
@@ -683,7 +707,6 @@ namespace WesternLemegeton
 
         public void ApplySeongheunStack(SeongheunType t, int n) => Build.ApplySeongheunStack(t, n);
 
-        public bool AcquirePassive(string id, PassiveRarity rarity, PassiveSource source) => Build.AcquirePassive(id, rarity, source);
 
         internal void ClearTransient()
         {
