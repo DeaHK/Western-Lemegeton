@@ -534,6 +534,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 274031976}
     m_Modifications:
+    - target: {fileID: 23104787860471344, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 23104787860471344, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_SortingOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1849333250836142470, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1849333250836142470, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_SortingOrder
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2079841056835413848, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_SortingOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4329566857740281894, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_SortingOrder
+      value: 12
+      objectReference: {fileID: 0}
     - target: {fileID: 7243960835254354488, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
       propertyPath: m_Name
       value: Raven
@@ -577,6 +601,30 @@ PrefabInstance:
     - target: {fileID: 7838484437053290772, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8383791747388708430, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8383791747388708430, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.485
+      objectReference: {fileID: 0}
+    - target: {fileID: 8383791747388708430, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 8433775933737036569, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8433775933737036569, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8433775933737036569, guid: b0ead10a9b66f5046bf88acc8bc20812, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.15
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -690,6 +738,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 274031976}
     m_Modifications:
+    - target: {fileID: 433005974500903935, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 433005974500903935, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 433005974500903935, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 665369602971836379, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_SortingOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1122272592826472256, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1122272592826472256, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_SortingOrder
+      value: 12
+      objectReference: {fileID: 0}
     - target: {fileID: 1781446226588163461, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -734,6 +806,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hunter
       objectReference: {fileID: 0}
+    - target: {fileID: 3514940976443691429, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_SortingOrder
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 7317348233441073430, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7317348233441073430, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_SortingOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7457074906036452777, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7457074906036452777, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.715
+      objectReference: {fileID: 0}
+    - target: {fileID: 7457074906036452777, guid: e5476d13ab341754d8a2b1f1fb21bab8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.02
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -766,6 +862,7 @@ GameObject:
   - component: {fileID: 1330023420}
   - component: {fileID: 1330023418}
   - component: {fileID: 1330023419}
+  - component: {fileID: 1330023421}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -847,6 +944,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1330023421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1330023417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1001 &1566136954
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1219,7 +1360,6 @@ MonoBehaviour:
   Scene: {fileID: 1954788953}
   Hero: {fileID: 1276339837}
   Crow: {fileID: 1112908258}
-  Cam: {fileID: 1330023418}
   State: 0
   BeforePause: 0
   BeforeRoute: 0
@@ -1228,6 +1368,7 @@ MonoBehaviour:
   Supplies: 0
   RunTime: 0
   RouteTravel: 0
+  Cam: {fileID: 1330023418}
   Notice: 
 --- !u!4 &1954788955
 Transform:
@@ -1244,6 +1385,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1954788956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33f50a60d28f6ae469a893e2a71593a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.StatModifierContainer
+--- !u!114 &1954788957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49411bdf01bd55645a61d8b1b0534c6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveRuntimeContext
+  defaultFlatStatTarget: {fileID: 1954788956}
+--- !u!114 &1954788958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20f4177101304284abc01fb607fc8122, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveManager
+  database: {fileID: 11400000, guid: 66126f42dae10244eb1177695eecb3ae, type: 2}
+  effectRegistryOverride: {fileID: 0}
+  startingPassives: []
+  logChanges: 0
+--- !u!114 &1954788959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3cab0748d1842d88c354d367bff7886, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveOfferService
 --- !u!1001 &2043279049
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1506,59 +1700,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc57520a97b334442afa2815d27cdc62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomAuthoring
---- !u!114 &1954788956
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954788947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33f50a60d28f6ae469a893e2a71593a3, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.StatModifierContainer
---- !u!114 &1954788957
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954788947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49411bdf01bd55645a61d8b1b0534c6e, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveRuntimeContext
-  defaultFlatStatTarget: {fileID: 1954788956}
---- !u!114 &1954788958
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954788947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20f4177101304284abc01fb607fc8122, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveManager
-  database: {fileID: 11400000, guid: 66126f42dae10244eb1177695eecb3ae, type: 2}
-  effectRegistryOverride: {fileID: 0}
-  startingPassives: []
-  logChanges: 0
---- !u!114 &1954788959
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954788947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3cab0748d1842d88c354d367bff7886, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveOfferService
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

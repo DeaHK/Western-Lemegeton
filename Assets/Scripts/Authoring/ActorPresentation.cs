@@ -26,7 +26,7 @@ namespace WesternLemegeton
         {
             if(!SpriteFrames)return;var g=Dungeon.I;
             string state="Idle";float speed=1;
-            if(player){state=player.ActiveSkill>0?new[]{"","Slash","Slam","Shot","Barrage"}[player.ActiveSkill]:player.BasicBusy?"Attack"+player.BasicStage.ToString("D2"):player.Dodging?"Dodge":player.Locomotion.State==LocomotionState.Moving?player.WalkHeld?"Walk":"Run":"Idle";speed=player.Locomotion.State==LocomotionState.Moving?player.Locomotion.Speed/(player.WalkHeld?2.8f:5.6f):1;}
+            if(player){state=player.ActiveSkill>0?new[]{"","Slash","Slam","Shot","Barrage"}[player.ActiveSkill]:player.BasicBusy?"Attack"+player.BasicStage.ToString("D2"):player.Dodging?"Dodge":player.Locomotion.State==LocomotionState.Moving?"Run":"Idle";speed=player.Locomotion.State==LocomotionState.Moving?player.Locomotion.Speed/5.6f:1;}
             else if(raven)state=raven.CurrentState.ToString();else if(enemy)state=enemy.Dead?"Death":enemy.Telegraphing?"Attack":"Run";
             if(g&&g.Cinematics&&g.Cinematics.IsPlaying&&(player||enemy&&g.IsBossWave))state=g.Cinematics.Kind==CinematicKind.PlayerDeath?"Death":"Entrance";
             CurrentMotion=state;

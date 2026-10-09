@@ -20,7 +20,7 @@ namespace WesternLemegeton
   public void ResetForRun(){Cooldown=LinkCooldown=attack=0;offerId=-1;ComboDashStarts=ComboEffects=LastComboHits=0;ResetAt(Vector2.zero);}
   public void ResetAt(Vector2 p){transform.position=p+new Vector2(-1,1);Active=LinkWindow=linkTime=ComboFlash=0;returning=false;marked=linkTarget=null;Status="동행";comboPhase=0;comboTarget=null;comboQueue.Clear();comboVictims.Clear();CurrentState=RavenState.Idle;}
   public void Mark(Enemy e){marked=e;}
-  public void Command(){if(Cooldown>0||!Dungeon.I.Running||Dungeon.I.IsTown)return;Active=5+Dungeon.I.RavenLevel*.75f;Cooldown=10;attack=0;Ink.Ring(transform.position,1.1f,Ink.Cyan);}
+  public void Command(){if(Cooldown>0||!Dungeon.I.Running||Dungeon.I.IsTown)return;Active=60;Cooldown=10;attack=0;Ink.Ring(transform.position,1.1f,Ink.Cyan);}
   public void OfferLink(Enemy e,long id)
   {
    if(LinkCooldown>0||Linking)return;var g=Dungeon.I;
@@ -86,10 +86,15 @@ namespace WesternLemegeton
    if(LastComboHits>=2){EndCombo();return;}
    comboTarget=Replacement(transform.position);if(!comboTarget){EndCombo();return;}
    comboPhase=1;comboElapsed=0;
-  }  void Update()
+  }
+  void Update()
   {
    var g=Dungeon.I;if(!g.Running)return;float dt=Time.deltaTime;
-   Cooldown=Mathf.Max(0,Cooldown-dt);LinkCooldown=Mathf.Max(0,LinkCooldown-dt);LinkWindow=Mathf.Max(0,LinkWindow-dt);ComboFlash=Mathf.Max(0,ComboFlash-dt);Active=Mathf.Max(0,Active-dt);attack-=dt;
+   if (Active == 0 && Cooldown > 0)
+   {
+   Cooldown = Mathf.Max(0, Cooldown - dt);
+   }
+   LinkCooldown=Mathf.Max(0,LinkCooldown-dt);LinkWindow=Mathf.Max(0,LinkWindow-dt);ComboFlash=Mathf.Max(0,ComboFlash-dt);Active=Mathf.Max(0,Active-dt);attack-=dt;
    if(ComboBusy){TickCombo(dt);return;}
    if(!Linking&&comboQueue.Count>0){BeginCombo();if(ComboBusy)return;}
    if(Linking)

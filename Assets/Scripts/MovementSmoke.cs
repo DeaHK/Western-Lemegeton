@@ -10,7 +10,7 @@ namespace WesternLemegeton
         void Check(bool pass,string message)
         {if(!pass){Debug.LogError("MOVEMENT_FAILED: "+message);Application.Quit(2);throw new System.Exception(message);}checks++;Debug.Log("MOVEMENT_PASS: "+message);}
         void Reset(Vector2 direction)
-        {hero.LastMove=hero.Facing=direction;hero.SafeEntry();hero.WalkHeld=false;hero.Skill2Cd=hero.Skill3Cd=hero.DashCd=hero.TagCd=0;hero.Weapon=0;hero.transform.position=new Vector2(-2,-2);hero.Locomotion.Reset(direction);hero.AdvanceCombat(0,Vector2.zero);}
+        {hero.LastMove=hero.Facing=direction;hero.SafeEntry();hero.Skill2Cd=hero.Skill3Cd=hero.DashCd=hero.TagCd=0;hero.Weapon=0;hero.transform.position=new Vector2(-2,-2);hero.Locomotion.Reset(direction);hero.AdvanceCombat(0,Vector2.zero);}
         void Move(Vector2 direction,int frames=30,float dt=1f/60)
         {for(int i=0;i<frames;i++)hero.AdvanceCombat(dt,direction);}
         IEnumerator Start()
@@ -35,7 +35,7 @@ namespace WesternLemegeton
             hero.AdvanceCombat(.02f,Vector2.zero);Check(hero.Locomotion.State==LocomotionState.Settling&&hero.Locomotion.Frame==7,"Release plays stopping pose");
             Move(Vector2.zero,9);Check(hero.Locomotion.State==LocomotionState.Idle&&hero.Locomotion.Frame==0,"Stop returns to directional idle");
             Reset(Vector2.right);Vector2 runStart=hero.transform.position;Move(Vector2.right);float run=Vector2.Distance(runStart,hero.transform.position),runCycle=hero.Locomotion.Cycle;
-            Reset(Vector2.right);hero.WalkHeld=true;Vector2 walkStart=hero.transform.position;Move(Vector2.right);float walk=Vector2.Distance(walkStart,hero.transform.position);
+            Reset(Vector2.right);Vector2 walkStart=hero.transform.position;Move(Vector2.right);float walk=Vector2.Distance(walkStart,hero.transform.position);
             Check(Mathf.Abs(run-walk*2)<.002f,"Shift walk is half the original run speed");
             Check(Mathf.Abs(hero.Locomotion.Cycle-walk/HunterLocomotion.StrideLength)<.001f,"Walk gait tracks travelled distance");
             Reset(Vector2.right);Move(Vector2.right,12);float cycle=hero.Locomotion.Cycle;int frame=hero.Locomotion.Frame;Vector3 pos=hero.transform.position;

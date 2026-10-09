@@ -170,7 +170,7 @@ namespace WesternLemegeton
         private void UpdateRavenPrompt(Dungeon g)
         {
             Show("CrowPrompt", g.Crow.LinkWindow > 0 || g.Crow.ComboFlash > 0);
-            Text("CrowPromptText", g.Crow.LinkWindow > 0 ? $"R · 연계 {g.Crow.LinkWindow:F1}s" : "까마귀 콤보 연계!");
+            Text("CrowPromptText", g.Crow.LinkWindow > 0 ? $"F · 연계 {g.Crow.LinkWindow:F1}s" : "까마귀 콤보 연계!");
         }
 
         #endregion
@@ -324,13 +324,13 @@ namespace WesternLemegeton
             {
                 if (g.IsTown)
                 {
-                    if (Vector2.Distance(g.Pos, RoomAuthoring.Point(g.Scene.Hirva.TownExit)) < 3) message = "E · 황야로 출발";
+                    if (Vector2.Distance(g.Pos, RoomAuthoring.Point(g.Scene.Hirva.TownExit)) < 3) message = "F · 황야로 출발";
                 }
                 else
                 {
                     var door = g.NearbyDoor();
-                    if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "E · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"E · {Dungeon.MapNames[door.Destination]} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
-                    else if (g.CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : g.CurrentKind == ExplorationRoomKind.Sigil ? "E · 성흔 제단 / 각인 강화" : "E · 악마카드 진열대 / 카드 선택";
+                    if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {Dungeon.MapNames[door.Destination]} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
+                    else if (g.CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 제단 / 각인 강화" : "F · 악마카드 진열대 / 카드 선택";
                 }
             }
             Show("Prompt", message != "");

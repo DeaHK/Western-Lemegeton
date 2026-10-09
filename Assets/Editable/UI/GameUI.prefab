@@ -8373,7 +8373,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: R
+  m_Text: F
 --- !u!1 &2878914590115588995
 GameObject:
   m_ObjectHideFlags: 0
@@ -8688,7 +8688,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1
+  m_Text: Left Shift
 --- !u!1 &3146676409801407524
 GameObject:
   m_ObjectHideFlags: 0
@@ -15627,7 +15627,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 3
+  m_Text: R
 --- !u!1 &5131028879759287490
 GameObject:
   m_ObjectHideFlags: 0
@@ -17469,9 +17469,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "WASD \uB2EC\uB9AC\uAE30 \xB7 SHIFT \uAC77\uAE30 \xB7 \uC88C\uD074\uB9AD
-    \uACF5\uACA9\nQ \uD0DC\uADF8 \xB7 SPACE \uD68C\uD53C \xB7 2 / 3 \uAE30\uC220\n1
-    \uAE4C\uB9C8\uADC0 \uBA85\uB839 \xB7 R \uC5F0\uACC4 \xB7 M \uC9C0\uB3C4"
+  m_Text: "WASD \uB2EC\uB9AC\uAE30 \xB7 \uC88C\uD074\uB9AD \uACF5\uACA9\nQ \uD0DC\uADF8
+    \xB7 SPACE \uD68C\uD53C \xB7 E / R \uAE30\uC220\nLEFT SHIFT \uAE4C\uB9C8\uADC0
+    \uBA85\uB839 \xB7 F \uC5F0\uACC4 \xB7 M \uC9C0\uB3C4"
 --- !u!1 &5571642466308989606
 GameObject:
   m_ObjectHideFlags: 0
@@ -21961,7 +21961,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 2
+  m_Text: E
 --- !u!1 &7002165808223527825
 GameObject:
   m_ObjectHideFlags: 0

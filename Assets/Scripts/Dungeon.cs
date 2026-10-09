@@ -149,7 +149,7 @@ namespace WesternLemegeton
             HandlePauseInput();
             TickNotice();
             if (!Running) return;
-            if (Input.GetKeyDown(KeyCode.E) && TryTravel()) return;
+            if (Input.GetKeyDown(KeyCode.F) && TryTravel()) return;
             if (IsTown) return;
             RunTime += Time.deltaTime;
             if (State == RunState.WaveBreak)

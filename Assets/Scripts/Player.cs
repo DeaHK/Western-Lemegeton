@@ -52,7 +52,6 @@ namespace WesternLemegeton
         // Movement
         public Vector2 Facing = Vector2.right, LastMove = Vector2.right;
         public readonly HunterLocomotion Locomotion = new HunterLocomotion();
-        public bool WalkHeld { get; set; }
 
         // Dash
         public float DashCd;
@@ -80,7 +79,6 @@ namespace WesternLemegeton
             float dt = Time.deltaTime;
             TickTimers(dt);
 
-            WalkHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             Vector2 move = new Vector2(
                 (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0),
                 (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0)).normalized;
@@ -103,8 +101,8 @@ namespace WesternLemegeton
             if (Input.GetKeyDown(KeyCode.Space)) TryDodge(move);
             if (Input.GetKeyDown(KeyCode.Q)) TryTag();
             HandleRavenInput(g);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) TrySkill(0);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) TrySkill(1);
+            if (Input.GetKeyDown(KeyCode.E)) TrySkill(0);
+            if (Input.GetKeyDown(KeyCode.R)) TrySkill(1);
             if (Input.GetMouseButtonDown(0) && (!UnityEngine.EventSystems.EventSystem.current || !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())) buffer = .18f;
             if (buffer > 0 && TryAttack()) buffer = 0;
         }
@@ -133,7 +131,7 @@ namespace WesternLemegeton
                 TickDash(dt);
             }
             else if (!ActionLocked && !(skill == 1 && elapsed < HunterMotion.SlashEnd))
-                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, skill == 4 ? 3.1f : WalkHeld ? 2.8f : 5.6f) * dt, .38f);
+                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, skill == 4 ? 3.1f : 5.6f) * dt, .38f);
         }
 
         #endregion
@@ -448,8 +446,8 @@ namespace WesternLemegeton
 
         private void HandleRavenInput(Dungeon g)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1)) g.Crow.Command();
-            if (Input.GetKeyDown(KeyCode.R)) g.Crow.TryLink();
+            if (Input.GetKeyDown(KeyCode.LeftShift)) g.Crow.Command();
+            if (Input.GetKeyDown(KeyCode.F)) g.Crow.TryLink();
         }
 
         private void ResolveRavenFollowups(Dungeon g, Enemy e, int stage, long attack, bool isSkill, bool chain)
@@ -529,7 +527,6 @@ namespace WesternLemegeton
             DashCd = TagCd = Reload = Fury = attackCd = comboTime = invulnerable = elapsed = buffer = hitTime = 0;
             System.Array.Clear(cds, 0, cds.Length);
             LastMove = Facing = Vector2.right;
-            WalkHeld = false;
             actionId = basicId = 0;
             lastComboAttack = -1;
             dashHits.Clear();
