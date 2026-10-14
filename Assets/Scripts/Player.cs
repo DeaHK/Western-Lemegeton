@@ -43,6 +43,9 @@ namespace WesternLemegeton
         public int BasicStage => basicStage;
         public bool BasicBusy => basicTime < basicDuration;
 
+        //aim
+        Vector2 aimDirection = Vector2.right;
+
         // Combo / Raven follow-up deduplication
         public int Combo, HitCombo;
         float comboTime, hitTime;
@@ -84,6 +87,7 @@ namespace WesternLemegeton
                 (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0)).normalized;
             if (move.sqrMagnitude > 0) LastMove = move;
             Vector2 aim = PaperWorld.Mouse(g.Cam, Input.mousePosition) - (Vector2)transform.position;
+            if (aim.sqrMagnitude > .1f) aimDirection = aim.normalized;
             Facing = Weapon == 0 ? LastMove : aim.sqrMagnitude > .1f ? aim.normalized : Facing;
 
             if (ActionLocked)
@@ -217,7 +221,7 @@ namespace WesternLemegeton
             basicId = actionId;
             basicWeapon = Weapon;
             basicCost = cost;
-            basicDirection = Facing.normalized;
+            basicDirection = aimDirection;
             basicDuration = attackCd = Weapon == 0 ? .25f : .3f;
             comboTime = Weapon == 0 ? 1.2f : 4;
             basicTime = 0;

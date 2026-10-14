@@ -254,7 +254,7 @@ namespace WesternLemegeton
             Crow.ResetAt(Pos);
             Hero.SafeEntry();
             ResetCamera();
-            Tell("히르바 · 동쪽 관문에서 E 키로 출발");
+            Tell("히르바 · 동쪽 관문에서 F 키로 출발");
         }
 
         private void BuildStage()
@@ -310,7 +310,7 @@ namespace WesternLemegeton
             else
             {
                 State = RunState.Exit;
-                Tell(CurrentKind == ExplorationRoomKind.Sigil ? "성흔 제단 · 중앙 제단에서 E 키로 각인 강화" : "악마카드 역참 · 중앙 진열대에서 E 키로 카드 선택");
+                Tell(CurrentKind == ExplorationRoomKind.Sigil ? "성흔 제단 · 중앙 제단에서 F 키로 각인 강화" : "악마카드 역참 · 중앙 진열대에서 F 키로 카드 선택");
             }
         }
 
@@ -558,7 +558,7 @@ namespace WesternLemegeton
         {
             Hero.Hp = Mathf.Min(Player.MaxHp, Hero.Hp + 18);
             State = RunState.Exit;
-            Tell(Progress.SegmentComplete ? "여섯 방 정리 완료 · 출구방의 동쪽 문에서 E 키" : "전투방 정리 완료 · 열린 문으로 다음 방을 탐험하세요");
+            Tell(Progress.SegmentComplete ? "여섯 방 정리 완료 · 출구방의 동쪽 문에서 F 키" : "전투방 정리 완료 · 열린 문으로 다음 방을 탐험하세요");
         }
 
         #endregion
