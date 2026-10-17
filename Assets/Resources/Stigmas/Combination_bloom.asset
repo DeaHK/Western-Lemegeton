@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c0cf9ea199548a4989393924e38957c, type: 3}
+  m_Name: Combination_bloom
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaCombinationSO
+  Id: bloom
+  DisplayName: "\uC790\uC5F0"
+  First: {fileID: 11400000, guid: 22976154e11a6fb40bd252b9156f3bd7, type: 2}
+  Second: {fileID: 11400000, guid: 22976154e11a6fb40bd252b9156f3bd7, type: 2}
+  SkillName: "\uAC1C\uD654"
+  SkillModuleId: bloom
+  ChargeCost: 2
+  Levels:
+  - BonusDescription: "\uAC00\uC0C1\uCCB4\uB825 \uBCF4\uC720 \uC911 \uD53C\uACA9
+      \uACBD\uC9C1 \uAC10\uC18C (\uC218\uCE58 \uBBF8\uC815)."
+    SkillDescription: "\uAC00\uC0C1\uCCB4\uB825 +15. \uAC00\uC0C1\uCCB4\uB825 \uBCF4\uC720
+      \uC911 \uACF5\uACA9\uB825 +10%."
+    Bonuses:
+    - ModuleId: shield_stun_reduction
+      Parameters:
+      - Key: value
+        Value: 10
+    SkillParameters:
+    - Key: bonus_hp
+      Value: 15
+    - Key: attack_percent
+      Value: 10
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uB3D9\uC77C \uBCF4\uB108\uC2A4\uC758 \uAC15\uD654 \uC218\uCE58
+      \uBBF8\uC815."
+    SkillDescription: "\uAC00\uC0C1\uCCB4\uB825 +20. \uAC00\uC0C1\uCCB4\uB825 \uBCF4\uC720
+      \uC911 \uACF5\uACA9\uB825 +10%."
+    Bonuses:
+    - ModuleId: shield_stun_reduction
+      Parameters:
+      - Key: value
+        Value: 15
+    SkillParameters:
+    - Key: bonus_hp
+      Value: 20
+    - Key: attack_percent
+      Value: 10
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uB3D9\uC77C \uBCF4\uB108\uC2A4\uC758 \uAC15\uD654 \uC218\uCE58
+      \uBBF8\uC815."
+    SkillDescription: "\uCC98\uCE58 \uC2DC \uAC00\uC0C1\uCCB4\uB825 \uC18C\uB7C9
+      \uC7AC\uCDA9\uC804 (\uC218\uCE58 \uBBF8\uC815)."
+    Bonuses:
+    - ModuleId: shield_stun_reduction
+      Parameters:
+      - Key: value
+        Value: 20
+    SkillParameters: []
+    HasUnspecifiedDesignValues: 1

@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c0cf9ea199548a4989393924e38957c, type: 3}
+  m_Name: Combination_burn_rush
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaCombinationSO
+  Id: burn_rush
+  DisplayName: "\uC5C5\uD654"
+  First: {fileID: 11400000, guid: ddb8ca269e9b56a4a85be98c44be943d, type: 2}
+  Second: {fileID: 11400000, guid: ddb8ca269e9b56a4a85be98c44be943d, type: 2}
+  SkillName: "\uC5F0\uC18C \uC9C8\uC8FC"
+  SkillModuleId: burn_rush
+  ChargeCost: 3
+  Levels:
+  - BonusDescription: "\uC5F0\uC18D \uCC98\uCE58 \uC2DC \uACF5\uACA9\uC18D\uB3C4
+      \uB2E8\uACC4 \uC0C1\uC2B9 (\uC218\uCE58 \uBBF8\uC815)."
+    SkillDescription: "3\uCD08\uAC04 \uD50C\uB808\uC774\uC5B4\xB7\uAE4C\uB9C8\uADC0
+      \uACF5\uC18D +30%. \uC885\uB8CC \uD6C4 1.5\uCD08\uAC04 \uC774\uB3D9\uC18D\uB3C4
+      -15%."
+    Bonuses:
+    - ModuleId: kill_chain_speed
+      Parameters:
+      - Key: value
+        Value: 3
+    SkillParameters:
+    - Key: attack_speed_percent
+      Value: 30
+    - Key: seconds
+      Value: 3
+    - Key: penalty_slow_percent
+      Value: 15
+    - Key: penalty_seconds
+      Value: 1.5
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uB3D9\uC77C \uBCF4\uB108\uC2A4\uC758 \uAC15\uD654 \uC218\uCE58
+      \uBBF8\uC815."
+    SkillDescription: "\uC9C0\uC18D\uC2DC\uAC04 4\uCD08. \uC885\uB8CC \uD6C4 1.5\uCD08\uAC04
+      \uC774\uB3D9\uC18D\uB3C4 -15%."
+    Bonuses:
+    - ModuleId: kill_chain_speed
+      Parameters:
+      - Key: value
+        Value: 4
+    SkillParameters:
+    - Key: attack_speed_percent
+      Value: 30
+    - Key: seconds
+      Value: 4
+    - Key: penalty_slow_percent
+      Value: 15
+    - Key: penalty_seconds
+      Value: 1.5
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uB3D9\uC77C \uBCF4\uB108\uC2A4\uC758 \uAC15\uD654 \uC218\uCE58
+      \uBBF8\uC815."
+    SkillDescription: "\uC9C0\uC18D\uC2DC\uAC04 \uC5F0\uC7A5, \uB300\uAC00 \uC9C0\uC18D\uC2DC\uAC04
+      \uAC10\uC18C (\uC218\uCE58 \uBBF8\uC815)."
+    Bonuses:
+    - ModuleId: kill_chain_speed
+      Parameters:
+      - Key: value
+        Value: 5
+    SkillParameters: []
+    HasUnspecifiedDesignValues: 1

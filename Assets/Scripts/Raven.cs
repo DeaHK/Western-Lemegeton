@@ -1,5 +1,6 @@
 using UnityEngine;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 namespace WesternLemegeton
 {
  public enum RavenState { Idle, Follow, Attack, Return, ComboWindup, ComboDash, LinkAttack }
@@ -82,7 +83,7 @@ namespace WesternLemegeton
    {trailClock=.035f;Ink.Line(previous,transform.position,new Color(.67f,.34f,1),.23f,.18f);ComboEffects++;}
    if(t<1)return;
    Enemy hit=comboTarget;comboVictims.Add(hit.GetInstanceID());LastComboHits++;
-   hit.TakeDamage(EvaluateRavenDamage(18)+Dungeon.I.RavenLevel*6,Dungeon.I.BurnLevel>0);Ink.Ring(transform.position,.85f,new Color(.75f,.45f,1),.22f);Ink.Burst(transform.position,Ink.Cyan,6);ComboEffects++;
+   DealDamage(hit,18,StigmaAttackKind.Followup);Ink.Ring(transform.position,.85f,new Color(.75f,.45f,1),.22f);Ink.Burst(transform.position,Ink.Cyan,6);ComboEffects++;
    if(LastComboHits>=2){EndCombo();return;}
    comboTarget=Replacement(transform.position);if(!comboTarget){EndCombo();return;}
    comboPhase=1;comboElapsed=0;
@@ -101,7 +102,7 @@ namespace WesternLemegeton
    {
     CurrentState=RavenState.LinkAttack;linkTime-=dt;CombatArt.Pose(art,"RavenLink",1.8f);
     if(linkTarget&&!linkTarget.Dead)transform.position=Vector2.MoveTowards(transform.position,linkTarget.transform.position,dt*25);
-    if(linkTime<=0){Vector2 p=linkTarget&&!linkTarget.Dead?(Vector2)linkTarget.transform.position:(Vector2)transform.position;foreach(var e in g.Enemies)if(e&&!e.Dead&&Vector2.Distance(p,e.transform.position)<2.5f)e.TakeDamage(EvaluateRavenDamage(45)+g.RavenLevel*10,g.BurnLevel>0);Ink.Ring(p,2.5f,Ink.Cyan,.4f);LinkCooldown=8;linkTarget=null;}return;
+    if(linkTime<=0){Vector2 p=linkTarget&&!linkTarget.Dead?(Vector2)linkTarget.transform.position:(Vector2)transform.position;foreach(var e in g.Enemies)if(e&&!e.Dead&&Vector2.Distance(p,e.transform.position)<2.5f)DealDamage(e,45,StigmaAttackKind.Link);Ink.Ring(p,2.5f,Ink.Cyan,.4f);LinkCooldown=8;linkTarget=null;}return;
    }
    CombatArt.Pose(art,"Raven",1.1f);
    Vector2 follow=g.Pos+new Vector2(-.95f,1.15f+Mathf.Sin(Time.time*3)*.15f),goal=follow;Enemy target=null;
@@ -110,10 +111,15 @@ namespace WesternLemegeton
    if(returning&&Vector2.Distance(transform.position,follow)<.3f){returning=false;Status="동행";}
    if(Vector2.Distance(transform.position,g.Pos)>9){Ink.Burst(transform.position,Ink.Cyan,4);transform.position=follow;target=null;goal=follow;Status="복귀";}
    CurrentState=Status=="공격"?RavenState.Attack:Status=="복귀"?RavenState.Return:Status=="동행"?RavenState.Idle:RavenState.Follow;
-   art.flipX=goal.x<transform.position.x;transform.position=Vector2.MoveTowards(transform.position,goal,dt*10);art.transform.localRotation=Quaternion.Euler(0,0,Mathf.Sin(Time.time*13)*8);
-   if(target&&Vector2.Distance(transform.position,target.transform.position)<1.3f&&attack<=0){attack=.5f;target.TakeDamage(EvaluateRavenDamage(10)+g.RavenLevel*6+(g.BurnLevel>0?3:0),g.BurnLevel>0);Ink.Line(transform.position,target.transform.position,Ink.Cyan,.13f,.2f);g.Sound();}
+   art.flipX=goal.x<transform.position.x;transform.position=Vector2.MoveTowards(transform.position,goal,dt*Mathf.Max(5,g.PassiveStats.Evaluate(StigmaStats.RavenMove,10)));art.transform.localRotation=Quaternion.Euler(0,0,Mathf.Sin(Time.time*13)*8);
+   if(target&&Vector2.Distance(transform.position,target.transform.position)<1.3f&&attack<=0){attack=.5f/Mathf.Max(.1f,g.PassiveStats.Evaluate(StigmaStats.RavenSpeed,1));DealDamage(target,10,StigmaAttackKind.Basic);Ink.Line(transform.position,target.transform.position,Ink.Cyan,.13f,.2f);g.Sound();}
   }
-  // Evaluate the base attack once; existing Butterfly/Fire additions follow it.
+  void DealDamage(Enemy enemy,float damage,StigmaAttackKind kind)
+  {
+   var g=Dungeon.I;
+   g.Stigmas.Combat.Hit(enemy,StigmaOwner.Raven,kind,EvaluateRavenDamage(damage));
+  }
+  // Evaluate the owner's common attack modifiers once before routing the hit.
   private float EvaluateRavenDamage(float baseDamage)=>Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.RavenAttack,baseDamage);
  }
 }

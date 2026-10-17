@@ -1345,7 +1345,6 @@ GameObject:
   - component: {fileID: 1954788955}
   - component: {fileID: 1954788954}
   - component: {fileID: 1954788953}
-  - component: {fileID: 1954788952}
   - component: {fileID: 1954788951}
   - component: {fileID: 1954788950}
   - component: {fileID: 1954788949}
@@ -1354,6 +1353,8 @@ GameObject:
   - component: {fileID: 1954788957}
   - component: {fileID: 1954788958}
   - component: {fileID: 1954788959}
+  - component: {fileID: 1954788961}
+  - component: {fileID: 1954788960}
   m_Layer: 0
   m_Name: Game_Systems
   m_TagString: Untagged
@@ -1504,18 +1505,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &1954788952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954788947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 325245e0ce5558449a6d45bb4a4dd43c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunBuild
 --- !u!114 &1954788953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1639,6 +1628,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3cab0748d1842d88c354d367bff7886, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveOfferService
+--- !u!114 &1954788960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6b9ce686ae63a348beb408440caa3da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaDebugMenu
+--- !u!114 &1954788961
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1af2a3d0639b0ab41a3a7320a2205cee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaManager
+  database: {fileID: 11400000, guid: 119c28a0cccf5124fa49fe7f2d24a16e, type: 2}
 --- !u!1001 &2043279049
 PrefabInstance:
   m_ObjectHideFlags: 0

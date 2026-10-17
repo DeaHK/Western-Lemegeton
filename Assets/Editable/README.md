@@ -21,7 +21,7 @@ UI_Canvas
   Title
   Combat_HUD
   Route_Map
-  Stigma_Build_Tree
+  Stigma_Management
   Devil_Card_Choice
   Pause / Settings / Results / Cinematic_Overlay
   Passive_Acquisition
@@ -83,7 +83,12 @@ Viewport_Backdrop
 - GameUIView의 Font Override에 한글 폰트를 넣으면 전체 UI에 적용합니다. 비어 있으면 기본 글꼴에 한해 운영체제의 Malgun Gothic을 사용하고, 개별 Text에 지정한 커스텀 폰트는 유지합니다.
 - GameUIView의 Active / Unlocked / Inactive / Rarity Colors에서 상태색을 조절합니다. `PassiveSlot.prefab`은 획득 아이템 슬롯 모양입니다.
 - 버튼의 On Click에는 UICommand.Execute와 명령 종류가 저장되어 있습니다. UI 오브젝트를 새것으로 통째로 교체하면 GameUIView의 References 및 패널 슬롯, Button의 On Click도 연결하세요. 단순 이미지·위치 교체는 연결을 바꿀 필요가 없습니다.
-- 성흔 외부 진입점 `Dungeon.ApplySeongheunStack(type, increment)`, 패시브 진입점 `Dungeon.AcquirePassive(id, rarity, source)`는 유지됩니다.
+- 성흔방 카드 후보는 `StigmaManager.Room.GetOffers()`, 확정은 `Room.ClaimCard(index, out error)`를 사용합니다. 플레이어/까마귀용 혼합 최대 3장 중 방 전체에서 1장만 획득하며, 소유자별 기보유 항목은 제외합니다. 보유 성흔 교체·강화는 `Room.Purchase(owner, id, upgrade, out error)`를 사용합니다. 방 밖 패시브/디버그 지급은 `StigmaManager.TryAcquire(owner, id, out error)`이며 획득 대상을 반드시 지정합니다. 패시브 획득은 `PassiveManager.AcquirePassiveById(id, source)`를 사용합니다.
+- 성흔 패널 버튼은 `StigmaRoomView`의 직렬화 참조를 통해 연결합니다. 나머지 공용 버튼의 `UICommand.Action` 번호는 저장된 프리팹과 일치해야 하므로 재번호를 매기지 않습니다.
+- 강화 성흔의 BaseDefinition은 같은 대상의 카드 출현 선행 조건이자 하위 장착 제한 계보입니다. InitialChoice가 켜진 강화는 하위 보유 시 후보 풀에 섞이며 출현을 보장하지 않습니다. UseBaseCombination을 켜면 기존 하위 조합을 계승합니다. 플라그라의 아이콘·공통 원 샷 효과·단계별 배율은 `Assets/Resources/Stigmas/Stigma_flagra.asset`에서 편집합니다.
+- OwnerRestriction으로 획득·장착 대상을 제한합니다. 플라그라는 PlayerOnly이며 UseOwnerLevel을 켜서 고유 효과만 플레이어 레벨을 따릅니다. 조합/G 단계는 양쪽 최소값을 유지합니다. 원 샷 잔탄 쿨감의 0발 최대치는 CommonEffects의 `empty_ammo_cooldown_reduction`(0.7)이며 6발 0까지 선형 보간합니다.
+- 성흔 Icon 필드에 직접 연결할 이미지는 `Assets/Resources/Stigmas/Icons`에 넣습니다. WesternArtImporter가 이 폴더를 Sprite/Single로 가져옵니다. 기존 Combat/Western 폴더는 런타임 카탈로그용 일반 Texture를 유지하므로 직접 Sprite 참조용으로 사용하지 않습니다.
+- 기본 재장전 시간은 `Hunter.prefab > Player > Base Reload Seconds`(기본 2초)입니다. Reload는 런타임 진행값입니다. 강화 원 샷 재장전만 공속 영향을 받고, 애니메이션 배속은 아직 연결하지 않았습니다.
 
 ## 저장 / 빌드 / 내보내기
 

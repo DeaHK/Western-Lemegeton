@@ -6,9 +6,12 @@ public class WesternArtImporter : AssetPostprocessor
 {
     void OnPreprocessTexture()
     {
-        if (!assetPath.StartsWith("Assets/Resources/Western/") && !assetPath.StartsWith("Assets/Resources/Combat/")) return;
+        bool stigmaIcon = assetPath.StartsWith("Assets/Resources/Stigmas/Icons/");
+        if (!stigmaIcon && !assetPath.StartsWith("Assets/Resources/Western/") && !assetPath.StartsWith("Assets/Resources/Combat/")) return;
         var importer = (TextureImporter)assetImporter;
-        importer.textureType = TextureImporterType.Default;
+        // Catalog artwork is converted into sprites at runtime. Stigma SOs need imported Sprite subassets.
+        importer.textureType = stigmaIcon ? TextureImporterType.Sprite : TextureImporterType.Default;
+        if (stigmaIcon) importer.spriteImportMode = SpriteImportMode.Single;
         importer.npotScale = TextureImporterNPOTScale.None;
         importer.alphaSource = TextureImporterAlphaSource.FromInput;
         importer.alphaIsTransparency = true;

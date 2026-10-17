@@ -2,6 +2,7 @@
 
 namespace WesternLemegeton
 {
+    using Stigmas;
     public class Enemy : MonoBehaviour
     {
         #region Enemy Fields / Runtime State
@@ -9,6 +10,10 @@ namespace WesternLemegeton
         // Identity / health
         public int Kind;
         public float Hp, MaxHp;
+        public readonly StigmaEnemyState Stigma = new StigmaEnemyState();
+        readonly StigmaTraceView stigmaView = new StigmaTraceView();
+        StigmaOwner lastDamageOwner = StigmaOwner.Player;
+        bool slowedAtDeath;
 
         // Common attack timing / aim
         float cooldown, windup = -1;
@@ -17,8 +22,8 @@ namespace WesternLemegeton
         // Charge (shared by Kind 1 and Kind 3)
         float chargeTime;
 
-        // Burn / flash
-        float burnTime, burnTick, flash;
+        // Hit flash
+        float flash;
 
         // Existing Kind 3 attack cycle
         int cycle;
@@ -63,15 +68,7 @@ namespace WesternLemegeton
             var g = Dungeon.I;
             if (!g.Running || Dead) return;
             float dt = Time.deltaTime;
-            if (burnTime > 0)
-            {
-                TickBurnTimers(dt);
-                if (burnTick <= 0)
-                {
-                    ApplyBurnTick(g);
-                    if (Dead) return;
-                }
-            }
+            Stigma.Tick(dt);
             TickFlash(dt);
             UpdateHealthBar();
             Vector2 p = transform.position, delta = GetTargetDelta(g, p);
@@ -98,6 +95,8 @@ namespace WesternLemegeton
             }
         }
 
+        void LateUpdate() { stigmaView.Show(this); }
+
         #endregion
 
         #region Target Acquisition
@@ -117,13 +116,13 @@ namespace WesternLemegeton
                     Vector2 away = p - (Vector2)other.transform.position;
                     if (away.sqrMagnitude < 1.4f && away.sqrMagnitude > .01f) movement += away.normalized * .7f;
                 }
-            transform.position = Rules.ResolveObstacles(p, p + Vector2.ClampMagnitude(movement, 1) * (Kind == 3 ? 1.7f : 2.2f) * dt, .5f);
+            transform.position = Rules.ResolveObstacles(p, p + Vector2.ClampMagnitude(movement, 1) * (Kind == 3 ? 1.7f : 2.2f) * StigmaMoveMultiplier * dt, .5f);
         }
 
         private void TickCharge(Dungeon g, Vector2 p, float dist, float dt)
         {
             chargeTime -= dt;
-            transform.position = Rules.ResolveObstacles(p, p + aim * 12 * dt, .5f);
+            transform.position = Rules.ResolveObstacles(p, p + aim * 12 * StigmaMoveMultiplier * dt, .5f);
             // dist is captured before movement, as in the original charge branch.
             if (dist < 1.15f) g.Hero.Hurt(22);
         }
@@ -240,38 +239,28 @@ namespace WesternLemegeton
 
         #endregion
 
-        #region Damage / Burn / Flash
+        #region Damage / Flash
 
-        public void TakeDamage(float damage, bool ignite)
+        public void TakeDamage(float damage)
         {
-            if (Dead || Dungeon.I.State == RunState.Cinematic) return;
-            ApplyDamageImpact(damage, ignite);
-            if (ignite) burnTime = 3;
-            if (Dead)
-            {
-                Die();
-            }
+            TakeStigmaDamage(damage, StigmaOwner.Player, Stigma.Slow(Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction) > 0);
         }
 
-        private void ApplyDamageImpact(float damage, bool ignite)
+        private void ApplyDamageImpact(float damage)
         {
             Hp = Mathf.Max(0, Hp - damage);
             flash = .1f;
-            Ink.Burst(transform.position, ignite ? Ink.Gold : Ink.Cyan, 5);
+            Ink.Burst(transform.position, Ink.Cyan, 5);
         }
 
-        private void TickBurnTimers(float dt)
+        public void TakeStigmaDamage(float damage, StigmaOwner owner, bool slowed)
         {
-            burnTime -= dt;
-            burnTick -= dt;
+            if (Dead || Dungeon.I.State == RunState.Cinematic) return;
+            lastDamageOwner = owner; slowedAtDeath = slowed;
+            ApplyDamageImpact(damage);
+            if (Dead) Die();
         }
-
-        private void ApplyBurnTick(Dungeon g)
-        {
-            burnTick = .5f;
-            TakeDamage(3 + g.BurnLevel * 2, false);
-            Ink.Burst(transform.position, Ink.Gold, 3);
-        }
+        float StigmaMoveMultiplier => 1 - Stigma.Slow(Dungeon.I.Stigmas ? Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction : .5f);
 
         private void TickFlash(float dt)
         {
@@ -286,6 +275,12 @@ namespace WesternLemegeton
         private void Die()
         {
             Dungeon.I.Kills++;
+            if (Dungeon.I.Stigmas)
+            {
+                var rules = Dungeon.I.Stigmas.Database.Rules;
+                Dungeon.I.Wallet.Add(Kind == 3 ? rules.BossCopper : rules.EnemyCopper);
+                Dungeon.I.Stigmas.Combat?.Killed(lastDamageOwner, slowedAtDeath);
+            }
             warning.enabled = false;
             Ink.Burst(transform.position, Ink.Red, 14);
             Destroy(gameObject);

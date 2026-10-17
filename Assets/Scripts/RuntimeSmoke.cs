@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 
 namespace WesternLemegeton
 {
@@ -45,17 +46,30 @@ namespace WesternLemegeton
                 Travel(g,2);yield return null;
                 g.Hero.transform.position=g.RoomCenter;Check(g.TryTravel()&&g.State==RunState.SigilChoice,"Central altar opens sigil tree");
                 if(segment==0){Capture("sigil-choice.png");yield return new WaitForEndOfFrame();}
-                g.CloseService();Check(!g.Progress.MapComplete,"Closing altar without choice keeps room unfinished");
+                g.CloseService();Check(g.Progress.MapComplete,"Leaving optional stigma service completes the room");
                 Travel(g,4);yield return null;yield return ClearCombat(g);
                 Travel(g,5);yield return null;yield return ClearCombat(g);
                 var exit=g.CurrentRoom.Doors.Find(d=>d.StageExit);g.Hero.transform.position=(Vector3)exit.Position;
-                Check(!g.TryTravel()&&g.State==RunState.Exit&&g.MapsCleared==4,"Exit stays locked when boss room cleared before side rooms");
+                Check(!g.TryTravel()&&g.State==RunState.Exit&&g.MapsCleared==5,"Exit stays locked while card service remains incomplete");
                 g.OpenRoute(true);Check(!g.RouteTravel&&!g.ChooseRoom(segment+1),"Preview cannot bypass incomplete service rooms");g.CloseRoute();
                 Travel(g,4);yield return null;Check(g.Enemies.Count==0&&g.Progress.MapComplete,"Revisited combat room never respawns enemies");
                 Travel(g,2);yield return null;g.Hero.transform.position=g.RoomCenter;
-                Check(g.TryTravel(),"Altar remains available after backtracking");int before=g.Build.Stack((SeongheunType)(segment%3));
-                Check(g.ClaimSigil((SeongheunType)(segment%3))&&g.Build.Stack((SeongheunType)(segment%3))==before+1,"Altar choice grants exactly one stack");
-                Check(!g.ClaimSigil(SeongheunType.Fire)&&g.MapsCleared==5,"Altar cannot be claimed twice");
+                Check(g.TryTravel(),"Completed altar remains available after backtracking");
+                var stigmaOffers=g.Stigmas.Room.GetOffers();
+                Check(stigmaOffers.Count>0&&stigmaOffers.Count<=3,"Altar offers up to three mixed-owner cards");
+                var uniqueCards=new HashSet<string>();
+                foreach(var candidate in stigmaOffers)
+                    Check(!g.Stigmas.Loadout.Owns(candidate.Owner,candidate.Definition.Id)&&uniqueCards.Add(candidate.Owner+"/"+candidate.Definition.Id),"Cards exclude owned owner-definition pairs and duplicate offers");
+                var pickedStigma=stigmaOffers[0];int before=g.Wallet.Copper;
+                int stigmaCount=g.Stigmas.Loadout.TotalAcquiredCount;
+                var previousEquipment=g.Stigmas.Loadout.Get(pickedStigma.Owner);
+                Check(!g.Stigmas.Room.Purchase(pickedStigma.Owner,pickedStigma.Definition.Id,false,out _),"Equip API cannot acquire an unowned card");
+                Check(g.Stigmas.Room.ClaimCard(0,out _)&&g.Stigmas.Loadout.Owns(pickedStigma.Owner,pickedStigma.Definition.Id)&&g.Wallet.Copper==before,"Selected card goes only to its designated owner for free");
+                bool replacesEquipped=!previousEquipment.IsEquipped||pickedStigma.Definition.IsUpgradeOf(previousEquipment.Definition);
+                Check(g.Stigmas.Loadout.Get(pickedStigma.Owner).Definition==(replacesEquipped?pickedStigma.Definition:previousEquipment.Definition),"First card or upgrade of equipped ancestor auto-equips; other cards preserve equipment");
+                Check(!g.Stigmas.Room.ClaimCard(1,out _)&&g.Stigmas.Loadout.TotalAcquiredCount==stigmaCount+1,"Room grants exactly one card across both owners");
+                g.CloseService();Check(g.TryTravel()&&g.Stigmas.Room.HasClaimedCard&&object.ReferenceEquals(stigmaOffers,g.Stigmas.Room.GetOffers()),"Reopening altar preserves its offers and consumed pickup");
+                g.CloseService();Check(g.MapsCleared==5,"Repeated altar use does not increment room completion");
                 Travel(g,3);yield return new WaitForSeconds(.15f);
                 if(segment==0){Capture("card-room.png");yield return new WaitForEndOfFrame();}
                 g.Hero.transform.position=g.RoomCenter;Check(g.TryTravel()&&g.State==RunState.CardChoice,"Card stand opens three choices");
@@ -85,7 +99,7 @@ namespace WesternLemegeton
             }
             Check(completedRooms==20&&completedWaves==50,"Entire run has twenty combat rooms and fifty waves plus ten service rooms");
             g.EnterTown();yield return null;Check(g.Rooms==null&&g.MapIndex==0&&g.MapsCleared==0&&Rules.RoomOrigin==Vector2.zero,"New run resets all room state and world bounds");
-            yield return BuildAndComboChecks(g);
+            yield return StigmaAndComboChecks(g);
             File.WriteAllText(Path.Combine(output,"runtime-checks.txt"),"PASS: "+checks+" runtime integration checks\n30 rooms / 50 combat waves completed\n");
             Debug.Log("WNN_RUNTIME_SMOKE_SUCCESS: "+checks);yield return new WaitForSeconds(.3f);Application.Quit(0);
         }
@@ -132,7 +146,7 @@ namespace WesternLemegeton
         {
             var c=g.Cinematics;Check(c.IsPlaying&&c.Kind==CinematicKind.BossEntrance,"Final boss spawn triggers its Timeline");
             var boss=g.Enemies.Find(e=>e&&e.Kind==3);Check(boss,"Cinematic has a living boss target");float hp=boss.Hp;var scale=boss.PresentationRoot.localScale;
-            boss.TakeDamage(10000,false);Check(boss.Hp==hp&&!g.Hero.TryAttack(),"Boss cannot be damaged during reveal");
+            boss.TakeDamage(10000);Check(boss.Hp==hp&&!g.Hero.TryAttack(),"Boss cannot be damaged during reveal");
             yield return new WaitForSecondsRealtime(1.05f);Capture("cinematic-boss.png");yield return new WaitForEndOfFrame();
             Check(c.TitleOpacity>.8&&g.Cam.fieldOfView<32,"Boss close-up and name appear on Timeline");
             int finished=c.CompletedCount;c.Skip();Check(g.State==RunState.Combat&&!c.IsPlaying&&c.CompletedCount==finished+1,"Boss skip restores combat once");
@@ -161,7 +175,7 @@ namespace WesternLemegeton
                 var door=g.CurrentRoom.Doors[0];g.Hero.transform.position=(Vector3)door.Position;Check(!g.TryDoor(door),"Live combat locks connecting doors");
                 foreach(var e in g.Enemies)foreach(var rect in Dungeon.Obstacles)Check(!rect.Contains(e.transform.position),"Enemies spawn outside world-offset scenery");
                 Check(g.Enemies.Exists(e=>e&&e.Kind==3)==(g.Room==4&&g.MapIndex==5&&wave==total-1),"Boss appears only at final combat wave");
-                foreach(var e in g.Enemies)if(e&&!e.Dead)e.TakeDamage(100000,false);
+                foreach(var e in g.Enemies)if(e&&!e.Dead)e.TakeDamage(100000);
                 yield return null;yield return null;completedWaves++;
                 if(wave<total-1)
                 {
@@ -176,30 +190,32 @@ namespace WesternLemegeton
                 }
             }
             Check(g.Progress.MapComplete&&g.State==RunState.Exit,"Combat clear unlocks doors without opening any popup");completedRooms++;
-        }        IEnumerator BuildAndComboChecks(Dungeon g)
+        }        IEnumerator StigmaAndComboChecks(Dungeon g)
         {
-            var build=g.Build;var hud=g.GetComponent<GameHUD>();
-            build.SetThreshold(SeongheunType.Fire,3);g.ApplySeongheunStack(SeongheunType.Fire,2);
-            Check(build.Stack(SeongheunType.Fire)==2&&!build.IsActive(SeongheunType.Fire)&&g.BurnLevel==0,"Below threshold UI stack does not enable damage effect");
-            g.ApplySeongheunStack(SeongheunType.Fire,1);
-            Check(build.Stack(SeongheunType.Fire)==3&&g.BurnLevel==3&&hud.StackPulse(SeongheunType.Fire)>0,"Stack addition immediately updates effect and HUD punch");
-            yield return new WaitForSeconds(.3f);Check(hud.StackPulse(SeongheunType.Fire)==0,"HUD punch ends after quarter second");
-            g.ApplySeongheunStack(SeongheunType.Fire,-2);Check(!build.IsActive(SeongheunType.Fire)&&g.BurnLevel==0&&hud.StackPulse(SeongheunType.Fire)==0,"Removing stacks deactivates effect without gain punch");
-            g.ApplySeongheunStack(SeongheunType.Fire,2);
+            var stigmas=g.Stigmas;var state=stigmas.Loadout;var hud=g.GetComponent<GameHUD>();
+            Check(stigmas.TryAcquire(StigmaOwner.Player,"ros",out _)&&stigmas.TryEquip(StigmaOwner.Player,"ros",out _),"Player acquires and equips its own stigma");
+            Check(!state.BothEquipped&&!stigmas.Combat.Active&&!stigmas.TryEquip(StigmaOwner.Raven,"ros",out _),"One owner's acquisition cannot equip the other or activate effects");
+            Check(stigmas.TryAcquire(StigmaOwner.Raven,"ros",out _)&&stigmas.TryEquip(StigmaOwner.Raven,"ros",out _),"Raven acquires independently");
+            stigmas.TrySetLevel(StigmaOwner.Player,3,out _);
+            Check(state.EffectiveLevel==1&&state.Combination.SkillModuleId=="flood","Combination uses the lower equipped level");
+            stigmas.TrySetLevel(StigmaOwner.Raven,2,out _);
+            Check(state.EffectiveLevel==2,"Changing the other owner refreshes the effective level");
+            stigmas.Combat.SetCharges(state.ChargeCapacity);
+            Check(stigmas.Combat.Charges==4,"Flood charge capacity is four");
             Check(g.Passives.AcquirePassiveById(1,PassiveAcquisitionSource.MonsterDrop).WasAdded,"Drop uses the new passive acquisition entry");
             Check(g.Passives.AcquirePassiveById(4,PassiveAcquisitionSource.ShopPurchase).WasAdded,"Shop uses the new passive acquisition entry");
             Check(g.Passives.AcquirePassiveById(5,PassiveAcquisitionSource.EventReward).WasAdded,"Event uses the new passive acquisition entry");
             var inventory=new List<PassiveInstance>();g.Passives.CopyActivePassives(inventory);
             Check(inventory.Count==3&&inventory[0].PassiveID==1&&inventory[1].PassiveID==4&&inventory[2].PassiveID==5&&inventory[0].InitialSource==PassiveAcquisitionSource.MonsterDrop&&inventory[2].Rarity==g.Passives.Database.GetById(5).Rarity,"Inventory preserves acquisition order, source and definition rarity");
-            Check(build.Stack(SeongheunType.Fire)==3,"Passive acquisition never changes stigma stacks");
+            Check(state.Get(StigmaOwner.Player).Level==3&&state.Get(StigmaOwner.Raven).Level==2&&stigmas.Combat.Charges==4,"Passive acquisition preserves separate stigma levels and charges");
             Check(!g.Passives.AcquirePassiveById(int.MaxValue,PassiveAcquisitionSource.EventReward).Success&&g.Passives.Count==3,"Unknown ID rejected without mutation");
             Check(hud.PendingPassiveNotices==3,"Rapid acquisitions queue all notices");
             var stacked=g.Passives.AcquirePassiveById(1,PassiveAcquisitionSource.EventReward);
             Check(stacked.WasStacked&&stacked.PreviousStack==1&&stacked.NewStack==2&&g.Passives.Count==3&&stacked.Instance.InitialSource==PassiveAcquisitionSource.MonsterDrop&&stacked.Instance.LastSource==PassiveAcquisitionSource.EventReward&&Mathf.Approximately(g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack),30)&&hud.PendingPassiveNotices==4,"Duplicate acquisition updates one stack, modifier and notification");
             yield return new WaitForSeconds(.12f);Capture("build-passives.png");yield return new WaitForSeconds(.2f);
-            hud.OpenBuildTree();Check(g.State==RunState.Paused,"Build tree pauses play");yield return new WaitForSeconds(.1f);Capture("build-tree.png");yield return new WaitForEndOfFrame();hud.CloseBuildTree();
-            build.SetThreshold(SeongheunType.Fire,1);g.StartRun();yield return null;g.Cinematics.Skip();
-            Check(g.Passives.Count==0&&!g.PassiveOffers.HasOffer&&g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.MoveSpeed)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.RavenAttack)==0&&build.Stack(SeongheunType.Fire)==0&&hud.PendingPassiveNotices==0,"New run clears passives, modifiers, offers, stigma and notification queue");
+            hud.OpenStigmaManagement();Check(g.State==RunState.Paused,"Stigma management pauses play");yield return new WaitForSeconds(.1f);Capture("build-tree.png");yield return new WaitForEndOfFrame();hud.CloseStigmaManagement();
+            g.StartRun();yield return null;g.Cinematics.Skip();
+            Check(g.Passives.Count==0&&!g.PassiveOffers.HasOffer&&g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.MoveSpeed)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.RavenAttack)==0&&state.TotalAcquiredCount==0&&!state.BothEquipped&&stigmas.Combat.Charges==0&&!hud.StigmaManagementOpen&&hud.PendingPassiveNotices==0,"New run clears passives, modifiers, offers, stigma and notification queue");
             var foes=g.Enemies.ToArray();g.Hero.transform.position=Vector2.zero;g.Crow.ResetAt(Vector2.zero);g.Crow.transform.position=new Vector2(-3,0);
             for(int i=0;i<foes.Length;i++){foes[i].enabled=false;foes[i].Hp=foes[i].MaxHp=500;foes[i].transform.position=new Vector2(i+1,0);}
             for(int i=1;i<=4;i++)g.Hero.Hit(foes[0],1,i,900+i);

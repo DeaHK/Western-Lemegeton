@@ -13,7 +13,7 @@ namespace WesternLemegeton
         void Reset(int weapon,Vector2 direction)
         {
             game.State=RunState.Combat;hero.SafeEntry();hero.Weapon=weapon;hero.Skill2Cd=hero.Skill3Cd=hero.TagCd=hero.DashCd=0;
-            hero.Ammo=6;hero.Reload=hero.Fury=0;hero.Combo=0;hero.Facing=hero.LastMove=direction;hero.transform.position=new Vector2(0,-1.5f);
+            hero.Ammo=6;hero.Reload=0;hero.Combo=0;hero.Facing=hero.LastMove=direction;hero.transform.position=new Vector2(0,-1.5f);
             game.Crow.ResetAt(hero.transform.position);target.Hp=target.MaxHp=5000;target.transform.position=(Vector2)hero.transform.position+direction*1.1f;
             hero.AdvanceCombat(0,Vector2.zero);
         }

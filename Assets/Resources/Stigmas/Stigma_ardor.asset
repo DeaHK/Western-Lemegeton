@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c1e6f2dc8157474bb69e451415b9ea2, type: 3}
+  m_Name: Stigma_ardor
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaDefinitionSO
+  Id: ardor
+  DisplayName: "\uC544\uB974\uB3C4\uB974"
+  Icon: {fileID: 0}
+  FallbackIconKey: FireIcon
+  InitialChoice: 1
+  BaseDefinition: {fileID: 0}
+  Levels:
+  - Description: "\uCC98\uCE58 \uC2DC \uACF5\uACA9\uC18D\uB3C4 +10% (3\uCD08). \uC7AC\uCC98\uCE58
+      \uC2DC \uC9C0\uC18D\uC2DC\uAC04 \uAC31\uC2E0."
+    Effects:
+    - ModuleId: on_kill_attack_speed
+      Parameters:
+      - Key: percent
+        Value: 10
+      - Key: seconds
+        Value: 3
+  - Description: "\uCC98\uCE58 \uC2DC \uACF5\uACA9\uC18D\uB3C4 +15% (4\uCD08), \uC774\uB3D9\uC18D\uB3C4
+      +5%. \uC7AC\uCC98\uCE58 \uC2DC \uC9C0\uC18D\uC2DC\uAC04 \uAC31\uC2E0."
+    Effects:
+    - ModuleId: on_kill_attack_speed
+      Parameters:
+      - Key: percent
+        Value: 15
+      - Key: seconds
+        Value: 4
+    - ModuleId: move_percent
+      Parameters:
+      - Key: percent
+        Value: 5
+  - Description: "\uCC98\uCE58 \uC2DC \uACF5\uACA9\uC18D\uB3C4 +20% (5\uCD08), \uC774\uB3D9\uC18D\uB3C4
+      +10%. \uC7AC\uCC98\uCE58 \uC2DC \uC9C0\uC18D\uC2DC\uAC04 \uAC31\uC2E0."
+    Effects:
+    - ModuleId: on_kill_attack_speed
+      Parameters:
+      - Key: percent
+        Value: 20
+      - Key: seconds
+        Value: 5
+    - ModuleId: move_percent
+      Parameters:
+      - Key: percent
+        Value: 10

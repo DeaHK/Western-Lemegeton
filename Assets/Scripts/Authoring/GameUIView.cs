@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 using RuntimePassiveRarity = WesternLemegeton.Passives.PassiveRarity;
 
 namespace WesternLemegeton
@@ -19,7 +20,8 @@ namespace WesternLemegeton
         #region Serialized References / UI Reference Definitions
 
         // Panels / state routing
-        public GameObject TitlePanel, HudPanel, RoutePanel, SigilPanel, CardsPanel, PausePanel, SettingsPanel, ResultsPanel, CinematicPanel, ToastPanel;
+        public GameObject TitlePanel, HudPanel, RoutePanel, CardsPanel, PausePanel, SettingsPanel, ResultsPanel, CinematicPanel, ToastPanel;
+        public StigmaRoomView StigmaView;
 
         // Shared artwork / fonts / colors
         public VisualCatalog Art;
@@ -44,10 +46,6 @@ namespace WesternLemegeton
         readonly List<PassiveSlotView> slots = new List<PassiveSlotView>();
         readonly List<PassiveInstance> passiveBuffer = new List<PassiveInstance>();
         readonly List<int> slotIds = new List<int>();
-
-        // Existing three stigma definitions (Fire / Nature / Butterfly)
-        readonly string[] buildIcons = { "FireIcon", "NatureIcon", "Raven" }, buildNames = { "잿불", "격노", "검은 날개" };
-        readonly string[] effects = { "공격에 화상을 더해 지속 피해를 줍니다. 각인이 늘수록 화상 피해가 강해집니다.", "무기 태그 후 일시적으로 공격력이 증가합니다. 각인이 늘수록 강화량이 커집니다.", "까마귀 명령의 공격 시간을 연장하고 연계 공격을 강화합니다." };
 
         #endregion
 
@@ -80,11 +78,11 @@ namespace WesternLemegeton
             UpdatePlayerHealthAndAmmo(p);
             UpdatePlayerSkillSlots(p);
             UpdateRavenSkillSlots(g);
-            UpdateStigmaHud(g, h);
+            UpdateStigmaHud(g);
             // These updates remain unconditional even when their panels are inactive.
             Prompt(g);
             Map(g);
-            Sigil(g, h);
+            UpdateCardChoices(g);
             Passives(g, h);
             UpdateResults(g);
             UpdateBossPrototype(g);
@@ -104,9 +102,9 @@ namespace WesternLemegeton
             Panel(TitlePanel, g.State == RunState.Title);
             Panel(HudPanel, g.State != RunState.Title && !cinematic);
             Panel(RoutePanel, g.State == RunState.Route);
-            Panel(SigilPanel, g.State == RunState.SigilChoice || h.BuildTreeOpen);
+            if (StigmaView) Panel(StigmaView.gameObject, h.StigmaManagementOpen || g.State == RunState.SigilChoice);
             Panel(CardsPanel, g.State == RunState.CardChoice);
-            Panel(PausePanel, g.State == RunState.Paused && !h.BuildTreeOpen);
+            Panel(PausePanel, g.State == RunState.Paused && !h.StigmaManagementOpen);
             Panel(SettingsPanel, h.SettingsOpen);
             Panel(ResultsPanel, g.State == RunState.Dead || g.State == RunState.Victory);
             Panel(CinematicPanel, cinematic);
@@ -122,7 +120,7 @@ namespace WesternLemegeton
             Text("WaveText", $"WAVE {g.WaveIndex+1} / {g.WavesInMap} · 남은 적 {g.Enemies.Count}");
             Show("WaveBreak", g.State == RunState.WaveBreak);
             Text("WaveBreakText", $"다음 WAVE {g.WaveIndex+1}\n{Mathf.CeilToInt(g.WaveCountdown)}초 후 적이 접근합니다");
-            Text("CombatStatus", $"회피 {(p.DashCd>0?p.DashCd.ToString("F1")+"s":"●")}  COMBO {p.HitCombo}  {(p.Fury>0?"태그 강화":"")}");
+            Text("CombatStatus", $"회피 {(p.DashCd>0?p.DashCd.ToString("F1")+"s":"●")}  COMBO {p.HitCombo}");
         }
 
         #endregion
@@ -131,10 +129,10 @@ namespace WesternLemegeton
 
         private void UpdatePlayerHealthAndAmmo(Player p)
         {
-            Fill("HP", p.Hp / 100);
-            Text("HPText", $"{Mathf.CeilToInt(p.Hp)} / 100");
+            Fill("HP", p.Hp / p.MaxHealth);
+            Text("HPText", $"{Mathf.CeilToInt(p.Hp)} / {p.MaxHealth:0}  <color=#F5DF8A>+{p.BonusHp.Current:0.#}</color>");
             Fill("Ammo", p.Ammo / 6f);
-            Text("AmmoText", p.Reload > 0 ? $"장전 {p.Reload:F1}s · {p.Ammo}/6" : $"리볼버 {p.Ammo}/6");
+            Text("AmmoText", p.Reload > 0 ? $"장전 {p.ReloadRemaining:F1}s · {p.Ammo}/6" : $"리볼버 {p.Ammo}/6");
         }
 
         #endregion
@@ -235,7 +233,7 @@ namespace WesternLemegeton
             }
         }
 
-        // Existing card-choice rendering stays at the end of Sigil's update.
+        // Card choices refresh independently of the stigma management panel.
         private void UpdateCardChoices(Dungeon g)
         {
             for (int n = 0; n < 3; n++)
@@ -263,47 +261,23 @@ namespace WesternLemegeton
 
         #endregion
 
-        #region Stigma / Sigil UI
+        #region Stigma HUD
 
-        private void UpdateStigmaHud(Dungeon g, GameHUD h)
+        private void UpdateStigmaHud(Dungeon g)
         {
-            for (int i = 0; i < 3; i++)
+            var state = g.Stigmas.Loadout;
+            for (int i = 0; i < 2; i++)
             {
-                var type = (SeongheunType)i;
-                int stack = g.Build.Stack(type);
-                bool active = g.Build.IsActive(type);
-                float pulse = h.StackPulse(type);
-                Text("Stack" + i, "각인 " + stack);
-                Text("RouteStack" + i, stack + " 각인");
-                Color("StigmaBorder" + i, pulse > 0 ? UnityEngine.Color.white : active ? ActiveColor : InactiveColor);
-                Color("StigmaIcon" + i, active ? UnityEngine.Color.white : new Color(.5f, .5f, .55f));
-                var icon = Object("StigmaPulse" + i);
-                if (icon) icon.transform.localScale = Vector3.one * (1 + (pulse > 0 ? Mathf.Sin((1 - pulse / .25f) * Mathf.PI) * .22f : 0));
+                var equipment = state.Get((StigmaOwner)i);
+                string label = (i == 0 ? "플레이어" : "까마귀") + " " + (equipment.IsEquipped ? equipment.Definition.DisplayName + " " + equipment.Level : "미장착");
+                Text("Stack" + i, label); Text("RouteStack" + i, label);
+                if (equipment.IsEquipped) Image("StigmaIcon" + i, equipment.Definition.Icon ? equipment.Definition.Icon : Art.Get(equipment.Definition.FallbackIconKey));
+                Color("StigmaIcon" + i, equipment.IsEquipped ? UnityEngine.Color.white : new Color(.5f,.5f,.55f));
             }
-        }
-
-        private void Sigil(Dungeon g, GameHUD h)
-        {
-            int i = h.SelectedSigil;
-            var type = (SeongheunType)i;
-            int stack = g.Build.Stack(type);
-            bool claim = g.State == RunState.SigilChoice;
-            Image("SigilCenter", buildIcons[i]);
-            Image("SigilDetailIcon", buildIcons[i]);
-            Text("SigilName", buildNames[i]);
-            Text("SigilStack", $"각인 {stack} · {(g.Build.IsActive(type)?"활성":"대기")}");
-            Text("SigilEffect", effects[i]);
-            Text("SigilThreshold", $"첫 활성화: {g.Build.Threshold(type)} 각인\n강화 노드: {g.Build.Threshold(type)+2} 각인");
-            Show("SigilClaim", claim);
-            Text("SigilClaimText", buildNames[i] + $" 각인 +1 ({stack} → {stack+1})");
-            for (int n = 0; n < 6; n++)
-            {
-                var t = (SeongheunType)(n / 2);
-                int needed = g.Build.Threshold(t) + (n % 2) * 2;
-                Color("SigilNode" + n, g.Build.Stack(t) >= needed ? UnlockedColor : InactiveColor);
-                Text("SigilNodeText" + n, buildNames[n / 2] + " · " + needed + " 각인");
-            }
-            UpdateCardChoices(g);
+            int charges = g.Stigmas.Combat?.Charges ?? 0;
+            string chargeText = $"G · {charges}/{state.ChargeCapacity}";
+            Text("Stack2", chargeText); Text("RouteStack2", chargeText);
+            Color("StigmaBorder2", state.Combination && charges >= state.Combination.ChargeCost ? ActiveColor : InactiveColor);
         }
 
         #endregion
@@ -314,7 +288,7 @@ namespace WesternLemegeton
         {
             Text("Location", g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {Dungeon.MapNames[g.MapIndex]}");
             Text("Notice", g.Notice);
-            Text("Supplies", $"보급품 {g.Supplies}\n방 완료 {g.MapsCleared} / 6");
+            Text("Supplies", $"구리동전 {g.Wallet.Copper} · 보급품 {g.Supplies}\n방 완료 {g.MapsCleared} / 6");
         }
 
         private void Prompt(Dungeon g)
@@ -330,7 +304,7 @@ namespace WesternLemegeton
                 {
                     var door = g.NearbyDoor();
                     if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {Dungeon.MapNames[door.Destination]} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
-                    else if (g.CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 제단 / 각인 강화" : "F · 악마카드 진열대 / 카드 선택";
+                    else if (g.CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 획득 / 교체 / 강화" : g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : "F · 악마카드 진열대 / 카드 선택";
                 }
             }
             Show("Prompt", message != "");
@@ -431,6 +405,12 @@ namespace WesternLemegeton
         {
             var image = Element<Image>(key);
             if (image) image.sprite = Art.Get(icon);
+        }
+
+        private void Image(string key, Sprite sprite)
+        {
+            var image = Element<Image>(key);
+            if (image) image.sprite = sprite;
         }
 
         private void Color(string key, Color color)

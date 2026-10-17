@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8470fd3919e37854cacced311485aac9, type: 3}
+  m_Name: StigmaRules
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaRulesSO
+  MaxChargeGrantsPerEnemy: 1
+  MaximumSlowFraction: 0.5
+  LinkSkillKey: 103
+  DebugKey: 290
+  ReplacementCosts: 000000000000000000000000
+  UpgradeCosts: 90010000e8030000
+  EnemyCopper: 50
+  BossCopper: 500
+  KnockbackDistance: 0.35
+  BaseHitStunSeconds: 0.15
+  FloodRadius:
+  - 6
+  - 7
+  - 8
+  FloodSeconds:
+  - 4
+  - 5
+  - 5
+  FloodDashRefund:
+  - 0.3
+  - 0.4
+  - 0.5
+  BloomStunReduction:
+  - 10
+  - 15
+  - 20
+  BloomKillRefill: 3
+  KillChainSpeedStep:
+  - 3
+  - 4
+  - 5
+  KillChainMaxStacks: 3
+  KillChainSeconds: 5
+  RushLevel3Seconds: 5
+  RushLevel3PenaltySeconds: 1
+  FamiliarInterval: 1
+  FamiliarRange: 14
+  FamiliarExplosionRadius: 3
+  FamiliarExplosionPercent: 60
+  MireRadius:
+  - 4
+  - 5
+  - 6
+  InfernoRadius:
+  - 5
+  - 6
+  - 7
+  InfernoTargetRange: 14
+  GroundTickSeconds: 0.5
+  GroundAttackPercent: 30
+  LinkBaseAttack: 20
+  MireForwardDistance: 4

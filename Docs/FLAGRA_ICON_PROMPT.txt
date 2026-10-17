@@ -1,0 +1,4 @@
+Asset: Assets/Resources/Stigmas/Icons/FlagraIcon.png
+Mode: built-in image_gen, transparent_background=true. Generated RGBA copied unchanged into project.
+Prompt:
+Use case: stylized-concept. Asset type: single square inventory skill sigil icon for a dark occult western action game, readable at 64x64. Primary request: Flagra, an evolved fire stigma enhancing a revolver shot. Subject: one bold stylized orange-crimson flame wrapping around a single upright antique brass revolver cartridge, white-hot core, subtle dark iron diamond-shaped occult frame. Hand-painted game icon, crisp chunky silhouette, restrained detail, dramatic amber light, no realism. Centered isolated emblem with generous transparent margin, fills 80 percent of square. Transparent background. No lettering, no numbers, no watermark, no scenery, no additional panels, no sheet. Strong readability against very dark plum UI.

@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c1e6f2dc8157474bb69e451415b9ea2, type: 3}
+  m_Name: Stigma_ros
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaDefinitionSO
+  Id: ros
+  DisplayName: "\uB85C\uC2A4"
+  Icon: {fileID: 0}
+  FallbackIconKey: WaterIcon
+  InitialChoice: 1
+  BaseDefinition: {fileID: 0}
+  Levels:
+  - Description: "\uD754\uC801\uC774 \uBD99\uC740 \uC801 \uC774\uB3D9\uC18D\uB3C4
+      -20%."
+    Effects:
+    - ModuleId: marked_enemy_slow
+      Parameters:
+      - Key: percent
+        Value: 20
+  - Description: "\uD754\uC801\uC774 \uBD99\uC740 \uC801 \uC774\uB3D9\uC18D\uB3C4
+      -30%."
+    Effects:
+    - ModuleId: marked_enemy_slow
+      Parameters:
+      - Key: percent
+        Value: 30
+  - Description: "\uD754\uC801\uC774 \uBD99\uC740 \uC801 \uC774\uB3D9\uC18D\uB3C4
+      -35%. \uAC10\uC18D\uB41C \uC801 \uBC1B\uB294 \uD53C\uD574 +10% (\uC911\uBCF5/\uD569\uC0B0
+      \uBD88\uAC00)."
+    Effects:
+    - ModuleId: marked_enemy_slow
+      Parameters:
+      - Key: percent
+        Value: 35
+    - ModuleId: slowed_enemy_vulnerability
+      Parameters:
+      - Key: percent
+        Value: 10

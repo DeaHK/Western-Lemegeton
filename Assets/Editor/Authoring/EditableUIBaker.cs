@@ -20,11 +20,11 @@ namespace WesternLemegeton.EditorTools
    Button(title,"New_Game",new Rect(39,546,267,71),"",GameUIAction.EnterTown,-1,true);
    Button(title,"Title_Settings",new Rect(49,635,239,70),"",GameUIAction.OpenSettings,-1,true);
    Label(title,"Title_Caption",new Rect(947,654,316,48),"히르바 · 저주받은 황야",18);
-   HUD();Route();Sigil();Cards();PauseAndSettings();Cinematic();
+   HUD();Route();Cards();PauseAndSettings();Cinematic();
    var toast=Panel("Passive_Acquisition",false);view.ToastPanel=toast.gameObject;toast.gameObject.AddComponent<CanvasGroup>();
    Frame(toast,"ToastBorder",new Rect(458,104,430,91),Ink.Gold);Icon(toast,"ToastIcon",new Rect(472,117,65,65),"BulletIcon");Label(toast,"ToastName",new Rect(554,117,315,30),"악마카드 획득",19);Label(toast,"ToastDetail",new Rect(554,152,315,26),"일반 · 이벤트 보상",14,muted);
-   view.HudPanel.SetActive(false);view.RoutePanel.SetActive(false);view.SigilPanel.SetActive(false);view.CardsPanel.SetActive(false);view.PausePanel.SetActive(false);view.SettingsPanel.SetActive(false);view.ResultsPanel.SetActive(false);view.CinematicPanel.SetActive(false);view.ToastPanel.SetActive(false);
-   PassivePrefab();return view;
+   view.HudPanel.SetActive(false);view.RoutePanel.SetActive(false);view.CardsPanel.SetActive(false);view.PausePanel.SetActive(false);view.SettingsPanel.SetActive(false);view.ResultsPanel.SetActive(false);view.CinematicPanel.SetActive(false);view.ToastPanel.SetActive(false);
+   PassivePrefab();WesternLemegeton.Stigmas.Editor.StigmaUIAuthoring.Build(view);return view;
   }
   void Bind(string key,GameObject o){view.References.Add(new UIReference{Key=key,Target=o});}
   RectTransform Rect(Transform parent,string name,Rect r)
@@ -82,7 +82,7 @@ namespace WesternLemegeton.EditorTools
    {float x=382+i*87;Label(p,"SkillKey"+i,new Rect(x,587,88,22),keys[i],13,muted);Box(p,"SkillFrame"+i,new Rect(x,610,69,67),panel);Icon(p,"SkillIcon"+i,new Rect(x+6,617,57,52),icons[i]);var cd=Box(p,"SkillCooldown"+i,new Rect(x,610,69,67),new Color(0,0,0,.67f));Label(cd.transform,"SkillCooldownText"+i,new Rect(2,20,65,31),"0.0",20,null,TextAnchor.MiddleCenter);Label(p,"SkillLabel"+i,new Rect(x-6,684,96,28),"기술",14,muted);}
    string[] stigma={"FireIcon","NatureIcon","Raven"};
    for(int i=0;i<3;i++)
-   {float x=1008+i*87;var pulse=Rect(p,"Stigma_"+i,new Rect(x-30,608,60,60));pulse.pivot=new Vector2(.5f,.5f);pulse.anchoredPosition=new Vector2(x,-638);Bind("StigmaPulse"+i,pulse.gameObject);Frame(pulse,"StigmaBorder"+i,new Rect(0,0,60,60),muted);Icon(pulse,"StigmaIcon"+i,new Rect(6,6,48,48),stigma[i]);Button(pulse,"Inspect_Stigma"+i,new Rect(0,0,60,60),"",GameUIAction.OpenTree,-1,true);Label(p,"Stack"+i,new Rect(x-30,675,84,25),"각인 0",14,muted);}
+   {float x=1008+i*87;var pulse=Rect(p,"Stigma_"+i,new Rect(x-30,608,60,60));pulse.pivot=new Vector2(.5f,.5f);pulse.anchoredPosition=new Vector2(x,-638);Bind("StigmaPulse"+i,pulse.gameObject);Frame(pulse,"StigmaBorder"+i,new Rect(0,0,60,60),muted);Icon(pulse,"StigmaIcon"+i,new Rect(6,6,48,48),stigma[i]);Button(pulse,"Inspect_Stigma"+i,new Rect(0,0,60,60),"",GameUIAction.OpenStigma,-1,true);Label(p,"Stack"+i,new Rect(x-30,675,84,25),"각인 0",14,muted);}
    var prompt=Box(p,"Prompt",new Rect(370,530,540,44),panel);Label(prompt.transform,"PromptText",new Rect(9,6,522,32),"E · 상호작용",17,Ink.Gold,TextAnchor.MiddleCenter);
    var crow=Box(p,"CrowPrompt",new Rect(480,470,320,38),panel);Label(crow.transform,"CrowPromptText",new Rect(8,4,304,30),"R · 까마귀 연계",16,Ink.Cyan,TextAnchor.MiddleCenter);
    var boss=Rect(p,"Boss",new Rect(415,137,450,22));Bind("Boss",boss.gameObject);Bar(boss,"BossHP",new Rect(0,0,450,14),Ink.Red,"봉인의 파수꾼");
@@ -97,15 +97,6 @@ namespace WesternLemegeton.EditorTools
    Box(p,"Route_Sidebar",new Rect(920,0,360,720),new Color(.12f,.075f,.15f));Label(p,"RouteStage",new Rect(945,31,313,41),"STAGE 01",27);Label(p,"RouteName",new Rect(946,79,310,34),"붉은 모래길");Label(p,"RouteProgress",new Rect(946,130,304,60),"방 완료 0/6");Bar(p,"RouteHP",new Rect(946,210,285,16),Ink.Red,"HP 100 / 100");
    string[] icons={"FireIcon","NatureIcon","Raven"};for(int i=0;i<3;i++){Icon(p,"RouteIcon"+i,new Rect(946+i*98,277,46,46),icons[i]);Label(p,"RouteStack"+i,new Rect(949+i*98,329,93,35),"0 각인",14,muted);}
    Label(p,"RouteBuild",new Rect(946,388,290,100),"악마카드 0장");Label(p,"RouteHint",new Rect(946,492,292,62),"다음 스테이지");Button(p,"RouteTravel",new Rect(945,565,309,54),"다음 스테이지로 이동",GameUIAction.NextStage);Button(p,"Route_Close",new Rect(945,641,309,43),"닫기 · M / ESC",GameUIAction.CloseMap);
-  }
-  void Sigil()
-  {
-   var p=Panel("Stigma_Build_Tree");view.SigilPanel=p.gameObject;Label(p,"Sigil_Title",new Rect(53,32,950,48),"성흔 각인 · SIGIL MANAGEMENT",27);Label(p,"Sigil_Subtitle",new Rect(55,87,1050,32),"속성 노드를 선택해 각인 수치와 효과를 확인하세요.",14,muted);
-   Vector2 center=new Vector2(385,335);float radius=184;for(int n=0;n<48;n++){float a=n*Mathf.PI/24,b=(n+1)*Mathf.PI/24;Line(p,"Circle_"+n,center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,center+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius,Ink.Red*.65f,2);}
-   string[] icons={"FireIcon","NatureIcon","Raven"};
-   for(int n=0;n<6;n++)
-   {float a=(-120+n*60)*Mathf.Deg2Rad;var at=center+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius;Line(p,"Branch_"+n,center,at,muted*.3f);var node=Frame(p,"SigilNode"+n,new Rect(at.x-35,at.y-35,70,70),muted);Icon(node.transform,"SigilNodeIcon"+n,new Rect(12,12,46,46),icons[n/2]);Button(node.transform,"Sigil_Select_"+n,new Rect(0,0,70,70),"",GameUIAction.SelectSigil,n/2,true);Label(p,"SigilNodeText"+n,new Rect(at.x-74,at.y+39,148,29),"1 각인",14,muted,TextAnchor.MiddleCenter);}
-   Icon(p,"SigilCenter",new Rect(center.x-33,center.y-33,66,66),icons[0]);Frame(p,"Sigil_Detail",new Rect(733,151,492,402),muted*.6f);Icon(p,"SigilDetailIcon",new Rect(760,180,74,74),icons[0]);Label(p,"SigilName",new Rect(856,182,336,38),"잿불",27);Label(p,"SigilStack",new Rect(856,228,329,32),"각인 0 · 대기",19);Label(p,"SigilEffect",new Rect(761,289,435,100),"성흔의 효과");Label(p,"SigilThreshold",new Rect(761,397,435,58),"첫 활성화: 1 각인",14,muted);Button(p,"SigilClaim",new Rect(760,474,438,51),"각인 +1",GameUIAction.ClaimSigil);Button(p,"Sigil_Close",new Rect(760,610,438,54),"돌아가기 · ESC",GameUIAction.CloseSigil);
   }
   void Cards()
   {
