@@ -22,7 +22,9 @@ namespace WesternLemegeton.EditorTools
    EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
    var camera=new GameObject("Main Camera",typeof(Camera),typeof(AudioListener)).GetComponent<Camera>();camera.tag="MainCamera";PaperWorld.Configure(camera);camera.transform.position=PaperWorld.CameraPosition(Vector2.zero);
    var systems=new GameObject("Game_Systems");var game=systems.AddComponent<Dungeon>();var bindings=systems.AddComponent<GameSceneBindings>();game.Scene=bindings;bindings.GameCamera=camera;
-   systems.AddComponent<RunBuild>();var sound=systems.AddComponent<AudioSource>();sound.playOnAwake=false;var director=systems.AddComponent<PlayableDirector>();director.playOnAwake=false;var cinematic=systems.AddComponent<CinematicDirector>();
+   systems.AddComponent<WesternLemegeton.Stigmas.StigmaManager>().Configure(WesternLemegeton.Stigmas.Editor.StigmaFoundationSetup.CreateMissingData());
+   systems.AddComponent<WesternLemegeton.Stigmas.StigmaDebugMenu>();
+   var sound=systems.AddComponent<AudioSource>();sound.playOnAwake=false;var director=systems.AddComponent<PlayableDirector>();director.playOnAwake=false;var cinematic=systems.AddComponent<CinematicDirector>();
    cinematic.assets=new[]{Resources.Load<TimelineAsset>("Cinematics/DungeonEntrance"),Resources.Load<TimelineAsset>("Cinematics/PlayerDeath"),Resources.Load<TimelineAsset>("Cinematics/BossEntrance")};var hud=systems.AddComponent<GameHUD>();
    var world=new GameObject("World").transform;
    var town=WesternEnvironment.Build(true,0);var authoredTown=EditableWorldBaker.Bake(town,-1,new RoomDoor[0],camera);Object.DestroyImmediate(town.Root.gameObject);var townPrefab=Save(authoredTown.gameObject,Root+"/Rooms/Hirva.prefab");bindings.Hirva=((GameObject)PrefabUtility.InstantiatePrefab(townPrefab,world)).GetComponent<RoomAuthoring>();

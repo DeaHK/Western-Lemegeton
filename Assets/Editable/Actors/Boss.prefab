@@ -163,6 +163,10 @@ GameObject:
   - component: {fileID: 3817545629373561850}
   - component: {fileID: 6936540390790166216}
   - component: {fileID: 758056907277756988}
+  - component: {fileID: 900000001}
+  - component: {fileID: 900000002}
+  - component: {fileID: 900000003}
+  - component: {fileID: 900000004}
   m_Layer: 0
   m_Name: Boss
   m_TagString: Untagged
@@ -1569,3 +1573,101 @@ MonoBehaviour:
   RenderOffset: {x: 0, y: 0, z: 0}
   Visible: {fileID: 70065726313180763}
   OverrideHidden: 0
+
+--- !u!114 &900000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617379214314409576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9591859f6e347e1bac2962c78d3e004, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyHealth
+  BaseHealth: 650
+  HealthPerRoom: 0
+
+--- !u!114 &900000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617379214314409576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7268b92a61f54012af13b9a5adf436f0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyKeepDistanceMovement
+  Speed: 1.7
+  UseAttackRange: 1
+  ApproachRange: 8.5
+  ApproachRangeFactor: 0.8
+  RetreatDistance: 0
+  BodyRadius: 0.5
+  SeparationDistanceSquared: 1.4
+  SeparationStrength: 0.7
+
+--- !u!114 &900000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617379214314409576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e0c73cb23b435ca36d710cc8d56fda, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBossAttack
+  EnableMelee: 0
+  EnableCharge: 1
+  EnableRanged: 1
+  Melee:
+    Damage: 15
+    TriggerRange: 1.7
+    HitRange: 1.75
+    WindupSeconds: 0.65
+    CooldownSeconds: 1.5
+    WarningRadius: 1.55
+  Charge:
+    Damage: 22
+    TriggerRange: 8.5
+    WindupSeconds: 0.9
+    CooldownSeconds: 1.3
+    ChargeSeconds: 0.55
+    ChargeSpeed: 12
+    HitRange: 1.15
+    BodyRadius: 0.5
+    WarningRadius: 2.5
+  Ranged:
+    Damage: 17
+    TriggerRange: 8.5
+    WindupSeconds: 0.9
+    CooldownSeconds: 1.3
+    ProjectileCount: 12
+    LowHealthProjectileCount: 20
+    ProjectileSpeed: 4.5
+    LowHealthProjectileSpeed: 6
+    LowHealthThreshold: 0.5
+    ProjectileLifetime: 5
+    RotationPerAttack: 13
+    WarningRadius: 2.5
+  InitialCooldownRange: {x: 0.8, y: 2}
+  ThreatPower: 25
+  IdleApproachRange: 8.5
+
+--- !u!114 &900000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1617379214314409576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 589c6fa8796445a29007e3a23d548677, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBasicBrain

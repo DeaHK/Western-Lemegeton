@@ -261,6 +261,51 @@ Transform:
   - {fileID: 217853482}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &285334359
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 285334360}
+  - component: {fileID: 285334361}
+  m_Layer: 0
+  m_Name: StageRoomDataBridge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &285334360
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285334359}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1861781159}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &285334361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285334359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fe372e0fdf30f64689000713214e2b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.StageRoomDataBridge
+  provider: {fileID: 1527023425}
 --- !u!1001 &776583425
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -988,6 +1033,128 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &1410185163
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1410185164}
+  - component: {fileID: 1410185166}
+  - component: {fileID: 1410185165}
+  m_Layer: 0
+  m_Name: RunMapManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1410185164
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410185163}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1861781159}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1410185165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410185163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 711906b20b3f0a4448bc855253f7589a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunIntegrationTest
+  startSeed: 12345
+  testCount: 400
+  layerSizes: 0100000002000000030000000200000001000000
+  middleTypes: 000000000100000002000000
+--- !u!114 &1410185166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410185163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5d5dd72e62e6a8488916d86884b5eb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.ExpeditionStageCoordinator
+  stageProvider: {fileID: 1527023425}
+  runSeed: 12345
+  layerSizes: 0100000002000000030000000200000001000000
+  middleTypes: 0000000003000000
+  stageConfigs:
+  - Type: 0
+    Config: {fileID: 11400000, guid: 23251201161b9e04cb9bd20b0a40cfff, type: 2}
+  - Type: 3
+    Config: {fileID: 11400000, guid: 8d787aa1e5b64b947a1dfb2982e2b7c2, type: 2}
+--- !u!1 &1527023424
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1527023426}
+  - component: {fileID: 1527023425}
+  m_Layer: 0
+  m_Name: StageLayoutManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1527023425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1527023424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f7ec34a19cee314a8c99c3393bbb760, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.StageLayoutProvider
+  roleConfig: {fileID: 11400000, guid: 23251201161b9e04cb9bd20b0a40cfff, type: 2}
+  roomCatalog: {fileID: 11400000, guid: 3f675c63bd49a6342a8b5975b9d09bd8, type: 2}
+  region: Wilderness
+  seed: 12345
+  useRandomTemplate: 1
+  fixedTemplate: 0
+  generationMode: 1
+  allowLoops: 1
+--- !u!4 &1527023426
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1527023424}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1861781159}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1566136954
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1065,6 +1232,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc57520a97b334442afa2815d27cdc62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomAuthoring
+--- !u!1 &1861781158
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1861781159}
+  m_Layer: 0
+  m_Name: StageRoomManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1861781159
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1861781158}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.57459, y: -13.63924, z: 9.01882}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1527023426}
+  - {fileID: 285334360}
+  - {fileID: 1410185164}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1941396385
 GameObject:
   m_ObjectHideFlags: 0
@@ -1144,7 +1345,6 @@ GameObject:
   - component: {fileID: 1954788955}
   - component: {fileID: 1954788954}
   - component: {fileID: 1954788953}
-  - component: {fileID: 1954788952}
   - component: {fileID: 1954788951}
   - component: {fileID: 1954788950}
   - component: {fileID: 1954788949}
@@ -1153,6 +1353,8 @@ GameObject:
   - component: {fileID: 1954788957}
   - component: {fileID: 1954788958}
   - component: {fileID: 1954788959}
+  - component: {fileID: 1954788961}
+  - component: {fileID: 1954788960}
   m_Layer: 0
   m_Name: Game_Systems
   m_TagString: Untagged
@@ -1303,18 +1505,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &1954788952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954788947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 325245e0ce5558449a6d45bb4a4dd43c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunBuild
 --- !u!114 &1954788953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1438,6 +1628,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3cab0748d1842d88c354d367bff7886, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Passives.PassiveOfferService
+--- !u!114 &1954788960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6b9ce686ae63a348beb408440caa3da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaDebugMenu
+--- !u!114 &1954788961
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1af2a3d0639b0ab41a3a7320a2205cee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaManager
+  database: {fileID: 11400000, guid: 119c28a0cccf5124fa49fe7f2d24a16e, type: 2}
 --- !u!1001 &2043279049
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1711,3 +1926,4 @@ SceneRoots:
   - {fileID: 2088121560}
   - {fileID: 1941396388}
   - {fileID: 1174311531}
+  - {fileID: 1861781159}

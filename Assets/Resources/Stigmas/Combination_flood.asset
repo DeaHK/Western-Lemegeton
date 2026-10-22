@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c0cf9ea199548a4989393924e38957c, type: 3}
+  m_Name: Combination_flood
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaCombinationSO
+  Id: flood
+  DisplayName: "\uC218\uD574"
+  First: {fileID: 11400000, guid: f5315a825c474c745ba22f5dc53be1b8, type: 2}
+  Second: {fileID: 11400000, guid: f5315a825c474c745ba22f5dc53be1b8, type: 2}
+  SkillName: "\uBC94\uB78C"
+  SkillModuleId: flood
+  ChargeCost: 2
+  Levels:
+  - BonusDescription: "\uAC10\uC18D\uB41C \uC801 \uCC98\uCE58 \uC2DC \uD68C\uD53C
+      \uCFE8\uD0C0\uC784 \uAC10\uC18C (\uC218\uCE58 \uBBF8\uC815)."
+    SkillDescription: "\uC8FC\uBCC0 \uC801 \uC774\uB3D9\uC18D\uB3C4 -40% (4\uCD08).
+      \uBC94\uC704 \uBBF8\uC815."
+    Bonuses:
+    - ModuleId: slowed_kill_dash_refund
+      Parameters:
+      - Key: value
+        Value: 0.3
+    SkillParameters:
+    - Key: slow_percent
+      Value: 40
+    - Key: seconds
+      Value: 4
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uB3D9\uC77C \uBCF4\uB108\uC2A4\uC758 \uAC15\uD654 \uC218\uCE58
+      \uBBF8\uC815."
+    SkillDescription: "\uBC94\uC704\xB7\uC9C0\uC18D\uC2DC\uAC04 \uC18C\uD3ED \uC99D\uAC00
+      (\uC218\uCE58 \uBBF8\uC815)."
+    Bonuses:
+    - ModuleId: slowed_kill_dash_refund
+      Parameters:
+      - Key: value
+        Value: 0.4
+    SkillParameters: []
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uB3D9\uC77C \uBCF4\uB108\uC2A4\uC758 \uAC15\uD654 \uC218\uCE58
+      \uBBF8\uC815."
+    SkillDescription: "\uBC94\uC704 \uD655\uB300. \uBC94\uC704 \uB0B4 \uC801 \uBC1B\uB294
+      \uD53C\uD574 +10% (\uC911\uBCF5/\uD569\uC0B0 \uBD88\uAC00)."
+    Bonuses:
+    - ModuleId: slowed_kill_dash_refund
+      Parameters:
+      - Key: value
+        Value: 0.5
+    SkillParameters:
+    - Key: vulnerability_percent
+      Value: 10
+    HasUnspecifiedDesignValues: 1

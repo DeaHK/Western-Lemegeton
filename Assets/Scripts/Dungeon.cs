@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 
 namespace WesternLemegeton
 {
@@ -16,7 +17,8 @@ namespace WesternLemegeton
         public Player Hero;
         public Raven Crow;
         GameHUD hud;
-        public RunBuild Build { get; private set; }
+        public StigmaManager Stigmas { get; private set; }
+        public readonly RunWallet Wallet = new RunWallet();
         public PassiveManager Passives { get; private set; }
         public PassiveOfferService PassiveOffers { get; private set; }
         public StatModifierContainer PassiveStats { get; private set; }
@@ -39,7 +41,7 @@ namespace WesternLemegeton
         public float RunTime;
         public bool RouteTravel;
         public readonly bool[] Events = new bool[5];
-        public bool Running => (!hud || !hud.SettingsOpen) && (State == RunState.Town || State == RunState.Combat || State == RunState.Exit || State == RunState.WaveBreak);
+        public bool Running => (!hud || (!hud.SettingsOpen && !hud.StigmaDebugOpen)) && (State == RunState.Town || State == RunState.Combat || State == RunState.Exit || State == RunState.WaveBreak);
 
         // Room / Logical XY footprints
         public static Rect[] Obstacles = System.Array.Empty<Rect>(), SolidObstacles = System.Array.Empty<Rect>();
@@ -84,7 +86,8 @@ namespace WesternLemegeton
         {
             I = this;
             if (!Scene) throw new System.InvalidOperationException("GameSceneBindings is required. Open the authored Main scene.");
-            Build = GetComponent<RunBuild>();
+            Stigmas = GetComponent<StigmaManager>();
+            if (!Stigmas) throw new System.InvalidOperationException("Game_Systems requires StigmaManager and its database.");
             Passives = GetComponent<PassiveManager>();
             PassiveOffers = GetComponent<PassiveOfferService>();
             PassiveStats = GetComponent<StatModifierContainer>();
@@ -121,6 +124,7 @@ namespace WesternLemegeton
 
         private void Update()
         {
+            if (hud && hud.StigmaDebugOpen) return;
             if (State == RunState.Cinematic)
             {
                 HandleCinematicInput();
@@ -203,7 +207,9 @@ namespace WesternLemegeton
             Passives.ResetRun();
             Hero.ResetForRun();
             Crow.ResetForRun();
-            Build.ResetRun();
+            if (Stigmas) Stigmas.ResetRun();
+            Wallet.Reset();
+            if (hud) hud.StigmaDebugOpen = false;
             ResetRunProgress();
         }
 
@@ -254,7 +260,7 @@ namespace WesternLemegeton
             Crow.ResetAt(Pos);
             Hero.SafeEntry();
             ResetCamera();
-            Tell("히르바 · 동쪽 관문에서 E 키로 출발");
+            Tell("히르바 · 동쪽 관문에서 F 키로 출발");
         }
 
         private void BuildStage()
@@ -310,7 +316,7 @@ namespace WesternLemegeton
             else
             {
                 State = RunState.Exit;
-                Tell(CurrentKind == ExplorationRoomKind.Sigil ? "성흔 제단 · 중앙 제단에서 E 키로 각인 강화" : "악마카드 역참 · 중앙 진열대에서 E 키로 카드 선택");
+                Tell(CurrentKind == ExplorationRoomKind.Sigil ? "성흔 제단 · 중앙 제단에서 F 키로 획득 / 교체 / 강화" : "악마카드 역참 · 중앙 진열대에서 F 키로 카드 선택");
             }
         }
 
@@ -386,7 +392,7 @@ namespace WesternLemegeton
             // Door handling has priority over service-room interaction.
             if (CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(Pos, RoomAuthoring.Point(CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f)
             {
-                if (Progress.MapComplete)
+                if (Progress.MapComplete && CurrentKind != ExplorationRoomKind.Sigil)
                 {
                     Tell("이 방의 보상은 이미 선택했습니다");
                     return false;
@@ -416,17 +422,8 @@ namespace WesternLemegeton
 
         public void CloseService()
         {
+            if (State == RunState.SigilChoice) Progress.CompleteService();
             if (State == RunState.SigilChoice || State == RunState.CardChoice) State = RunState.Exit;
-        }
-
-        public bool ClaimSigil(SeongheunType type)
-        {
-            if (State != RunState.SigilChoice || CurrentKind != ExplorationRoomKind.Sigil || Progress.MapComplete || (int)type < 0 || (int)type > 2) return false;
-            ApplySeongheunStack(type, 1);
-            Progress.CompleteService();
-            State = RunState.Exit;
-            Tell("성흔 각인 완료 · 다른 방 탐험을 계속하세요");
-            return true;
         }
 
         public bool ClaimCard(int choice)
@@ -442,11 +439,6 @@ namespace WesternLemegeton
             State = RunState.Exit;
             Tell("악마카드 획득 · 카드 효과가 이번 런에 적용됩니다");
             return true;
-        }
-
-        public void Upgrade(int kind)
-        {
-            if (State == RunState.SigilChoice) ClaimSigil((SeongheunType)kind);
         }
 
         #endregion
@@ -556,9 +548,9 @@ namespace WesternLemegeton
 
         private void CompleteCombatRoom()
         {
-            Hero.Hp = Mathf.Min(Player.MaxHp, Hero.Hp + 18);
+            Hero.Hp = Mathf.Min(Hero.MaxHealth, Hero.Hp + 18);
             State = RunState.Exit;
-            Tell(Progress.SegmentComplete ? "여섯 방 정리 완료 · 출구방의 동쪽 문에서 E 키" : "전투방 정리 완료 · 열린 문으로 다음 방을 탐험하세요");
+            Tell(Progress.SegmentComplete ? "여섯 방 정리 완료 · 출구방의 동쪽 문에서 F 키" : "전투방 정리 완료 · 열린 문으로 다음 방을 탐험하세요");
         }
 
         #endregion
@@ -612,6 +604,7 @@ namespace WesternLemegeton
 
         public void BeginDeath()
         {
+            if (Stigmas) Stigmas.Combat?.OnDeath();
             if (!Cinematics.Play(CinematicKind.PlayerDeath)) State = RunState.Dead;
         }
 
@@ -701,15 +694,9 @@ namespace WesternLemegeton
 
         #region Utility / Query
 
-        public int BurnLevel { get => Build.EffectLevel(SeongheunType.Fire); set => Build.SetStack(SeongheunType.Fire, value); }
-        public int FuryLevel { get => Build.EffectLevel(SeongheunType.Nature); set => Build.SetStack(SeongheunType.Nature, value); }
-        public int RavenLevel { get => Build.EffectLevel(SeongheunType.Butterfly); set => Build.SetStack(SeongheunType.Butterfly, value); }
-
-        public void ApplySeongheunStack(SeongheunType t, int n) => Build.ApplySeongheunStack(t, n);
-
-
         internal void ClearTransient()
         {
+            if (Stigmas) Stigmas.Combat?.Skills.ClearWorldObjects();
             foreach (var b in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(b.gameObject);
             foreach (var f in FindObjectsByType<Fade>(FindObjectsSortMode.None)) Destroy(f.gameObject);
             foreach (var f in FindObjectsByType<SkillEffects>(FindObjectsSortMode.None)) Destroy(f.gameObject);

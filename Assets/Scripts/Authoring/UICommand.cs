@@ -1,7 +1,8 @@
 using UnityEngine;
 namespace WesternLemegeton
 {
- public enum GameUIAction {EnterTown,OpenSettings,CloseSettings,Resume,OpenMap,CloseMap,NextStage,OpenTree,SelectSigil,ClaimSigil,CloseSigil,ClaimCard,CloseService,ToggleFullscreen}
+ // Values are serialized in existing prefabs. Retired actions 8–10 stay unassigned.
+ public enum GameUIAction {EnterTown=0,OpenSettings=1,CloseSettings=2,Resume=3,OpenMap=4,CloseMap=5,NextStage=6,OpenStigma=7,ClaimCard=11,CloseService=12,ToggleFullscreen=13}
  public sealed class UICommand:MonoBehaviour
  {
   public GameUIAction Action;public int Parameter;
@@ -17,10 +18,7 @@ namespace WesternLemegeton
     case GameUIAction.OpenMap:g.OpenRoute();break;
     case GameUIAction.CloseMap:g.CloseRoute();break;
     case GameUIAction.NextStage:if(!g.IsTown&&g.Room==4)g.FinishExpedition();else g.ChooseRoom(g.NextRoom);break;
-    case GameUIAction.OpenTree:hud.OpenBuildTree();break;
-    case GameUIAction.SelectSigil:hud.SelectSigil(Parameter);break;
-    case GameUIAction.ClaimSigil:g.ClaimSigil((SeongheunType)hud.SelectedSigil);break;
-    case GameUIAction.CloseSigil:if(hud.BuildTreeOpen)hud.CloseBuildTree();else g.CloseService();break;
+    case GameUIAction.OpenStigma:hud.OpenStigmaManagement();break;
     case GameUIAction.ClaimCard:g.ClaimCard(Parameter);break;
     case GameUIAction.CloseService:g.CloseService();break;
     case GameUIAction.ToggleFullscreen:Screen.fullScreen=!Screen.fullScreen;break;

@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c0cf9ea199548a4989393924e38957c, type: 3}
+  m_Name: Combination_inferno
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaCombinationSO
+  Id: inferno
+  DisplayName: "\uD654\uC7AC"
+  First: {fileID: 11400000, guid: ddb8ca269e9b56a4a85be98c44be943d, type: 2}
+  Second: {fileID: 11400000, guid: 22976154e11a6fb40bd252b9156f3bd7, type: 2}
+  SkillName: "\uB300\uD3ED\uBC1C"
+  SkillModuleId: inferno
+  ChargeCost: 5
+  Levels:
+  - BonusDescription: "\uACF5\uACA9\uB825 +2%."
+    SkillDescription: "\uC9C0\uC815 \uC704\uCE58\uC5D0 \uACF5\uACA9\uB825 350% \uD3ED\uBC1C.
+      \uCD5C\uB300 \uCCB4\uB825\uC758 15%\uB97C \uAE30\uBCF8 \uCCB4\uB825\uC5D0\uC11C
+      \uC18C\uBAA8. \uC18C\uBAA8 \uD6C4 \uAE30\uBCF8 \uCCB4\uB825 1 \uC774\uC0C1
+      \uD544\uC694."
+    Bonuses:
+    - ModuleId: attack_percent
+      Parameters:
+      - Key: percent
+        Value: 2
+    SkillParameters:
+    - Key: attack_percent
+      Value: 350
+    - Key: max_hp_cost_percent
+      Value: 15
+    - Key: minimum_remaining_hp
+      Value: 1
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uACF5\uACA9\uB825 +3%."
+    SkillDescription: "\uD3ED\uBC1C \uBC94\uC704 \uC99D\uAC00 (\uC218\uCE58 \uBBF8\uC815)."
+    Bonuses:
+    - ModuleId: attack_percent
+      Parameters:
+      - Key: percent
+        Value: 3
+    SkillParameters: []
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uACF5\uACA9\uB825 +4%, \uAC00\uC0C1\uCCB4\uB825 \uD68D\uB4DD\uB7C9
+      +5%."
+    SkillDescription: "\uD3ED\uBC1C \uD6C4 3\uCD08\uAC04 \uD654\uC5FC \uC7A5\uD310
+      (\uD53C\uD574 \uB4F1 \uC138\uBD80 \uC218\uCE58 \uBBF8\uC815)."
+    Bonuses:
+    - ModuleId: attack_percent
+      Parameters:
+      - Key: percent
+        Value: 4
+    - ModuleId: bonus_hp_gain_percent
+      Parameters:
+      - Key: percent
+        Value: 5
+    SkillParameters:
+    - Key: ground_seconds
+      Value: 3
+    HasUnspecifiedDesignValues: 1

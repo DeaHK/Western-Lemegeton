@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 
 namespace WesternLemegeton
 {
@@ -8,17 +9,15 @@ namespace WesternLemegeton
     {
         public GameUIView View;
         public bool SettingsOpen { get; private set; }
-        public bool BuildTreeOpen { get; private set; }
-        public int SelectedSigil { get; private set; }
+        public bool StigmaManagementOpen { get; private set; }
+        public bool StigmaDebugOpen { get; set; }
         public PassiveAcquireResult? Toast { get; private set; }
         public float ToastOpacity => !Toast.HasValue ? 0 : Mathf.Clamp01(Mathf.Min((2.4f - toastTime) / .15f, toastTime / .3f));
-        readonly float[] pulses = new float[3];
         readonly Queue<PassiveAcquireResult> notices = new Queue<PassiveAcquireResult>();
-        RunBuild observed;
+        StigmaManager observedStigmas;
         PassiveManager observedPassives;
         float toastTime;
         RunState treeReturn;
-        public float StackPulse(SeongheunType type) => Mathf.Max(0, pulses[(int)type] - Time.unscaledTime);
         public int PendingPassiveNotices => notices.Count + (Toast.HasValue ? 1 : 0);
 
         // Retry after Dungeon.Awake; component Awake order is not a binding contract.
@@ -26,11 +25,10 @@ namespace WesternLemegeton
         {
             var g = Dungeon.I;
             if (!g) return;
-            if (!observed && g.Build)
+            if (!observedStigmas && g.Stigmas)
             {
-                observed = g.Build;
-                observed.StackChanged += StackChanged;
-                observed.Reset += ResetBuild;
+                observedStigmas = g.Stigmas;
+                observedStigmas.Changed += StigmaChanged;
             }
             if (!observedPassives && g.Passives)
             {
@@ -43,25 +41,23 @@ namespace WesternLemegeton
         void OnEnable() { Connect(); }
         void OnDisable()
         {
-            if (observed)
+            if (observedStigmas)
             {
-                observed.StackChanged -= StackChanged;
-                observed.Reset -= ResetBuild;
+                observedStigmas.Changed -= StigmaChanged;
             }
             if (observedPassives)
             {
                 observedPassives.PassiveAcquired -= Acquired;
                 observedPassives.PassivesReset -= ResetPassives;
             }
-            observed = null;
+            observedStigmas = null;
             observedPassives = null;
         }
-        void StackChanged(SeongheunType t, int before, int after)
+        void StigmaChanged(StigmaChange change)
         {
-            if (after > before) pulses[(int)t] = Time.unscaledTime + .25f;
+            if (change.Kind == StigmaChangeKind.Reset) StigmaManagementOpen = false;
         }
         void Acquired(PassiveAcquireResult result) { if (result.Success) notices.Enqueue(result); }
-        void ResetBuild() { System.Array.Clear(pulses, 0, 3); BuildTreeOpen = false; }
         void ResetPassives() { notices.Clear(); Toast = null; toastTime = 0; }
 
         void Update()
@@ -76,13 +72,12 @@ namespace WesternLemegeton
                 if (toastTime <= 0) Toast = null;
             }
             if (!Toast.HasValue && notices.Count > 0) { Toast = notices.Dequeue(); toastTime = 2.4f; }
-            if (BuildTreeOpen && g.State != RunState.Paused) BuildTreeOpen = false;
+            if (StigmaManagementOpen && g.State != RunState.Paused) StigmaManagementOpen = false;
         }
 
         public void OpenSettings() { SettingsOpen = true; }
         public void CloseSettings() { SettingsOpen = false; }
-        public void SelectSigil(int index) { SelectedSigil = Mathf.Clamp(index, 0, 2); }
-        public void OpenBuildTree() { var g = Dungeon.I; if (!g.Running) return; BuildTreeOpen = true; treeReturn = g.State; g.BeforePause = g.State; g.State = RunState.Paused; }
-        public void CloseBuildTree() { if (!BuildTreeOpen) return; BuildTreeOpen = false; Dungeon.I.State = treeReturn; }
+        public void OpenStigmaManagement() { var g = Dungeon.I; if (!g.Running) return; StigmaManagementOpen = true; treeReturn = g.State; g.BeforePause = g.State; g.State = RunState.Paused; }
+        public void CloseStigmaManagement() { if (!StigmaManagementOpen) return; StigmaManagementOpen = false; Dungeon.I.State = treeReturn; }
     }
 }

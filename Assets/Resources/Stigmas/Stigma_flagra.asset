@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c1e6f2dc8157474bb69e451415b9ea2, type: 3}
+  m_Name: Stigma_flagra
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaDefinitionSO
+  Id: flagra
+  DisplayName: "\ud50c\ub77c\uadf8\ub77c"
+  Icon: {fileID: 21300000, guid: cda2bf82ba63456fbb466ea6223345fb, type: 3}
+  FallbackIconKey: FireIcon
+  InitialChoice: 1
+  BaseDefinition: {fileID: 11400000, guid: ddb8ca269e9b56a4a85be98c44be943d, type: 2}
+  UseBaseCombination: 1
+  OwnerRestriction: 1
+  UseOwnerLevel: 1
+  CommonEffects:
+  - ModuleId: one_shot_ammo
+    Parameters:
+    - Key: range_multiplier
+      Value: 2
+    - Key: empty_ammo_cooldown_reduction
+      Value: 0.7
+    - Key: ammo_0
+      Value: 1.1
+    - Key: ammo_1
+      Value: 1.5
+    - Key: ammo_2
+      Value: 2
+    - Key: ammo_3
+      Value: 2.4
+    - Key: ammo_4
+      Value: 3
+    - Key: ammo_5
+      Value: 3.6
+    - Key: ammo_6
+      Value: 4
+  Levels:
+  - Description: "\ucc98\uce58 \uc2dc \uacf5\uc18d +15% (5\ucd08). \uc6d0 \uc0f7 \uc794\ud0c4 \uc5f0\uc18c. \uc7ac\ucc98\uce58 \uc2dc \uc9c0\uc18d\uc2dc\uac04 \uac31\uc2e0."
+    Effects:
+    - ModuleId: on_kill_attack_speed
+      Parameters:
+      - Key: percent
+        Value: 15
+      - Key: seconds
+        Value: 5
+  - Description: "\ucc98\uce58 \uc2dc \uacf5\uc18d +25% (8\ucd08), \uc0c1\uc2dc \uc774\uc18d +10%. \uc6d0 \uc0f7 \ud53c\ud574 \uac15\ud654."
+    Effects:
+    - ModuleId: on_kill_attack_speed
+      Parameters:
+      - Key: percent
+        Value: 25
+      - Key: seconds
+        Value: 8
+    - ModuleId: move_percent
+      Parameters:
+      - Key: percent
+        Value: 10
+    - ModuleId: one_shot_tier
+      Parameters:
+      - Key: ammo_0
+        Value: 1.1
+      - Key: ammo_1
+        Value: 1.6
+      - Key: ammo_2
+        Value: 2.1
+      - Key: ammo_3
+        Value: 2.6
+      - Key: ammo_4
+        Value: 3.3
+      - Key: ammo_5
+        Value: 4
+      - Key: ammo_6
+        Value: 4.5
+  - Description: "\ucc98\uce58 \uc2dc \uacf5\uc18d +40% (10\ucd08), \uc0c1\uc2dc \uc774\uc18d +15%. \uac15\ud654 \uc6d0 \uc0f7 \uc7ac\uc7a5\uc804 \uc644\ub8cc \uc2dc \ud68c\ud53c \ucd08\uae30\ud654."
+    Effects:
+    - ModuleId: on_kill_attack_speed
+      Parameters:
+      - Key: percent
+        Value: 40
+      - Key: seconds
+        Value: 10
+    - ModuleId: move_percent
+      Parameters:
+      - Key: percent
+        Value: 15
+    - ModuleId: one_shot_tier
+      Parameters:
+      - Key: ammo_0
+        Value: 1.1
+      - Key: ammo_1
+        Value: 1.7
+      - Key: ammo_2
+        Value: 2.2
+      - Key: ammo_3
+        Value: 2.8
+      - Key: ammo_4
+        Value: 3.6
+      - Key: ammo_5
+        Value: 4.5
+      - Key: ammo_6
+        Value: 5
+      - Key: reset_dodge
+        Value: 1

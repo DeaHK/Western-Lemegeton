@@ -71,7 +71,7 @@ MonoBehaviour:
   DashCd: 0
   TagCd: 0
   Reload: 0
-  Fury: 0
+  BaseReloadSeconds: 2
   Facing: {x: 1, y: 0}
   LastMove: {x: 1, y: 0}
   art: {fileID: 6327433259600277697}

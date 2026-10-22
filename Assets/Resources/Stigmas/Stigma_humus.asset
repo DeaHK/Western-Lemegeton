@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c1e6f2dc8157474bb69e451415b9ea2, type: 3}
+  m_Name: Stigma_humus
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaDefinitionSO
+  Id: humus
+  DisplayName: "\uC6B0\uBB34\uC2A4"
+  Icon: {fileID: 0}
+  FallbackIconKey: NatureIcon
+  InitialChoice: 1
+  BaseDefinition: {fileID: 0}
+  Levels:
+  - Description: "\uCC98\uCE58 \uC2DC \uAC00\uC0C1\uCCB4\uB825 +3."
+    Effects:
+    - ModuleId: on_kill_bonus_hp
+      Parameters:
+      - Key: amount
+        Value: 3
+  - Description: "\uCC98\uCE58 \uC2DC \uAC00\uC0C1\uCCB4\uB825 +5."
+    Effects:
+    - ModuleId: on_kill_bonus_hp
+      Parameters:
+      - Key: amount
+        Value: 5
+  - Description: "\uCC98\uCE58 \uC2DC \uAC00\uC0C1\uCCB4\uB825 +8. \uD0C0\uACA9 \uC2DC
+      \uC57D\uD55C \uB109\uBC31 (\uC138\uBD80 \uC218\uCE58 \uBBF8\uC815)."
+    Effects:
+    - ModuleId: on_kill_bonus_hp
+      Parameters:
+      - Key: amount
+        Value: 8
+    - ModuleId: on_hit_knockback
+      Parameters: []

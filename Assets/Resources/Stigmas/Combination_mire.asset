@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c0cf9ea199548a4989393924e38957c, type: 3}
+  m_Name: Combination_mire
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaCombinationSO
+  Id: mire
+  DisplayName: "\uC9C4\uD759"
+  First: {fileID: 11400000, guid: f5315a825c474c745ba22f5dc53be1b8, type: 2}
+  Second: {fileID: 11400000, guid: 22976154e11a6fb40bd252b9156f3bd7, type: 2}
+  SkillName: "\uB2AA \uD3ED\uBC1C"
+  SkillModuleId: mire
+  ChargeCost: 4
+  Levels:
+  - BonusDescription: "\uBC1B\uB294 \uACBD\uC9C1 \uC2DC\uAC04 -5%."
+    SkillDescription: "\uC804\uBC29 \uD3ED\uBC1C. \uAC10\uC18D\uB41C \uC801\uC5D0\uAC8C
+      \uACF5\uACA9\uB825 220%, \uADF8 \uC678 80%. \uC0AC\uC6A9 \uD6C4 3\uCD08\uAC04
+      \uC774\uB3D9\uC18D\uB3C4 -30%."
+    Bonuses:
+    - ModuleId: hit_stun_percent
+      Parameters:
+      - Key: percent
+        Value: -5
+    SkillParameters:
+    - Key: slowed_attack_percent
+      Value: 220
+    - Key: attack_percent
+      Value: 80
+    - Key: penalty_slow_percent
+      Value: 30
+    - Key: penalty_seconds
+      Value: 3
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uBC1B\uB294 \uACBD\uC9C1 \uC2DC\uAC04 -8%."
+    SkillDescription: "\uD3ED\uBC1C \uBC94\uC704 \uC99D\uAC00 (\uC218\uCE58 \uBBF8\uC815)."
+    Bonuses:
+    - ModuleId: hit_stun_percent
+      Parameters:
+      - Key: percent
+        Value: -8
+    SkillParameters: []
+    HasUnspecifiedDesignValues: 1
+  - BonusDescription: "\uBC1B\uB294 \uACBD\uC9C1 \uC2DC\uAC04 -10%, \uCD5C\uB300
+      \uCCB4\uB825 +2%."
+    SkillDescription: "\uBC94\uC704 \uD655\uB300, \uB300\uAC00 \uC9C0\uC18D\uC2DC\uAC04
+      2\uCD08."
+    Bonuses:
+    - ModuleId: hit_stun_percent
+      Parameters:
+      - Key: percent
+        Value: -10
+    - ModuleId: max_hp_percent
+      Parameters:
+      - Key: percent
+        Value: 2
+    SkillParameters:
+    - Key: penalty_seconds
+      Value: 2
+    HasUnspecifiedDesignValues: 1

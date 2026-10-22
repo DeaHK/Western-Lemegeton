@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00016e4527987234aa176a3d93385d77, type: 3}
+  m_Name: Wilderness Room Catalog
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomCatalog
+  Entries:
+  - PrefabId: Entry_01
+    Role: 0
+    Region: Wilderness
+    Prefab: {fileID: 2705716217502448606, guid: 21930013db609c946b044fe30a0355e9, type: 3}
+    Weight: 1
+  - PrefabId: Combat_01
+    Role: 1
+    Region: Wilderness
+    Prefab: {fileID: 8504877256074678598, guid: 9a8942f9dd96944478d675ffa2c19e6d, type: 3}
+    Weight: 1
+  - PrefabId: Combat_02
+    Role: 1
+    Region: Wilderness
+    Prefab: {fileID: 7759318815682765975, guid: e3e94e1255e6dbe4d800bf8278c1c612, type: 3}
+    Weight: 1
+  - PrefabId: Combat_03
+    Role: 1
+    Region: Wilderness
+    Prefab: {fileID: 8217752345500370232, guid: 28c7bf54bd5662940b797c3ba3aa3114, type: 3}
+    Weight: 1
+  - PrefabId: Combat_04
+    Role: 1
+    Region: Wilderness
+    Prefab: {fileID: 8073388664799014232, guid: 20b62af10df36f649b711d6d1489da5e, type: 3}
+    Weight: 1
+  - PrefabId: Shop_01
+    Role: 3
+    Region: Wilderness
+    Prefab: {fileID: 6275819343580966066, guid: 04fedb3768ca510419cf8cedf31dc214, type: 3}
+    Weight: 1

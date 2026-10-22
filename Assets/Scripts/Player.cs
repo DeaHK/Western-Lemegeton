@@ -1,5 +1,6 @@
 using UnityEngine;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 
 namespace WesternLemegeton
 {
@@ -10,21 +11,31 @@ namespace WesternLemegeton
         // Health / Damage / Invulnerability
         public const float MaxHp = 100;
         public float Hp = 100;
+        public readonly BonusHealth BonusHp = new BonusHealth();
+        public float MaxHealth => Dungeon.I && Dungeon.I.PassiveStats ? Mathf.Max(1, Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MaxHealth, MaxHp)) : MaxHp;
+        float hitStun;
+        public bool Stunned => hitStun > 0;
         float invulnerable;
         public bool Invulnerable => invulnerable > 0;
         public int DamageEvents { get; private set; }
-        // Compatibility multiplier: Raw ATK is applied only by EvaluateOutgoingDamage.
-        public float DamageScale => (1 + Dungeon.I.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack) / 100f) * FuryMultiplier;
-        private float FuryMultiplier => 1 + (Fury > 0 ? .18f + .12f * Dungeon.I.FuryLevel : 0);
 
         // Weapon / Ammo / Reload
         public int Weapon, Ammo = 6;
-        public float TagCd, Reload, Fury;
+        public float TagCd, Reload;
+        [Min(.01f)] public float BaseReloadSeconds = 2;
+        bool reloadUsesAttackSpeed, reloadResetsDodge;
+        int reloadEffectRevision;
+        bool ReloadBonusValid => reloadUsesAttackSpeed && Dungeon.I && Dungeon.I.Stigmas &&
+            Dungeon.I.Stigmas.Combat != null && Dungeon.I.Stigmas.Combat.EffectRevision == reloadEffectRevision;
+        public float ReloadSpeed => ReloadBonusValid
+            ? StigmaWeaponEffects.ReloadRate(Dungeon.I.PassiveStats.Evaluate(StigmaStats.PlayerSpeed, 1)) : 1;
+        public float ReloadRemaining => Mathf.Max(0, Reload) / ReloadSpeed;
 
         // Skills (dashHits tracks Slash hits, not the dodge action)
         readonly float[,] cds = new float[2, 2];
         int skill, skillWeapon, skillSlot, ticks;
         float elapsed;
+        float skillCooldownMultiplier = 1;
         Vector2 skillDirection;
         readonly System.Collections.Generic.HashSet<Enemy> dashHits = new System.Collections.Generic.HashSet<Enemy>();
         public float Skill2Cd { get => cds[Weapon, 0]; set => cds[Weapon, 0] = value; }
@@ -42,6 +53,9 @@ namespace WesternLemegeton
         bool basicPending;
         public int BasicStage => basicStage;
         public bool BasicBusy => basicTime < basicDuration;
+
+        //aim
+        Vector2 aimDirection = Vector2.right;
 
         // Combo / Raven follow-up deduplication
         public int Combo, HitCombo;
@@ -79,11 +93,14 @@ namespace WesternLemegeton
             float dt = Time.deltaTime;
             TickTimers(dt);
 
+            if (Stunned) { AdvanceActions(dt, Vector2.zero); return; }
+
             Vector2 move = new Vector2(
                 (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0),
                 (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0)).normalized;
             if (move.sqrMagnitude > 0) LastMove = move;
             Vector2 aim = PaperWorld.Mouse(g.Cam, Input.mousePosition) - (Vector2)transform.position;
+            if (aim.sqrMagnitude > .1f) aimDirection = aim.normalized;
             Facing = Weapon == 0 ? LastMove : aim.sqrMagnitude > .1f ? aim.normalized : Facing;
 
             if (ActionLocked)
@@ -131,7 +148,12 @@ namespace WesternLemegeton
                 TickDash(dt);
             }
             else if (!ActionLocked && !(skill == 1 && elapsed < HunterMotion.SlashEnd))
-                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, skill == 4 ? 3.1f : 5.6f) * dt, .38f);
+            {
+                float baseSpeed = skill == 4 ? 3.1f : 5.6f;
+                float speed = Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, baseSpeed);
+                float minimum = baseSpeed * (1 - (Dungeon.I.Stigmas ? Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction : .5f));
+                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Mathf.Max(minimum, speed) * dt, .38f);
+            }
         }
 
         #endregion
@@ -140,13 +162,13 @@ namespace WesternLemegeton
 
         public bool TryDodge(Vector2 direction)
         {
-            if (!Dungeon.I.Running || ActionLocked || DashCd > 0 || direction.sqrMagnitude == 0) return false;
+            if (!Dungeon.I.Running || Stunned || ActionLocked || DashCd > 0 || direction.sqrMagnitude == 0) return false;
             FinishSkill();
             CancelBasic();
             PresentationSequence++;
             dashDirection = direction.normalized;
             dashTime = .19f;
-            DashCd = 2.5f;
+            DashCd = Mathf.Max(0, Dungeon.I.PassiveStats.Evaluate(StigmaStats.DashCooldown, 2.5f));
             invulnerable = 2;
             buffer = 0;
             Ink.Burst(transform.position, Ink.Cyan);
@@ -171,7 +193,7 @@ namespace WesternLemegeton
 
         private float EvaluateOutgoingDamage(float baseDamage)
         {
-            return Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.PlayerAttack, baseDamage) * FuryMultiplier;
+            return Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.PlayerAttack, baseDamage);
         }
 
         public void Hit(Enemy e, float damage, int stage = 0, long attack = 0, bool isSkill = false)
@@ -181,7 +203,7 @@ namespace WesternLemegeton
             bool chain = stage > 0 && tracker.Hit(e.GetInstanceID(), stage, attack, g.RunTime);
             // Mark before damage; offer links and combo follow-ups after damage.
             g.Crow.Mark(e);
-            e.TakeDamage(EvaluateOutgoingDamage(damage), g.BurnLevel > 0);
+            g.Stigmas.Combat.Hit(e, StigmaOwner.Player, isSkill ? StigmaAttackKind.Skill : StigmaAttackKind.Basic, EvaluateOutgoingDamage(damage));
             DamageEvents++;
             HitCombo++;
             hitTime = 3;
@@ -191,7 +213,12 @@ namespace WesternLemegeton
         public void Hurt(float damage)
         {
             if (invulnerable > 0 || !Dungeon.I.Running || Dungeon.I.IsTown) return;
-            Hp = Mathf.Max(0, Hp - damage);
+            Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
+            if (Dungeon.I.Stigmas)
+            {
+                hitStun = Mathf.Max(0, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
+                Dungeon.I.Stigmas.Combat?.SyncShieldBuff();
+            }
             invulnerable = 1;
             Ink.Burst(transform.position, Ink.Red, 12);
             Dungeon.I.Sound();
@@ -205,11 +232,11 @@ namespace WesternLemegeton
         public bool TryAttack()
         {
             var g = Dungeon.I;
-            if (!g.Running || g.IsTown || SkillBusy || dashTime > 0 || attackCd > 0) return false;
+            if (!g.Running || g.IsTown || Stunned || SkillBusy || dashTime > 0 || attackCd > 0) return false;
             int cost = Rules.AmmoCost(Combo);
             if (Weapon == 1 && Ammo < cost)
             {
-                if (Reload <= 0) Reload = 2;
+                if (Reload <= 0) BeginReload();
                 return false;
             }
             basicStage = Combo + 1;
@@ -217,8 +244,8 @@ namespace WesternLemegeton
             basicId = actionId;
             basicWeapon = Weapon;
             basicCost = cost;
-            basicDirection = Facing.normalized;
-            basicDuration = attackCd = Weapon == 0 ? .25f : .3f;
+            basicDirection = aimDirection;
+            basicDuration = attackCd = (Weapon == 0 ? .25f : .3f) / Mathf.Max(.1f, g.PassiveStats.Evaluate(StigmaStats.PlayerSpeed, 1));
             comboTime = Weapon == 0 ? 1.2f : 4;
             basicTime = 0;
             basicPending = true;
@@ -265,14 +292,13 @@ namespace WesternLemegeton
 
         public bool TryTag()
         {
-            if (!Dungeon.I.Running || ActionLocked || TagCd > 0) return false;
+            if (!Dungeon.I.Running || Stunned || ActionLocked || TagCd > 0) return false;
             FinishSkill();
             CancelBasic();
             Weapon = 1 - Weapon;
             TagCd = .5f;
             Combo = 0;
             attackCd = 0;
-            Fury = 2 + Dungeon.I.FuryLevel;
             Ink.Ring(transform.position, 1, Ink.Gold);
             return true;
         }
@@ -280,7 +306,7 @@ namespace WesternLemegeton
         private void FireBasicShots(bool finisher)
         {
             Ammo -= basicCost;
-            if (Ammo <= 3 && Reload <= 0) Reload = 2;
+            if (Ammo <= 3 && Reload <= 0) BeginReload();
             for (int i = 0; i < basicCost; i++)
             {
                 Vector2 dir = Quaternion.Euler(0, 0, (i - (basicCost - 1) * .5f) * 7) * basicDirection;
@@ -289,12 +315,34 @@ namespace WesternLemegeton
             SkillEffects.Shot(transform.position, basicDirection, 1.1f);
         }
 
+        void BeginReload(bool useAttackSpeed = false, bool resetDodge = false, int effectRevision = 0)
+        {
+            Reload = Mathf.Max(.01f, BaseReloadSeconds);
+            reloadUsesAttackSpeed = useAttackSpeed;
+            reloadResetsDodge = resetDodge;
+            reloadEffectRevision = effectRevision;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void SetAmmoForDebug(int value)
+        {
+            Ammo = Mathf.Clamp(value, 0, 6);
+            Reload = 0;
+            reloadUsesAttackSpeed = reloadResetsDodge = false;
+        }
+#endif
+
         private void TickReload(float dt)
         {
             if (Reload > 0)
             {
-                Reload -= dt;
-                if (Reload <= 0) Ammo = 6;
+                Reload = Mathf.Max(0, Reload - dt * ReloadSpeed);
+                if (Reload <= 0)
+                {
+                    Ammo = 6;
+                    if (ReloadBonusValid && reloadResetsDodge) DashCd = 0;
+                    reloadUsesAttackSpeed = reloadResetsDodge = false;
+                }
             }
         }
 
@@ -304,10 +352,11 @@ namespace WesternLemegeton
 
         public bool TrySkill(int slot)
         {
-            if (!Dungeon.I.Running || Dungeon.I.IsTown || SkillBusy || basicPending || slot < 0 || slot > 1 || cds[Weapon, slot] > 0) return false;
+            if (!Dungeon.I.Running || Dungeon.I.IsTown || Stunned || SkillBusy || basicPending || slot < 0 || slot > 1 || cds[Weapon, slot] > 0) return false;
             CancelBasic();
             skillWeapon = Weapon;
             skillSlot = slot;
+            skillCooldownMultiplier = 1;
             elapsed = 0;
             ticks = 0;
             actionId++;
@@ -399,14 +448,25 @@ namespace WesternLemegeton
             if (ticks == 0 && elapsed >= HunterMotion.ShotHit)
             {
                 ticks++;
+                var stigma = Dungeon.I.Stigmas;
+                // Snapshot the ammunition before any hit/kill callbacks or consumption.
+                var profile = StigmaWeaponEffects.Resolve(stigma.Loadout, Ammo, 4);
+                skillCooldownMultiplier = profile.CooldownMultiplier;
+                int revision = stigma.Combat.EffectRevision;
+                if (profile.ForcesReload)
+                {
+                    Ammo = 0;
+                    BeginReload(true, profile.ResetDodgeOnReload, revision);
+                }
                 foreach (var e in Dungeon.I.Enemies)
                     if (e && !e.Dead)
                     {
                         Vector2 v = (Vector2)e.transform.position - (Vector2)transform.position;
                         float along = Vector2.Dot(v, skillDirection);
-                        if (along >= 0 && along <= 4 && Mathf.Abs(v.x * skillDirection.y - v.y * skillDirection.x) < .8f) Hit(e, 42, 0, actionId, true);
+                        if (along >= 0 && along <= profile.Range && Mathf.Abs(v.x * skillDirection.y - v.y * skillDirection.x) < .8f)
+                            Hit(e, 42 * profile.DamageMultiplier, 0, actionId, true);
                     }
-                SkillEffects.Shot(transform.position, skillDirection, 4);
+                SkillEffects.Shot(transform.position, skillDirection, profile.Range);
                 Dungeon.I.Sound(true);
             }
             if (elapsed >= HunterMotion.ShotDuration) FinishSkill();
@@ -426,8 +486,9 @@ namespace WesternLemegeton
 
         private void FinishSkill()
         {
-            if (skill != 0) cds[skillWeapon, skillSlot] = 8;
+            if (skill != 0) cds[skillWeapon, skillSlot] = 8 * skillCooldownMultiplier;
             skill = 0;
+            skillCooldownMultiplier = 1;
         }
 
         #endregion
@@ -522,9 +583,11 @@ namespace WesternLemegeton
         public void ResetForRun()
         {
             Hp = MaxHp;
+            BonusHp.Clear(); hitStun = 0;
             Weapon = Combo = HitCombo = DamageEvents = 0;
             Ammo = 6;
-            DashCd = TagCd = Reload = Fury = attackCd = comboTime = invulnerable = elapsed = buffer = hitTime = 0;
+            DashCd = TagCd = Reload = attackCd = comboTime = invulnerable = elapsed = buffer = hitTime = 0;
+            reloadUsesAttackSpeed = reloadResetsDodge = false;
             System.Array.Clear(cds, 0, cds.Length);
             LastMove = Facing = Vector2.right;
             actionId = basicId = 0;
@@ -535,6 +598,7 @@ namespace WesternLemegeton
 
         public void SafeEntry()
         {
+            hitStun = 0;
             invulnerable = 1;
             dashTime = 0;
             skill = 0;
@@ -562,12 +626,12 @@ namespace WesternLemegeton
 
         private void TickTimers(float dt)
         {
+            hitStun = Mathf.Max(0, hitStun - dt);
             DashCd = Mathf.Max(0, DashCd - dt);
             TagCd = Mathf.Max(0, TagCd - dt);
             for (int w = 0; w < 2; w++)
                 for (int s = 0; s < 2; s++)
                     cds[w, s] = Mathf.Max(0, cds[w, s] - dt);
-            Fury -= dt;
             invulnerable -= dt;
             attackCd -= dt;
             comboTime -= dt;

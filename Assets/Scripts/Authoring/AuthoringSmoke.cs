@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using WesternLemegeton.Passives;
+using WesternLemegeton.Stigmas;
 namespace WesternLemegeton
 {
  public sealed class AuthoringSmoke:MonoBehaviour
@@ -12,8 +13,10 @@ namespace WesternLemegeton
   int checks;Dungeon g;GameUIView ui;
   void Check(bool ok,string text){if(!ok){Debug.LogError("AUTHORING_FAILED: "+text);Application.Quit(2);throw new System.Exception(text);}checks++;Debug.Log("AUTHORING_PASS: "+text);}
   void Click(string key)
+  { Click(ui.Element<Button>(key),key); }
+  void Click(Button button,string key)
   {
-   var button=ui.Element<Button>(key);Check(button&&button.IsActive(),"Native button is active: "+key);
+   Check(button&&button.IsActive(),"Native button is active: "+key);
    var rect=button.GetComponent<RectTransform>();Vector3[] corners=new Vector3[4];rect.GetWorldCorners(corners);
    var pointer=new PointerEventData(EventSystem.current){position=(corners[0]+corners[2])*.5f,button=PointerEventData.InputButton.Left};
    var hits=new List<RaycastResult>();EventSystem.current.RaycastAll(pointer,hits);
@@ -28,8 +31,12 @@ namespace WesternLemegeton
    Click("Start");yield return null;yield return new WaitForEndOfFrame();Check(g.IsTown&&ui.HudPanel.activeInHierarchy,"Title button enters authored Hirva");
    hud.OpenSettings();yield return null;yield return new WaitForEndOfFrame();Check(!g.Running&&ui.SettingsPanel.activeInHierarchy,"Settings suspend game input");Click("Settings_Close");yield return null;yield return new WaitForEndOfFrame();
    Click("Map_Button");yield return null;yield return new WaitForEndOfFrame();Check(ui.RoutePanel.activeInHierarchy&&!g.RouteTravel,"HUD map is read-only");Click("Route_Close");yield return null;yield return new WaitForEndOfFrame();
-   Click("Inspect_Stigma0");yield return null;yield return new WaitForEndOfFrame();Check(ui.SigilPanel.activeInHierarchy&&!g.Running,"HUD opens build tree");Click("Sigil_Select_4");Check(hud.SelectedSigil==2,"Persistent button parameter selects Butterfly");Click("Sigil_Close");yield return null;
-   g.ApplySeongheunStack(SeongheunType.Fire,2);Check(hud.StackPulse(SeongheunType.Fire)>0,"Stack event starts punch immediately");yield return null;yield return new WaitForEndOfFrame();Check(ui.Element<Text>("Stack0").text=="\uAC01\uC778 2","Stack event updates native text: "+ui.Element<Text>("Stack0").text);
+   Click("Inspect_Stigma0");yield return null;yield return new WaitForEndOfFrame();
+   var stigma=ui.StigmaView;Check(stigma&&stigma.gameObject.activeInHierarchy&&!g.Running,"HUD opens authored stigma management");
+   Check(g.Stigmas.TryAcquire(StigmaOwner.Player,"ros",out _)&&g.Stigmas.TryEquip(StigmaOwner.Player,"ros",out _),"Player acquires and equips Ros");
+   Click(stigma.RavenButton,"Stigma Raven tab");Check(stigma.SelectedOwner==StigmaOwner.Raven&&!stigma.Slots[0].Button.interactable,"Raven tab does not show player acquisitions");
+   Click(stigma.PlayerButton,"Stigma Player tab");Check(stigma.Slots[0].Button.interactable&&!stigma.EquipButton.interactable,"Player acquisition is visible and room-only transaction stays locked in town");
+   Click(stigma.CloseButton,"Stigma Close");yield return null;
    int[] passiveIds={1,4,5};var sources=new[]{PassiveAcquisitionSource.MonsterDrop,PassiveAcquisitionSource.ShopPurchase,PassiveAcquisitionSource.EventReward};
    for(int i=0;i<3;i++)Check(g.Passives.AcquirePassiveById(passiveIds[i],sources[i]).WasAdded,"Database acquisition path "+i);
    yield return null;yield return new WaitForEndOfFrame();Check(ui.PassiveContent.childCount==3&&ui.ToastPanel.activeInHierarchy,"Prefab inventory slots and toast created");
