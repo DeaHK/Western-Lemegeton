@@ -80,6 +80,16 @@ namespace WesternLemegeton
                 RoomRole temp = roles[i]; roles[i] = roles[j]; roles[j] = temp;
             }
             for (int i = 2; i < 6; i++) layout.Rooms[i].Role = roles[i - 2];
+            // Boss stages always end with their Boss encounter in the deepest selected exit room.
+            int bossRole = roles.IndexOf(RoomRole.Boss);
+            if (bossRole >= 0)
+            {
+                int exitRole = layout.ExitIndex - 2;
+                RoomRole swap = roles[exitRole];
+                roles[exitRole] = roles[bossRole];
+                roles[bossRole] = swap;
+                for (int i = 2; i < 6; i++) layout.Rooms[i].Role = roles[i - 2];
+            }
             foreach (RoomNode room in layout.Rooms) room.Neighbors.Sort();
             return layout;
         }
@@ -95,6 +105,9 @@ namespace WesternLemegeton
             }
             if (roles.Count != 6) throw new InvalidOperationException("StageRoleConfig must contain exactly six roles.");
             if (roles.FindAll(r => r == RoomRole.Entry).Count != 1) throw new InvalidOperationException("Exactly one Entry is required.");
+            int bossCount = roles.FindAll(r => r == RoomRole.Boss).Count;
+            if (config.Type == StageType.Boss && bossCount != 1) throw new InvalidOperationException("Boss stages require exactly one Boss room.");
+            if (config.Type != StageType.Boss && bossCount != 0) throw new InvalidOperationException("Only the final Boss stage may contain a Boss room.");
             if (!roles.Remove(RoomRole.Entry) || !roles.Remove(RoomRole.Combat))
                 throw new InvalidOperationException("Procedural mode requires at least one Combat for fixed Room 1.");
             return roles;

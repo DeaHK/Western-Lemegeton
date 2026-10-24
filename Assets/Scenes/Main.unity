@@ -460,6 +460,147 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc57520a97b334442afa2815d27cdc62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomAuthoring
+--- !u!1001 &873524882
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2449912314272859915, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: coordinator
+      value: 
+      objectReference: {fileID: 1410185166}
+    - target: {fileID: 4317221962029335320, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_Name
+      value: RunMapCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9133876315685098406, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4317221962029335320, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 873524885}
+  m_SourcePrefab: {fileID: 100100000, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+--- !u!1 &873524883 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4317221962029335320, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+  m_PrefabInstance: {fileID: 873524882}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &873524884 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2449912314272859915, guid: 31c0cfa34fc7f14439080e4c893473f4, type: 3}
+  m_PrefabInstance: {fileID: 873524882}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a02f74ceb27348749a6ab0ac0c343f6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunMapView
+--- !u!114 &873524885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 873524883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3533ae3688b56c6428bab8dc6203011a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunStageSelectionController
+  coordinator: {fileID: 1410185166}
+  roomBridge: {fileID: 285334361}
+  view: {fileID: 873524884}
+  initialSeed: 12345
+  showOnStart: 0
+  showDeveloperControls: 0
+  onStageReady:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &970243128
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -702,6 +843,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1174311531}
   - component: {fileID: 1174311530}
+  - component: {fileID: 1174311532}
   m_Layer: 0
   m_Name: Viewport_Backdrop
   m_TagString: Untagged
@@ -775,6 +917,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1174311532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1174311529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1001 &1276339835
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1080,7 +1266,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunIntegrationTest
   startSeed: 12345
   testCount: 400
-  layerSizes: 0100000002000000030000000200000001000000
+  layerSizes: 0100000002000000030000000100000001000000
   middleTypes: 000000000100000002000000
 --- !u!114 &1410185166
 MonoBehaviour:
@@ -1096,8 +1282,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.ExpeditionStageCoordinator
   stageProvider: {fileID: 1527023425}
   runSeed: 12345
-  layerSizes: 0100000002000000030000000200000001000000
-  middleTypes: 0000000003000000
+  layerSizes: 0100000002000000030000000100000001000000
+  middleTypes: 00000000
   stageConfigs:
   - Type: 0
     Config: {fileID: 11400000, guid: 23251201161b9e04cb9bd20b0a40cfff, type: 2}
@@ -1137,7 +1323,7 @@ MonoBehaviour:
   region: Wilderness
   seed: 12345
   useRandomTemplate: 1
-  fixedTemplate: 0
+  fixedTemplate: 1
   generationMode: 1
   allowLoops: 1
 --- !u!4 &1527023426
@@ -1355,6 +1541,7 @@ GameObject:
   - component: {fileID: 1954788959}
   - component: {fileID: 1954788961}
   - component: {fileID: 1954788960}
+  - component: {fileID: 1954788962}
   m_Layer: 0
   m_Name: Game_Systems
   m_TagString: Untagged
@@ -1653,6 +1840,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaManager
   database: {fileID: 11400000, guid: 119c28a0cccf5124fa49fe7f2d24a16e, type: 2}
+--- !u!114 &1954788962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954788947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a243a73f78c72bb4ab728f39e59bf903, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.StageDungeonBuilder
+  controller: {fileID: 873524885}
+  dungeon: {fileID: 1954788954}
+  gridSpacing: {x: 60, y: 44}
 --- !u!1001 &2043279049
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1927,3 +2129,4 @@ SceneRoots:
   - {fileID: 1941396388}
   - {fileID: 1174311531}
   - {fileID: 1861781159}
+  - {fileID: 873524882}

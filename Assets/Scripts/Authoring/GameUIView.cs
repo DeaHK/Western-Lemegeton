@@ -46,6 +46,29 @@ namespace WesternLemegeton
         readonly List<PassiveSlotView> slots = new List<PassiveSlotView>();
         readonly List<PassiveInstance> passiveBuffer = new List<PassiveInstance>();
         readonly List<int> slotIds = new List<int>();
+        readonly RectTransform[] miniNodeRects = new RectTransform[6];
+        readonly RectTransform[] miniLabelRects = new RectTransform[6];
+        readonly Text[] miniLabels = new Text[6];
+        readonly Image[] miniNodeFills = new Image[6];
+        readonly Vector2[] miniNodeBasePositions = new Vector2[6];
+        readonly Vector2[] miniNodeBaseSizes = new Vector2[6];
+        readonly Vector2[] miniLabelBaseSizes = new Vector2[6];
+        readonly string[] miniLabelBaseText = new string[6];
+        readonly int[] miniLabelBaseFontSizes = new int[6];
+        readonly Color[] miniFillBaseColors = new Color[6];
+        readonly Image[] miniLinks = new Image[5];
+        readonly Vector2[] miniLinkBasePositions = new Vector2[5];
+        readonly Vector2[] miniLinkBaseSizes = new Vector2[5];
+        readonly Quaternion[] miniLinkBaseRotations = new Quaternion[5];
+        readonly List<Image> extraMiniLinks = new List<Image>();
+        readonly Vector2[] generatedMiniPoints = new Vector2[6];
+        RectTransform miniMapRect;
+        Color miniLinkColor;
+        bool generatedMiniMapActive;
+        int generatedMiniEdgeCount;
+        public bool GeneratedMinimapActive => generatedMiniMapActive;
+        public int GeneratedMinimapEdgeCount => generatedMiniEdgeCount;
+        public Vector2 GetGeneratedMinimapPoint(int roomIndex) => roomIndex >= 0 && roomIndex < generatedMiniPoints.Length ? generatedMiniPoints[roomIndex] : Vector2.zero;
 
         #endregion
 
@@ -55,6 +78,7 @@ namespace WesternLemegeton
         {
             foreach (var r in References)
                 if (r.Target) refs[r.Key] = r.Target;
+            CacheMinimap();
             var font = FontOverride ? FontOverride : Font.CreateDynamicFontFromOSFont(SystemFonts, 18);
             foreach (var t in GetComponentsInChildren<Text>(true))
                 if (FontOverride || !t.font || t.font.name == "LegacyRuntime") t.font = font;
@@ -286,7 +310,7 @@ namespace WesternLemegeton
 
         private void UpdateLocationAndSupplies(Dungeon g)
         {
-            Text("Location", g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {Dungeon.MapNames[g.MapIndex]}");
+            Text("Location", g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {g.GetRoomName(g.MapIndex)}");
             Text("Notice", g.Notice);
             Text("Supplies", $"구리동전 {g.Wallet.Copper} · 보급품 {g.Supplies}\n방 완료 {g.MapsCleared} / 6");
         }
@@ -303,8 +327,8 @@ namespace WesternLemegeton
                 else
                 {
                     var door = g.NearbyDoor();
-                    if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {Dungeon.MapNames[door.Destination]} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
-                    else if (g.CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 획득 / 교체 / 강화" : g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : "F · 악마카드 진열대 / 카드 선택";
+                    if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {g.GetRoomName(door.Destination)} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
+                    else if (g.CurrentKind != ExplorationRoomKind.Combat && g.CurrentKind != ExplorationRoomKind.Entry && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 획득 / 교체 / 강화" : g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : "F · 악마카드 진열대 / 카드 선택";
                 }
             }
             Show("Prompt", message != "");
@@ -313,14 +337,17 @@ namespace WesternLemegeton
 
         private void Map(Dungeon g)
         {
+            if (g.UsesGeneratedStage) UpdateGeneratedMinimap(g.Progress.GeneratedLayout);
+            else RestoreFixedMinimap();
             for (int i = 0; i < 6; i++)
             {
                 bool current = !g.IsTown && g.MapIndex == i, done = !g.IsTown && g.Progress.Cleared(i), visited = !g.IsTown && g.Progress.Visited(i);
                 var color = current ? UnlockedColor : done ? ActiveColor : visited ? new Color(.97f, .89f, .72f) : InactiveColor;
                 Color("MiniNode" + i, color);
                 Color("RouteNode" + i, color);
-                string kind = RoomGraph.Kind(i) == ExplorationRoomKind.Sigil ? "성흔 강화" : RoomGraph.Kind(i) == ExplorationRoomKind.DevilCards ? "악마카드 선택" : "전투";
-                Text("RouteNodeText" + i, $"{i+1:00} {Dungeon.MapNames[i]}\n{kind} · {(current?"현재 위치":done?"완료":visited?"미완료":"미방문")}");
+                if (g.UsesGeneratedStage && miniNodeFills[i]) miniNodeFills[i].color = GeneratedRoleColor(g.Progress.GeneratedLayout.Rooms[i].Role);
+                string kind = g.Progress.KindAt(i) == ExplorationRoomKind.Sigil ? "성흔 강화" : g.Progress.KindAt(i) == ExplorationRoomKind.DevilCards ? "악마카드 선택" : "전투";
+                Text("RouteNodeText" + i, $"{i+1:00} {g.GetRoomName(i)}\n{kind} · {(current?"현재 위치":done?"완료":visited?"미완료":"미방문")}");
             }
             Show("RouteTravel", g.RouteTravel);
             Text("RouteStage", g.IsTown ? "여정의 시작" : $"STAGE {g.Room+1:00}");
@@ -331,6 +358,167 @@ namespace WesternLemegeton
             Text("RouteBuild", $"악마카드 {g.Passives.Count}장\n공격 {PassiveBonus(g, WesternPassiveStatKeys.PlayerAttack)} · 이동 {PassiveBonus(g, WesternPassiveStatKeys.MoveSpeed)}\n까마귀 공격 {PassiveBonus(g, WesternPassiveStatKeys.RavenAttack)}");
             Text("RouteTravelText", g.IsTown ? "황야로 출발" : g.Room == 4 ? "탐험 완료" : "다음 스테이지로 이동");
             Text("RouteHint", g.RouteTravel ? g.Room == 4 && !g.IsTown ? "모든 봉인을 해제했습니다." : "다음: " + Dungeon.RoomNames[g.NextRoom] : "여섯 방을 완료한 뒤 출구 문에서 다음 스테이지로 이동할 수 있습니다.");
+        }
+
+        private void CacheMinimap()
+        {
+            if (TryRef("Minimap", out var root)) miniMapRect = root.GetComponent<RectTransform>();
+            for (int i = 0; i < 6; i++)
+            {
+                if (TryRef("MiniNode" + i, out var node))
+                {
+                    miniNodeRects[i] = node.GetComponent<RectTransform>();
+                    if (miniNodeRects[i]) { miniNodeBasePositions[i] = miniNodeRects[i].anchoredPosition; miniNodeBaseSizes[i] = miniNodeRects[i].sizeDelta; }
+                }
+                if (TryRef("MiniNode" + i + "_Fill", out var fill))
+                {
+                    miniNodeFills[i] = fill.GetComponent<Image>();
+                    if (miniNodeFills[i]) miniFillBaseColors[i] = miniNodeFills[i].color;
+                }
+                if (TryRef("MiniLabel" + i, out var label))
+                {
+                    miniLabels[i] = label.GetComponent<Text>();
+                    miniLabelRects[i] = label.GetComponent<RectTransform>();
+                    if (miniLabels[i]) { miniLabelBaseText[i] = miniLabels[i].text; miniLabelBaseFontSizes[i] = miniLabels[i].fontSize; }
+                    if (miniLabelRects[i]) miniLabelBaseSizes[i] = miniLabelRects[i].sizeDelta;
+                }
+            }
+            for (int i = 0; i < miniLinks.Length; i++)
+            {
+                if (!TryRef("MiniLink" + i, out var link)) continue;
+                miniLinks[i] = link.GetComponent<Image>();
+                if (!miniLinks[i]) continue;
+                var rect = miniLinks[i].rectTransform;
+                miniLinkBasePositions[i] = rect.anchoredPosition;
+                miniLinkBaseSizes[i] = rect.sizeDelta;
+                miniLinkBaseRotations[i] = rect.localRotation;
+                miniLinkColor = miniLinks[i].color;
+            }
+        }
+
+        private void UpdateGeneratedMinimap(StageLayout layout)
+        {
+            if (!miniMapRect || layout == null || layout.Rooms == null || layout.Rooms.Count != 6) return;
+            generatedMiniMapActive = true;
+            int minX = layout.Rooms[0].GridPosition.x, maxX = minX;
+            int minY = layout.Rooms[0].GridPosition.y, maxY = minY;
+            for (int i = 1; i < 6; i++)
+            {
+                var grid = layout.Rooms[i].GridPosition;
+                minX = Mathf.Min(minX, grid.x); maxX = Mathf.Max(maxX, grid.x);
+                minY = Mathf.Min(minY, grid.y); maxY = Mathf.Max(maxY, grid.y);
+            }
+
+            const float nodeWidth = 30f, nodeHeight = 20f;
+            float spanX = maxX - minX, spanY = maxY - minY;
+            float scaleX = spanX > 0 ? Mathf.Max(1f, miniMapRect.rect.width - nodeWidth) / spanX : float.PositiveInfinity;
+            float scaleY = spanY > 0 ? Mathf.Max(1f, miniMapRect.rect.height - nodeHeight) / spanY : float.PositiveInfinity;
+            float scale = Mathf.Min(scaleX, scaleY);
+            if (float.IsInfinity(scale) || float.IsNaN(scale)) scale = 1f;
+            float centerX = (minX + maxX) * .5f, centerY = (minY + maxY) * .5f;
+            Vector2 mapCenter = new Vector2(miniMapRect.rect.width * .5f, miniMapRect.rect.height * .5f);
+
+            for (int i = 0; i < 6; i++)
+            {
+                RoomNode room = layout.Rooms[i];
+                Vector2 point = mapCenter + new Vector2((room.GridPosition.x - centerX) * scale, -(room.GridPosition.y - centerY) * scale);
+                generatedMiniPoints[i] = point;
+                if (miniNodeRects[i])
+                {
+                    miniNodeRects[i].sizeDelta = new Vector2(nodeWidth, nodeHeight);
+                    miniNodeRects[i].anchoredPosition = new Vector2(point.x - nodeWidth * .5f, -(point.y - nodeHeight * .5f));
+                }
+                if (miniLabels[i]) miniLabels[i].text = (i + 1).ToString("00");
+                if (miniNodeFills[i]) miniNodeFills[i].color = GeneratedRoleColor(room.Role);
+            }
+
+            int edgeCount = 0;
+            for (int i = 0; i < 6; i++)
+                foreach (int neighbor in layout.Rooms[i].Neighbors)
+                    if (neighbor > i)
+                    {
+                        EnsureMiniLink(edgeCount);
+                        SetMiniLink(edgeCount, generatedMiniPoints[i], generatedMiniPoints[neighbor]);
+                        edgeCount++;
+                    }
+            for (int i = edgeCount; i < miniLinks.Length + extraMiniLinks.Count; i++)
+            {
+                Image link = GetMiniLink(i);
+                if (link) link.gameObject.SetActive(false);
+            }
+            generatedMiniEdgeCount = edgeCount;
+        }
+
+        private void EnsureMiniLink(int index)
+        {
+            if (index < miniLinks.Length || index - miniLinks.Length < extraMiniLinks.Count) return;
+            if (miniLinks[0] == null) return;
+            var clone = Instantiate(miniLinks[0], miniMapRect, false);
+            clone.name = "GeneratedMiniLink" + extraMiniLinks.Count;
+            clone.raycastTarget = false;
+            clone.transform.SetSiblingIndex(miniNodeRects[0] ? miniNodeRects[0].GetSiblingIndex() : miniMapRect.childCount - 1);
+            extraMiniLinks.Add(clone);
+        }
+
+        private Image GetMiniLink(int index) => index < miniLinks.Length ? miniLinks[index] : extraMiniLinks[index - miniLinks.Length];
+
+        private void SetMiniLink(int index, Vector2 a, Vector2 b)
+        {
+            Image image = GetMiniLink(index);
+            if (!image) return;
+            var rect = image.rectTransform;
+            Vector2 delta = b - a;
+            rect.pivot = new Vector2(0, .5f);
+            rect.anchoredPosition = new Vector2(a.x, -a.y);
+            rect.sizeDelta = new Vector2(delta.magnitude, 2f);
+            rect.localRotation = Quaternion.Euler(0, 0, -Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+            image.color = miniLinkColor;
+            image.gameObject.SetActive(true);
+        }
+
+        private void RestoreFixedMinimap()
+        {
+            if (!generatedMiniMapActive) return;
+            generatedMiniMapActive = false;
+            for (int i = 0; i < 6; i++)
+            {
+                if (miniNodeRects[i])
+                {
+                    miniNodeRects[i].anchoredPosition = miniNodeBasePositions[i];
+                    miniNodeRects[i].sizeDelta = miniNodeBaseSizes[i];
+                }
+                if (miniLabels[i]) miniLabels[i].text = miniLabelBaseText[i];
+                if (miniLabelRects[i]) miniLabelRects[i].sizeDelta = miniLabelBaseSizes[i];
+                if (miniLabels[i] && miniLabelBaseFontSizes[i] > 0) miniLabels[i].fontSize = miniLabelBaseFontSizes[i];
+                if (miniNodeFills[i]) miniNodeFills[i].color = miniFillBaseColors[i];
+            }
+            for (int i = 0; i < miniLinks.Length; i++)
+            {
+                if (!miniLinks[i]) continue;
+                var rect = miniLinks[i].rectTransform;
+                rect.anchoredPosition = miniLinkBasePositions[i];
+                rect.sizeDelta = miniLinkBaseSizes[i];
+                rect.localRotation = miniLinkBaseRotations[i];
+                miniLinks[i].gameObject.SetActive(true);
+            }
+            foreach (var link in extraMiniLinks) if (link) link.gameObject.SetActive(false);
+            generatedMiniEdgeCount = 0;
+        }
+
+        private bool TryRef(string key, out GameObject target) => refs.TryGetValue(key, out target) && target;
+
+        private static Color GeneratedRoleColor(RoomRole role)
+        {
+            switch (role)
+            {
+                case RoomRole.Entry: return new Color(.25f, .53f, .58f);
+                case RoomRole.Sigil: return new Color(.48f, .30f, .75f);
+                case RoomRole.Shop: return new Color(.76f, .47f, .19f);
+                case RoomRole.CardMerchant: return new Color(.25f, .43f, .72f);
+                case RoomRole.Boss: return new Color(.75f, .22f, .19f);
+                case RoomRole.Event: return new Color(.30f, .61f, .38f);
+                default: return new Color(.38f, .36f, .37f);
+            }
         }
 
         #endregion

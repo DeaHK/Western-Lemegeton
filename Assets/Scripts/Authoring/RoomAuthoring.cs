@@ -9,6 +9,7 @@ namespace WesternLemegeton
         public RoomDoor[] Doors;
         public Transform[] EnemySpawnPoints;
         [Min(.1f)]public float SpawnRadius=2;
+        [System.NonSerialized] public readonly List<Rect> RuntimeClearAreas = new List<Rect>();
         public Vector2 Center=>new Vector2(transform.position.x,transform.position.z);
         public static Vector2 Point(Transform t)=>new Vector2(t.position.x,t.position.z);
         public WesternEnvironment.Layout Capture()
@@ -16,11 +17,14 @@ namespace WesternLemegeton
             var layout=new WesternEnvironment.Layout{Root=transform,Town=Town,Authored=this};
             foreach(var f in GetComponentsInChildren<WorldFootprint>(true))
             {
-                if(!f.enabled||!f.gameObject.activeSelf)continue;var r=f.Bounds;r.position-=Center;layout.Obstacles.Add(r);if(f.BlocksDodge)layout.Buildings.Add(r);
+                if(!f.enabled||!ActiveWithinRoom(f.transform))continue;var r=f.Bounds;r.position-=Center;
+                if(RuntimeClearAreas.Exists(area=>area.Overlaps(r)))continue;
+                layout.Obstacles.Add(r);if(f.BlocksDodge)layout.Buildings.Add(r);
             }
             return layout;
         }
         public ExplorationRoom Bind(){var r=new ExplorationRoom{Index=RoomIndex,Layout=Capture()};r.Doors.AddRange(Doors);return r;}
+        bool ActiveWithinRoom(Transform child){while(child!=transform&&child!=null){if(!child.gameObject.activeSelf)return false;child=child.parent;}return true;}
         void OnDrawGizmosSelected(){Gizmos.color=new Color(.1f,.8f,1,.5f);Gizmos.DrawWireCube(transform.position,new Vector3(30,.1f,18));}
     }
 }

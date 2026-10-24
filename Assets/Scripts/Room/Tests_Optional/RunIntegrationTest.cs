@@ -12,7 +12,7 @@ namespace WesternLemegeton
     {
         [SerializeField] private int startSeed = 12345;
         [SerializeField, Min(1)] private int testCount = 400;
-        [SerializeField] private int[] layerSizes = { 1, 2, 3, 2, 1 };
+        [SerializeField] private int[] layerSizes = { 1, 2, 3, 1, 1 };
         [SerializeField] private StageType[] middleTypes = { StageType.Basic, StageType.Sigil, StageType.Shop };
 
         [ContextMenu("Validate 400 Run Seeds")]

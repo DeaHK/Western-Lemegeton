@@ -20,7 +20,7 @@ namespace WesternLemegeton
             foreach(var e in game.Enemies){e.enabled=false;e.transform.position=new Vector2(12,7);}
             var obstacles=Dungeon.Obstacles;var solids=Dungeon.SolidObstacles;Dungeon.Obstacles=System.Array.Empty<Rect>();Dungeon.SolidObstacles=System.Array.Empty<Rect>();
             var directions=new[]{Vector2.right,new Vector2(1,1),Vector2.up,new Vector2(-1,1),Vector2.left,new Vector2(-1,-1),Vector2.down,new Vector2(1,-1)};
-            int[] rows={1,2,3,2,1,1,0,1};
+            int[] rows={1,2,0,2,1,1,3,1};
             for(int i=0;i<8;i++)
             {
                 Reset(directions[i]);Vector2 start=hero.transform.position;Move(directions[i],10);

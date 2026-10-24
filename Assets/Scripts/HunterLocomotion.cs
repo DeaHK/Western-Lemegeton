@@ -11,7 +11,9 @@ namespace WesternLemegeton
         public float Cycle {get;private set;}
         public float Speed {get;private set;}
         public int Sector {get;private set;}
-        public int Row=>Sector==2?3:Sector==1||Sector==3?2:Sector==6?0:1;
+        // The atlas is authored front-to-back from top to bottom. World-up moves away
+        // from the camera and must use the rear-facing row; world-down uses the front.
+        public int Row=>Sector==2?0:Sector==1||Sector==3?2:Sector==6?3:1;
         public bool Mirror=>Sector>=3&&Sector<=5;
         public int Frame=>State==LocomotionState.Moving?1+Mathf.Min(5,Mathf.FloorToInt(Cycle*6)):State==LocomotionState.Settling?7:0;
         float settle;

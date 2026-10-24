@@ -1,4 +1,4 @@
-﻿// Western Lemegeton - StageRoomDataBridge.cs
+// Western Lemegeton - StageRoomDataBridge.cs
 // 역할: 룸 데이터와 출입구 방향 변환
 // 주의: 기존 게임의 ExpeditionProgress.cs / RoomAuthoring 및 실제 Instantiate 로직은 수정하지 않음.
 
@@ -12,6 +12,7 @@ namespace WesternLemegeton
     public class StageRoomDataBridge : MonoBehaviour
     {
         [SerializeField] private StageLayoutProvider provider;
+        public StageLayoutProvider Provider => provider;
 
         public bool TryGetRoomSpawnData(int roomIndex, out RoomSpawnData data)
         {
