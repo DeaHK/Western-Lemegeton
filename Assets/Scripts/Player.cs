@@ -6,6 +6,7 @@ namespace WesternLemegeton
 {
     public class Player : MonoBehaviour
     {
+        public CowboyRope Tether { get; set; }
         #region Fields and state by responsibility
 
         // Health / Damage / Invulnerability
@@ -143,6 +144,7 @@ namespace WesternLemegeton
 
         private void TickMovement(float dt, Vector2 move)
         {
+            if (Tether && Tether.IsBound) { dashTime = 0; Tether.Pull(dt); return; }
             if (dashTime > 0)
             {
                 TickDash(dt);
@@ -162,6 +164,7 @@ namespace WesternLemegeton
 
         public bool TryDodge(Vector2 direction)
         {
+            if (Tether && Tether.IsBound) return false;
             if (!Dungeon.I.Running || Stunned || ActionLocked || DashCd > 0 || direction.sqrMagnitude == 0) return false;
             FinishSkill();
             CancelBasic();
@@ -211,15 +214,22 @@ namespace WesternLemegeton
         }
 
         public void Hurt(float damage)
+            => ApplyIncomingDamage(damage, true);
+
+        // 지속 피해는 일반 피격 무적을 만들거나 사용하지 않습니다. 보호막은 그대로 적용합니다.
+        public void HurtOverTime(float damage)
+            => ApplyIncomingDamage(damage, false);
+
+        private void ApplyIncomingDamage(float damage, bool useHitInvulnerability)
         {
-            if (invulnerable > 0 || !Dungeon.I.Running || Dungeon.I.IsTown) return;
+            if ((useHitInvulnerability && invulnerable > 0) || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return;
             Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
             if (Dungeon.I.Stigmas)
             {
                 hitStun = Mathf.Max(0, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
                 Dungeon.I.Stigmas.Combat?.SyncShieldBuff();
             }
-            invulnerable = 1;
+            if (useHitInvulnerability) invulnerable = 1;
             Ink.Burst(transform.position, Ink.Red, 12);
             Dungeon.I.Sound();
             if (Hp <= 0) Dungeon.I.BeginDeath();

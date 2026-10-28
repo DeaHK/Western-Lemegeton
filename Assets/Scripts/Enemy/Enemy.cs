@@ -10,6 +10,9 @@ namespace WesternLemegeton
 
         // Identity / health
         public int Kind;
+        [HideInInspector] public bool AuxiliaryTarget;
+        public event System.Action<Enemy> Damaged;
+        public event System.Action<Enemy> Dying;
         // 기존 프리팹의 저장값과 외부 코드의 Hp/MaxHp 접근을 유지합니다.
         [FormerlySerializedAs("Hp"), SerializeField, HideInInspector] float legacyHp;
         [FormerlySerializedAs("MaxHp"), SerializeField, HideInInspector] float legacyMaxHp;
@@ -97,6 +100,7 @@ namespace WesternLemegeton
 
         private void Update()
         {
+            if (AuxiliaryTarget) return;
             var g = Dungeon.I;
             if (!g.Running || Dead) return;
             float dt = Time.deltaTime;
@@ -139,7 +143,7 @@ namespace WesternLemegeton
             }
         }
 
-        void LateUpdate() { stigmaView.Show(this); }
+        void LateUpdate() { if (!AuxiliaryTarget) stigmaView.Show(this); }
 
         #endregion
 
@@ -285,9 +289,15 @@ namespace WesternLemegeton
 
         public void TakeStigmaDamage(float damage, StigmaOwner owner, bool slowed)
         {
-            if (Dead || Dungeon.I.State == RunState.Cinematic) return;
+            if (!gameObject.activeInHierarchy || Dead || Dungeon.I.State == RunState.Cinematic) return;
+            if (AuxiliaryTarget)
+            {
+                if (damage > 0) { Hp = 0; Damaged?.Invoke(this); }
+                return;
+            }
             lastDamageOwner = owner; slowedAtDeath = slowed;
             ApplyDamageImpact(damage);
+            if (damage > 0) Damaged?.Invoke(this);
             if (Dead) Die();
         }
         float StigmaMoveMultiplier => 1 - Stigma.Slow(Dungeon.I.Stigmas ? Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction : .5f);
@@ -304,6 +314,8 @@ namespace WesternLemegeton
 
         private void Die()
         {
+            Dying?.Invoke(this);
+            if (AuxiliaryTarget) { Destroy(gameObject); return; }
             Dungeon.I.Kills++;
             if (Dungeon.I.Stigmas)
             {

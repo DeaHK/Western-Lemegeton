@@ -27,7 +27,7 @@ namespace WesternLemegeton
                 distance < RetreatDistance ? -delta.normalized : Vector2.zero;
             foreach (var other in game.Enemies)
             {
-                if (!other || other == owner || other.Dead) continue;
+                if (!other || other == owner || other.Dead || other.AuxiliaryTarget) continue;
                 Vector2 away = position - (Vector2)other.transform.position;
                 if (away.sqrMagnitude < SeparationDistanceSquared && away.sqrMagnitude > .01f)
                     movement += away.normalized * SeparationStrength;

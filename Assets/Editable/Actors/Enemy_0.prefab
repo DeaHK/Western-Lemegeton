@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6cb4d526a2072cd459632e5050232df0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.WorldDepth
 --- !u!1 &973571944727312248
 GameObject:
@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501b04ee8c633a24faeb1810fe19776c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.PaperCard
   Source: {fileID: 4779836499642820349}
   Flat: 0
@@ -257,7 +257,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501b04ee8c633a24faeb1810fe19776c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.PaperCard
   Source: {fileID: 6405662662488551398}
   Flat: 0
@@ -373,7 +373,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0.015, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1172028850655950837}
@@ -425,7 +425,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -600
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: e6d1a1bd0d26379458d878eb425099f5, type: 2}
   m_Color: {r: 0.85, g: 0.035, b: 0.08, a: 0.42}
@@ -447,7 +447,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -600
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
 --- !u!1 &3145869287850242563
@@ -478,7 +478,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.39874908, y: -0, z: -0, w: 0.9170601}
   m_LocalPosition: {x: 0, y: 0, z: -0.35}
-  m_LocalScale: {x: 0.5263158, y: 0.5263158, z: 0.5263158}
+  m_LocalScale: {x: 0.5263158, y: 0.5263158, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1172028850655950837}
@@ -530,7 +530,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 12
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 0ddce6e7e1a904246b74885a5e88672a, type: 2}
   m_Color: {r: 0.865, g: 0.75699997, b: 0.769, a: 1}
@@ -552,7 +552,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 12
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
 --- !u!1 &4790147848270203936
@@ -657,7 +657,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501b04ee8c633a24faeb1810fe19776c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.PaperCard
   Source: {fileID: 8522532986147017276}
   Flat: 1
@@ -766,7 +766,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501b04ee8c633a24faeb1810fe19776c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.PaperCard
   Source: {fileID: 6643623912213099738}
   Flat: 1
@@ -801,7 +801,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.39874908, y: -0, z: -0, w: 0.9170601}
   m_LocalPosition: {x: 0, y: 0, z: 1.35}
-  m_LocalScale: {x: 1, y: 0.09, z: 0}
+  m_LocalScale: {x: 1, y: 0.09, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1172028850655950837}
@@ -853,7 +853,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 21
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 5c353056d73688a438cb916c92a0ded8, type: 2}
   m_Color: {r: 0.94, g: 0.22, b: 0.26, a: 1}
@@ -875,7 +875,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 21
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
 --- !u!1 &6438414498288144161
@@ -906,7 +906,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0.015, z: -0.32}
-  m_LocalScale: {x: 0.85, y: 0.35, z: 0}
+  m_LocalScale: {x: 0.85, y: 0.35, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1172028850655950837}
@@ -958,7 +958,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: e6d1a1bd0d26379458d878eb425099f5, type: 2}
   m_Color: {r: 0.025, g: 0.01, b: 0.035, a: 0.5}
@@ -980,7 +980,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -1
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
 --- !u!1 &7579740841687931087
@@ -1011,7 +1011,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.39874908, y: -0, z: -0, w: 0.9170601}
   m_LocalPosition: {x: 0, y: 0, z: 1.35}
-  m_LocalScale: {x: 1, y: 0.09, z: 0}
+  m_LocalScale: {x: 1, y: 0.09, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1172028850655950837}
@@ -1063,7 +1063,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 5c353056d73688a438cb916c92a0ded8, type: 2}
   m_Color: {r: 0.05, g: 0.03, b: 0.05, a: 1}
@@ -1085,7 +1085,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
 --- !u!1 &8231750873085546022
@@ -1098,13 +1098,13 @@ GameObject:
   m_Component:
   - component: {fileID: 4391687789627772838}
   - component: {fileID: 6045581329847303124}
-  - component: {fileID: 7337452325942902560}
-  - component: {fileID: 3924106622752268719}
-  - component: {fileID: 5057775302305426830}
   - component: {fileID: 900000001}
   - component: {fileID: 900000002}
   - component: {fileID: 900000003}
   - component: {fileID: 900000004}
+  - component: {fileID: 7337452325942902560}
+  - component: {fileID: 3924106622752268719}
+  - component: {fileID: 5057775302305426830}
   m_Layer: 0
   m_Name: Enemy_0
   m_TagString: Untagged
@@ -1142,15 +1142,76 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75c6310d2c42f904896768749a5f794c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
   Kind: 0
-  Hp: 55
-  MaxHp: 55
+  legacyHp: 55
+  legacyMaxHp: 55
   AuthoredArt: {fileID: 3775186189446952969}
   HealthFill: {fileID: 7436198052173914349}
   AuthoredSprite: {fileID: 4779836499642820349}
   AuthoredWarning: {fileID: 6643623912213099738}
+--- !u!114 &900000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8231750873085546022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9591859f6e347e1bac2962c78d3e004, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyHealth
+  BaseHealth: 55
+  HealthPerRoom: 13
+--- !u!114 &900000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8231750873085546022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 916c01a17fa944a18f01c89567acd5a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyChaseMovement
+  Speed: 2.2
+  StopDistance: 1.36
+  BodyRadius: 0.5
+  SeparationRadius: 1.183216
+  SeparationStrength: 0.7
+--- !u!114 &900000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8231750873085546022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f111339a561d4cfc89ec5c84b0aca316, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyMeleeAttack
+  Damage: 15
+  TriggerRange: 1.7
+  HitRange: 1.75
+  WindupSeconds: 0.65
+  CooldownSeconds: 1.5
+  WarningRadius: 1.55
+--- !u!114 &900000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8231750873085546022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 589c6fa8796445a29007e3a23d548677, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBasicBrain
 --- !u!114 &7337452325942902560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1161,7 +1222,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6cb4d526a2072cd459632e5050232df0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.WorldDepth
 --- !u!210 &3924106622752268719
 SortingGroup:
@@ -1186,7 +1247,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d971fa10eeba8d34b92f6d5a62eb46c6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.ActorPresentation
   UseCustomVisual: 0
   CustomVisual: {fileID: 7439522322498452124}
@@ -1350,75 +1411,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501b04ee8c633a24faeb1810fe19776c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.PaperCard
   Source: {fileID: 6707599297203798757}
   Flat: 0
   RenderOffset: {x: 0, y: 0, z: 0}
   Visible: {fileID: 2809480593353204102}
   OverrideHidden: 0
-
---- !u!114 &900000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8231750873085546022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9591859f6e347e1bac2962c78d3e004, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyHealth
-  BaseHealth: 55
-  HealthPerRoom: 13
-
---- !u!114 &900000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8231750873085546022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 916c01a17fa944a18f01c89567acd5a6, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyChaseMovement
-  Speed: 2.2
-  StopDistance: 1.36
-  BodyRadius: 0.5
-  SeparationRadius: 1.183216
-  SeparationStrength: 0.7
-
---- !u!114 &900000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8231750873085546022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f111339a561d4cfc89ec5c84b0aca316, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyMeleeAttack
-  Damage: 15
-  TriggerRange: 1.7
-  HitRange: 1.75
-  WindupSeconds: 0.65
-  CooldownSeconds: 1.5
-  WarningRadius: 1.55
-
---- !u!114 &900000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8231750873085546022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 589c6fa8796445a29007e3a23d548677, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBasicBrain

@@ -438,13 +438,13 @@ GameObject:
   m_Component:
   - component: {fileID: 3449227973419680019}
   - component: {fileID: 3448459361593370134}
-  - component: {fileID: 1860271235382891813}
-  - component: {fileID: 7956825598555020660}
-  - component: {fileID: 2075352081612384761}
   - component: {fileID: 900000001}
   - component: {fileID: 900000002}
   - component: {fileID: 900000003}
   - component: {fileID: 900000004}
+  - component: {fileID: 1860271235382891813}
+  - component: {fileID: 7956825598555020660}
+  - component: {fileID: 2075352081612384761}
   m_Layer: 0
   m_Name: Enemy_2
   m_TagString: Untagged
@@ -485,12 +485,80 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
   Kind: 2
-  Hp: 55
-  MaxHp: 55
+  legacyHp: 55
+  legacyMaxHp: 55
   AuthoredArt: {fileID: 6212843116885252282}
   HealthFill: {fileID: 5515119079526010999}
   AuthoredSprite: {fileID: 8104701496351415981}
   AuthoredWarning: {fileID: 5182802583859961806}
+--- !u!114 &900000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4009962647794957871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9591859f6e347e1bac2962c78d3e004, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyHealth
+  BaseHealth: 55
+  HealthPerRoom: 13
+--- !u!114 &900000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4009962647794957871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7268b92a61f54012af13b9a5adf436f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyKeepDistanceMovement
+  Speed: 2.2
+  UseAttackRange: 1
+  ApproachRange: 8
+  ApproachRangeFactor: 0.8
+  RetreatDistance: 4
+  BodyRadius: 0.5
+  SeparationDistanceSquared: 1.4
+  SeparationStrength: 0.7
+--- !u!114 &900000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4009962647794957871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48f55355184f457eb8422e12d85dfec0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyRangedAttack
+  Damage: 13
+  TriggerRange: 8
+  WindupSeconds: 0.9
+  CooldownSeconds: 1.5
+  ProjectileSpeed: 6.5
+  ProjectileLifetime: 3
+  ProjectileCount: 3
+  SpreadAngle: 16
+  WarningRadius: 1
+  InitialCooldownRange: {x: 0.8, y: 2}
+--- !u!114 &900000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4009962647794957871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 589c6fa8796445a29007e3a23d548677, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBasicBrain
 --- !u!114 &1860271235382891813
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1357,75 +1425,3 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
-
---- !u!114 &900000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4009962647794957871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9591859f6e347e1bac2962c78d3e004, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyHealth
-  BaseHealth: 55
-  HealthPerRoom: 13
-
---- !u!114 &900000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4009962647794957871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7268b92a61f54012af13b9a5adf436f0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyKeepDistanceMovement
-  Speed: 2.2
-  ApproachRange: 8
-  UseAttackRange: 1
-  ApproachRangeFactor: 0.8
-  RetreatDistance: 4
-  BodyRadius: 0.5
-  SeparationDistanceSquared: 1.4
-  SeparationStrength: 0.7
-
---- !u!114 &900000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4009962647794957871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 48f55355184f457eb8422e12d85dfec0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyRangedAttack
-  Damage: 13
-  TriggerRange: 8
-  WindupSeconds: 0.9
-  CooldownSeconds: 1.5
-  ProjectileSpeed: 6.5
-  ProjectileLifetime: 3
-  ProjectileCount: 3
-  SpreadAngle: 16
-  WarningRadius: 1
-  InitialCooldownRange: {x: 0.8, y: 2}
-
---- !u!114 &900000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4009962647794957871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 589c6fa8796445a29007e3a23d548677, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBasicBrain

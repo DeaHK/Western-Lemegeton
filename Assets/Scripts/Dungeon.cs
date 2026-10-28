@@ -25,6 +25,12 @@ namespace WesternLemegeton
 
         // Enemy tracking
         public readonly List<Enemy> Enemies = new List<Enemy>();
+        readonly List<Enemy> pendingEnemies = new List<Enemy>();
+        // 피격 처리의 foreach 도중에도 안전하게 하차한 적/밧줄을 등록합니다.
+        public void QueueEnemy(Enemy enemy)
+        {
+            if (enemy && !Enemies.Contains(enemy) && !pendingEnemies.Contains(enemy)) pendingEnemies.Add(enemy);
+        }
         Transform actors;
 
         // Progress
@@ -487,6 +493,8 @@ namespace WesternLemegeton
 
         private void DestroyTrackedEnemies()
         {
+            foreach (var e in pendingEnemies) if (e) Destroy(e.gameObject);
+            pendingEnemies.Clear();
             foreach (var e in Enemies)
                 if (e) Destroy(e.gameObject);
             Enemies.Clear();
@@ -494,6 +502,8 @@ namespace WesternLemegeton
 
         private void RemoveDefeatedEnemies()
         {
+            foreach (var e in pendingEnemies) if (e && !e.Dead && e.gameObject.activeInHierarchy && !Enemies.Contains(e)) Enemies.Add(e);
+            pendingEnemies.Clear();
             Enemies.RemoveAll(e => !e || e.Dead);
         }
 
@@ -696,6 +706,11 @@ namespace WesternLemegeton
 
         internal void ClearTransient()
         {
+            foreach (var rope in FindObjectsByType<CowboyRope>(FindObjectsSortMode.None)) rope.Release();
+            foreach (var cowboy in FindObjectsByType<CowboyAttack>(FindObjectsSortMode.None)) cowboy.Cancel();
+            foreach (var attack in FindObjectsByType<RobeManAttack>(FindObjectsSortMode.None)) attack.Cancel();
+            foreach (var bottle in FindObjectsByType<RobeManPoisonBottle>(FindObjectsSortMode.None)) Destroy(bottle.gameObject);
+            foreach (var zone in FindObjectsByType<RobeManPoisonZone>(FindObjectsSortMode.None)) Destroy(zone.gameObject);
             if (Stigmas) Stigmas.Combat?.Skills.ClearWorldObjects();
             foreach (var b in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(b.gameObject);
             foreach (var f in FindObjectsByType<Fade>(FindObjectsSortMode.None)) Destroy(f.gameObject);

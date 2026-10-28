@@ -29,6 +29,9 @@ namespace WesternLemegeton
         {
             if (!isActiveAndEnabled) return;
             if (attack && attack.isActiveAndEnabled && attack.Tick(game, speedMultiplier, dt)) return;
+            // 스킬별 배율을 외부 이동 배율에 한 번만 곱하므로 이동 모듈을 교체해도 같은 감속 규칙을 사용합니다.
+            if (attack && attack.isActiveAndEnabled && attack is ISlowMovementSkill skill)
+                speedMultiplier *= Mathf.Clamp01(skill.SkillMovementMultiplier);
             if (movement && movement.isActiveAndEnabled)
                 movement.Tick(owner, game, game.Pos, speedMultiplier, dt);
         }
