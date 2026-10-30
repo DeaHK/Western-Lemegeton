@@ -16,7 +16,7 @@ namespace WesternLemegeton.EditorTools
         public static void RunAll()
         {
             Run();
-            MountedEnemyChecks.Run();
+            EnemyPairChecks.Run();
             RobeManChecks.Run();
             EnemyModuleChecks.Run();
         }
@@ -49,7 +49,7 @@ namespace WesternLemegeton.EditorTools
 
         static void CheckSkill(Dungeon game, bool cowboy, bool keepDistance)
         {
-            var path = cowboy ? MountedEnemySetup.CowboyPath : RobeManSetup.PrefabPath;
+            var path = cowboy ? EnemyPairSetup.CowboyPath : RobeManSetup.PrefabPath;
             var enemy = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<Enemy>(path));
             try
             {
@@ -165,3 +165,4 @@ namespace WesternLemegeton.EditorTools
         }
     }
 }
+

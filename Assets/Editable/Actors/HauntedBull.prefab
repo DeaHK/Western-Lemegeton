@@ -720,13 +720,9 @@ MonoBehaviour:
   WildTriggerRange: 6
   WildHitRadius: 1.1
   WildWarningLength: 30
-  RideTriggerRange: 6
-  RideHitRadius: 1.1
-  RideWarningLength: 8
   StompSeconds: 3
   LockSeconds: 1
   ChargeSpeed: 12
-  RideDistance: 8
   Damage: 22
   BodyRadius: 0.5
   KnockbackDistance: 1
@@ -1437,3 +1433,4 @@ MonoBehaviour:
   RenderOffset: {x: 0, y: 0, z: 0}
   Visible: {fileID: 7759928264301903072}
   OverrideHidden: 0
+

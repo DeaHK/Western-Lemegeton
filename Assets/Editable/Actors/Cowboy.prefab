@@ -472,7 +472,6 @@ MonoBehaviour:
   LassoRange: 12
   LassoSpeed: 10
   LassoHitRadius: 0.55
-  MountSpeed: 10
   PullSpeed: 1.2
   LassoMoveMultiplier: 0.35
 --- !u!114 &8598921816369811044
@@ -1437,3 +1436,4 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
+

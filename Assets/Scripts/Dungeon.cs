@@ -26,7 +26,7 @@ namespace WesternLemegeton
         // Enemy tracking
         public readonly List<Enemy> Enemies = new List<Enemy>();
         readonly List<Enemy> pendingEnemies = new List<Enemy>();
-        // 피격 처리의 foreach 도중에도 안전하게 하차한 적/밧줄을 등록합니다.
+        // 피격 처리의 foreach 도중에도 안전하게 생성된 적/밧줄을 등록합니다.
         public void QueueEnemy(Enemy enemy)
         {
             if (enemy && !Enemies.Contains(enemy) && !pendingEnemies.Contains(enemy)) pendingEnemies.Add(enemy);
@@ -745,3 +745,4 @@ namespace WesternLemegeton
         #endregion
     }
 }
+

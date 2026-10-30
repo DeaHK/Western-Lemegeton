@@ -4,7 +4,7 @@ namespace WesternLemegeton
 {
     public sealed class CowboyAttack : EnemyAttackModule, ISlowMovementSkill
     {
-        public enum ActionState { Shoot, ShotWindup, Spin, LassoOut, LassoReturn, ApproachBull, Mounted, Stunned }
+        public enum ActionState { Shoot, ShotWindup, Spin, LassoOut, LassoReturn }
         public ActionState Action { get; private set; }
         public Enemy Owner { get; private set; }
         public bool Slowed => Action == ActionState.Spin || Action == ActionState.LassoOut || Action == ActionState.LassoReturn;
@@ -22,7 +22,7 @@ namespace WesternLemegeton
         public float SpreadAngle = 16;
         [Min(0)] public float WarningRadius = .8f;
         public Vector2 InitialCooldownRange = Vector2.zero;
-        // 올가미 준비 연출과 비행·탑승·끌림 설정입니다. 머리 위 고리는 공격 판정과 별개입니다.
+        // 올가미 준비 연출과 비행·끌림 설정입니다. 머리 위 고리는 공격 판정과 별개입니다.
         [Header("올가미")]
         [Min(0)] public float SpinSeconds = 3;
         [Header("올가미 준비 표시 (공격 판정과 별개)")]
@@ -33,7 +33,6 @@ namespace WesternLemegeton
         [Min(.1f)] public float LassoRange = 12;
         [Min(.1f)] public float LassoSpeed = 10;
         [Min(.01f)] public float LassoHitRadius = .55f;
-        [Min(.1f)] public float MountSpeed = 10;
         [Min(.1f)] public float PullSpeed = 1.2f;
         [Range(0, 1)] public float LassoMoveMultiplier = .35f;
         public CowboyRope Rope { get; internal set; }
@@ -43,7 +42,6 @@ namespace WesternLemegeton
         bool wasInRange;
         Vector2 shotAim, lassoDirection, lassoOrigin, lassoPosition;
         SpriteRenderer spinVisual, lassoVisual;
-        HauntedBullAttack targetBull;
         public override bool Telegraphing => Action == ActionState.ShotWindup || Action == ActionState.Spin;
         public override float AttackPower => ShotDamage;
         public override float AttackRange => ShootRange;
@@ -57,17 +55,11 @@ namespace WesternLemegeton
                 Random.Range(InitialCooldownRange.x, InitialCooldownRange.y);
         }
 
-        // 사격·올가미·황소 접근·탑승·기절을 분기합니다. 올가미 중에는 감속 이동을 허용합니다.
+        // 사격·올가미을 분기합니다. 올가미 중에는 감속 이동을 허용합니다.
         public override bool Tick(Dungeon game, float speedMultiplier, float dt)
         {
             if (!game.Running || !Owner || Owner.Dead) return true;
-            if (Action == ActionState.Mounted) return true;
-            if (Action == ActionState.Stunned)
-            {
-                timer -= dt;
-                if (timer <= 0) { Action = ActionState.Shoot; Owner.SetMeleeWarning(false, 1); }
-                return true;
-            }
+
             cooldown -= dt;
             bool inRange = Vector2.Distance(transform.position, game.Pos) <= ShootRange;
             // 공격 범위 안 -> 밖으로 바뀐 순간에만 올가미를 준비합니다.
@@ -98,23 +90,7 @@ namespace WesternLemegeton
                 AdvanceLasso(game, dt);
                 return false;
             }
-            if (Action == ActionState.ApproachBull)
-            {
-                if (!targetBull || targetBull.State != HauntedBullAttack.BullState.Wild || targetBull.GetComponent<Enemy>().Dead)
-                { ResumeShooting(); return true; }
-                Vector2 from = transform.position;
-                Vector2 to = Vector2.MoveTowards(from, targetBull.transform.position, MountSpeed * speedMultiplier * dt);
-                int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / .1f));
-                for (int i = 1; i <= steps; i++)
-                {
-                    Vector2 next = Vector2.Lerp(from, to, i / (float)steps);
-                    if (HauntedBullAttack.Blocked(next, .4f)) { ResumeShooting(); return true; }
-                    transform.position = next;
-                }
-                if (Vector2.Distance(transform.position, targetBull.transform.position) <= .8f)
-                    if (!targetBull.Mount(this)) ResumeShooting();
-                return true;
-            }
+
             if (Action == ActionState.ShotWindup)
             {
                 timer -= dt;
@@ -157,7 +133,7 @@ namespace WesternLemegeton
         }
 
         // EnemyRangedAttack과 같은 중앙 대칭 부채꼴 발사 방식입니다. 원본 모듈은 수정하지 않습니다.
-        // 지상/탑승 사격 모두 발사 순간의 탄환 수·간격각·피해·속도·수명을 적용합니다.
+        // 사격은 발사 순간의 탄환 수·간격각·피해·속도·수명을 적용합니다.
         public void FireFrom(Vector2 origin, Vector2 target)
         {
             Vector2 direction = (target - origin).normalized;
@@ -171,28 +147,19 @@ namespace WesternLemegeton
             }
         }
 
-        // 발사 순간 Hunter와 살아 있는 Wild 황소 중 가장 가까운 대상을 골라 방향을 고정합니다.
+        // 발사 순간 Hunter를 향해 방향을 고정합니다.
         void ThrowLasso(Dungeon game)
         {
             RemoveVisual(ref spinVisual);
             lassoOrigin = lassoPosition = transform.position;
             Vector2 target = game.Pos;
-            float nearest = Vector2.Distance(lassoOrigin, target);
-            foreach (var enemy in game.Enemies)
-            {
-                if (!enemy || enemy.Dead) continue;
-                var bull = enemy.GetComponent<HauntedBullAttack>();
-                if (!bull || bull.State != HauntedBullAttack.BullState.Wild) continue;
-                float d = Vector2.Distance(lassoOrigin, enemy.transform.position);
-                if (d < nearest) { nearest = d; target = enemy.transform.position; }
-            }
             lassoDirection = (target - lassoOrigin).normalized;
             if (lassoDirection.sqrMagnitude < .001f) lassoDirection = Vector2.right;
             distance = 0; Action = ActionState.LassoOut;
             lassoVisual = Ink.Shape("Cowboy / Flying lasso", null, lassoPosition, Vector2.one * .6f, Ink.Gold, -580, true);
         }
 
-        // 비행을 작은 이동으로 나눠 충돌을 검사하고 구속·황소 접근·회수로 전환합니다.
+        // 비행을 작은 이동으로 나눠 충돌을 검사하고 구속·회수로 전환합니다.
         void AdvanceLasso(Dungeon game, float dt)
         {
             if (Action == ActionState.LassoReturn)
@@ -215,45 +182,24 @@ namespace WesternLemegeton
                     Rope = CowboyRope.Bind(this, game.Hero, PullSpeed, LassoRange * 1.5f);
                     ResumeShooting(); return;
                 }
-                foreach (var enemy in game.Enemies)
-                {
-                    if (!enemy || enemy.Dead) continue;
-                    var bull = enemy.GetComponent<HauntedBullAttack>();
-                    if (bull && bull.State == HauntedBullAttack.BullState.Wild &&
-                        Vector2.Distance(lassoPosition, bull.transform.position) <= LassoHitRadius + .3f)
-                    {
-                        RemoveVisual(ref lassoVisual); targetBull = bull; Action = ActionState.ApproachBull; return;
-                    }
-                }
+
             }
             if (distance >= LassoRange - .0001f) Action = ActionState.LassoReturn;
         }
 
-        // 올가미 표시를 정리해 사격으로 복귀하고, 탑승/하차 요청에 맞춰 행동 상태를 바꿉니다.
+        // 올가미 표시를 정리해 사격으로 복귀합니다.
         void ResumeShooting()
         {
             RemoveVisual(ref spinVisual); RemoveVisual(ref lassoVisual);
-            targetBull = null; Action = ActionState.Shoot; cooldown = 0;
+            Action = ActionState.Shoot; cooldown = 0;
         }
-        public void EnterMounted(HauntedBullAttack bull)
-        {
-            if (Rope) Rope.Release();
-            ResumeShooting(); Action = ActionState.Mounted;
-            if (Owner) Owner.SetMeleeWarning(false, 1);
-        }
-        public void LeaveMounted(float stunSeconds)
-        {
-            Action = ActionState.Stunned; timer = stunSeconds; wasInRange = false;
-            if (Owner) Owner.SetMeleeWarning(true, 1);
-        }
-        // 취소·비활성화 시 밧줄과 표시를 해제하되 황소가 관리하는 탑승 상태는 보존합니다.
         public override void Cancel()
         {
             RemoveVisual(ref spinVisual); RemoveVisual(ref lassoVisual);
             if (Rope) Rope.Release();
             if (Owner) Owner.SetMeleeWarning(false, 1);
-            if (Action != ActionState.Mounted) Action = ActionState.Shoot;
-            targetBull = null; wasInRange = false;
+            Action = ActionState.Shoot;
+            wasInRange = false;
         }
         static void RemoveVisual(ref SpriteRenderer visual)
         {
@@ -263,3 +209,5 @@ namespace WesternLemegeton
         void OnDisable() => Cancel();
     }
 }
+
+

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace WesternLemegeton.EditorTools
 {
-    public static class MountedEnemySetup
+    public static class EnemyPairSetup
     {
         public const string BullPath = "Assets/Editable/Actors/HauntedBull.prefab";
         public const string CowboyPath = "Assets/Editable/Actors/Cowboy.prefab";
@@ -54,3 +54,4 @@ namespace WesternLemegeton.EditorTools
         }
     }
 }
+
