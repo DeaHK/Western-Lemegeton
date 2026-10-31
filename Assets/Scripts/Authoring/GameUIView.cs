@@ -141,7 +141,9 @@ namespace WesternLemegeton
 
         private void UpdatePlayerSkillSlots(Player p)
         {
-            Skill(0, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", p.TagCd, p.Weapon == 0 ? "단검" : "리볼버");
+            // Slot 0 represents the always-available primary attack while weapon swapping is paused.
+            Text("SkillKey0", "좌클릭");
+            Skill(0, "ShotIcon", 0, "리볼버");
             Skill(1, "HunterDash", p.DashCd, "회피");
             Skill(2, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", p.Skill2Cd, p.Weapon == 0 ? "베어 가르기" : "원 샷");
             Skill(3, p.Weapon == 0 ? "SlamIcon" : "BarrageIcon", p.Skill3Cd, p.Weapon == 0 ? "내려찍기" : "난사");

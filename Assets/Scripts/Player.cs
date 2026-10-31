@@ -21,7 +21,8 @@ namespace WesternLemegeton
         public int DamageEvents { get; private set; }
 
         // Weapon / Ammo / Reload
-        public int Weapon, Ammo = 6;
+        // 0 = dagger (preserved for later), 1 = revolver (current default weapon).
+        public int Weapon = 1, Ammo = 6;
         public float TagCd, Reload;
         [Min(.01f)] public float BaseReloadSeconds = 2;
         bool reloadUsesAttackSpeed, reloadResetsDodge;
@@ -117,7 +118,8 @@ namespace WesternLemegeton
         private void HandleActionInput(Dungeon g, Vector2 move)
         {
             if (Input.GetKeyDown(KeyCode.Space)) TryDodge(move);
-            if (Input.GetKeyDown(KeyCode.Q)) TryTag();
+            // 무기 스왑 (추후 재활성화)
+            // if (Input.GetKeyDown(KeyCode.Q)) TryTag();
             HandleRavenInput(g);
             if (Input.GetKeyDown(KeyCode.E)) TrySkill(0);
             if (Input.GetKeyDown(KeyCode.R)) TrySkill(1);
@@ -594,7 +596,8 @@ namespace WesternLemegeton
         {
             Hp = MaxHp;
             BonusHp.Clear(); hitStun = 0;
-            Weapon = Combo = HitCombo = DamageEvents = 0;
+            Weapon = 1; // Start every run with the revolver; dagger support remains available for later.
+            Combo = HitCombo = DamageEvents = 0;
             Ammo = 6;
             DashCd = TagCd = Reload = attackCd = comboTime = invulnerable = elapsed = buffer = hitTime = 0;
             reloadUsesAttackSpeed = reloadResetsDodge = false;
