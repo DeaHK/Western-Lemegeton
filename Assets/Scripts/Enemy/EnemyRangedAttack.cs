@@ -18,6 +18,7 @@ namespace WesternLemegeton
         Enemy owner;
         float cooldown, windup = -1;
         Vector2 aim;
+        Vector3 worldAim;
         public override bool Telegraphing => windup > 0;
         public override float AttackPower => Damage;
         public override float AttackRange => TriggerRange;
@@ -41,8 +42,7 @@ namespace WesternLemegeton
                     for (int i = 0; i < ProjectileCount; i++)
                     {
                         float angle = (i - (ProjectileCount - 1) * .5f) * SpreadAngle;
-                        Bullet.Spawn(position, Quaternion.Euler(0, 0, angle) * aim * ProjectileSpeed,
-                            Damage, true, ProjectileLifetime);
+                        Bullet.SpawnAimed(owner, worldAim, ProjectileSpeed, angle, Damage, true, ProjectileLifetime);
                     }
                     windup = -1;
                     cooldown = CooldownSeconds;
@@ -54,6 +54,7 @@ namespace WesternLemegeton
             if (cooldown > 0 || delta.magnitude >= TriggerRange) return false;
             // 발사 순간에 다시 조준하지 않고 준비 시작 시 방향을 고정합니다.
             aim = delta.normalized;
+            worldAim = CombatBody.For(game.Hero).Center;
             windup = WindupSeconds;
             owner.SetMeleeWarning(true, WarningRadius);
             return true;

@@ -115,6 +115,31 @@ namespace WesternLemegeton.EditorTools
                 zone.Advance(game, 100);
                 Check(!zone && game.Hero.Hp == hp - 20, "Zone expires without out-of-range damage");
 
+                // 적도 개별 노출 시간을 사용하며, 모든 RobeMan은 면역입니다.
+                var victim = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<Enemy>("Assets/Editable/Actors/Enemy_0.prefab"));
+                victim.Init(0, 0);
+                victim.transform.position = Vector2.zero;
+                enemy.transform.position = Vector2.zero;
+                game.Enemies.Add(victim);
+                if (!game.Enemies.Contains(enemy)) game.Enemies.Add(enemy);
+                float victimHp = victim.Hp, robeHp = enemy.Hp;
+                game.Hero.transform.position = Vector2.right * 20;
+                var friendlyZone = RobeManPoisonZone.Spawn(Vector2.zero, 3, 10, 5, 1);
+                friendlyZone.Advance(game, .5f);
+                Check(victim.Hp == victimHp, "Enemy waits a full exposure interval");
+                friendlyZone.Advance(game, .5f);
+                Check(victim.Hp == victimHp - 5 && enemy.Hp == robeHp, "Other enemy takes poison while RobeMan is immune");
+                victim.transform.position = Vector2.right * 5;
+                friendlyZone.Advance(game, .5f);
+                victim.transform.position = Vector2.zero;
+                friendlyZone.Advance(game, .5f);
+                Check(victim.Hp == victimHp - 5, "Enemy exit resets exposure independently of Hunter");
+                friendlyZone.Advance(game, 1.5f);
+                Check(victim.Hp == victimHp - 15 && enemy.Hp == robeHp, "Enemy catches up two poison ticks and RobeMan stays immune");
+                RobeManPoisonZone.Remove(friendlyZone.gameObject);
+                game.Enemies.Remove(victim);
+                UnityEngine.Object.DestroyImmediate(victim.gameObject);
+
                 attack.Initialize(enemy);
                 // 근접 공격 중 달성한 독병 조건이 후딜 종료까지 보존되는지 검사합니다.
                 attack.RequiredStaySeconds = .2f;

@@ -35,7 +35,7 @@ namespace WesternLemegeton.EditorTools
                 if (bull)
                 {
                     root.AddComponent<HauntedBullAttack>();
-                    root.AddComponent<EnemyChaseMovement>().StopDistance = 4.5f;
+                    root.AddComponent<EnemyChaseMovement>().StopDistance = 1.5f;
                 }
                 else
                 {

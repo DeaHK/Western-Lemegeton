@@ -727,7 +727,17 @@ MonoBehaviour:
   BodyRadius: 0.5
   KnockbackDistance: 1
   StunSeconds: 3
-  ChargeCooldown: 2
+  ChargeCooldown: 10
+  ShortTriggerRange: 2.5
+  ShortDistance: 3
+  ShortStompSeconds: 0.2
+  ShortLockSeconds: 0.1
+  ShortChargeSpeed: 10
+  ShortCooldown: 1.5
+  ShortHitKnockback: 3
+  ShortHitKnockbackDuration: 0.3
+  ShortHitKnockbackHeight: 0.45
+  FullHitStunSeconds: 1
   StompStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -750,7 +760,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyChaseMovement
   Speed: 2.2
-  StopDistance: 4.5
+  StopDistance: 1.5
   BodyRadius: 0.5
   SeparationRadius: 1.183216
   SeparationStrength: 0.7
@@ -1433,4 +1443,3 @@ MonoBehaviour:
   RenderOffset: {x: 0, y: 0, z: 0}
   Visible: {fileID: 7759928264301903072}
   OverrideHidden: 0
-

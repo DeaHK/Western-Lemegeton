@@ -47,6 +47,16 @@ namespace WesternLemegeton
             }
             e.Finish();
         }
+        // 실제 발사/피격 지점의 월드 좌표를 그대로 사용합니다.
+        public static void WorldShot(Vector3 origin, Vector3 end)
+            => WorldShotEffect.Create(origin, end, Ink.Gold, .07f, .12f);
+        public static void WorldImpact(Vector3 position, Color color)
+        {
+            Vector3 right = Vector3.right * .16f;
+            Vector3 up = Quaternion.Euler(PaperWorld.Pitch, 0, 0) * Vector3.up * .16f;
+            WorldShotEffect.Create(position-right, position+right, color, .06f, .16f);
+            WorldShotEffect.Create(position-up, position+up, color, .06f, .16f);
+        }
         void Update()
         {
             if(!Dungeon.I||!Dungeon.I.Running)return;age+=Time.deltaTime;
@@ -57,3 +67,4 @@ namespace WesternLemegeton
         }
     }
 }
+

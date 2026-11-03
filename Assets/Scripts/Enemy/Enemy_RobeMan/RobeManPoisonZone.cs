@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace WesternLemegeton
 {
@@ -7,6 +8,9 @@ namespace WesternLemegeton
     {
         float remaining, insideTime;
         bool expired;
+        readonly Dictionary<Enemy, float> enemyExposure = new Dictionary<Enemy, float>();
+        readonly List<Enemy> enemySnapshot = new List<Enemy>();
+        readonly List<Enemy> previousTargets = new List<Enemy>();
         public float Radius { get; private set; }
         public float Damage { get; private set; }
         public float Interval { get; private set; }
@@ -50,12 +54,43 @@ namespace WesternLemegeton
                 }
             }
             else insideTime = 0; // 나갔다 들어오면 다시 1초부터 셉니다.
+            AdvanceEnemies(game, activeTime);
             if (remaining <= 0)
             {
                 expired = true;
                 Remove(gameObject);
             }
         }
+
+        void AdvanceEnemies(Dungeon game, float dt)
+        {
+            // 사망 이벤트가 적 목록을 변경해도 이번 검사 대상은 유지합니다.
+            enemySnapshot.Clear();
+            enemySnapshot.AddRange(game.Enemies);
+            previousTargets.Clear();
+            previousTargets.AddRange(enemyExposure.Keys);
+            foreach (var enemy in previousTargets)
+                if (!enemy || !enemySnapshot.Contains(enemy) || !CanPoison(enemy)) enemyExposure.Remove(enemy);
+
+            foreach (var enemy in enemySnapshot)
+            {
+                if (!CanPoison(enemy)) continue;
+                enemyExposure.TryGetValue(enemy, out float elapsed);
+                elapsed += dt;
+                while (elapsed >= Interval && enemy && !enemy.Dead && enemy.gameObject.activeInHierarchy)
+                {
+                    elapsed -= Interval;
+                    enemy.TakeEnvironmentDamage(Damage);
+                }
+                if (enemy && !enemy.Dead) enemyExposure[enemy] = elapsed;
+                else enemyExposure.Remove(enemy);
+            }
+        }
+
+        bool CanPoison(Enemy enemy)
+            => enemy && !enemy.Dead && enemy.gameObject.activeInHierarchy &&
+               !enemy.GetComponent<RobeManAttack>() &&
+               Vector2.Distance(transform.position, enemy.transform.position) <= Radius;
 
         // 실행 중에는 프레임 종료 시, 에디터 검사 중에는 즉시 오브젝트를 제거합니다.
         public static void Remove(GameObject target)

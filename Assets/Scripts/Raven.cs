@@ -4,8 +4,48 @@ using WesternLemegeton.Stigmas;
 namespace WesternLemegeton
 {
  public enum RavenState { Idle, Follow, Attack, Return, ComboWindup, ComboDash, LinkAttack }
+ [DefaultExecutionOrder(350)]
  public class Raven:MonoBehaviour
  {
+  [Tooltip("이 거리 안에 들어오면 접근을 멈추고 공격합니다.")]
+  [Min(.1f)] public float AttackRange=1.3f;
+  [Tooltip("그림자는 지면에 두고 외형만 띄우는 높이")]
+  [Min(0)] public float FlightHeight=1.2f;
+  const int RavenRenderOrder=8000;
+  float EffectiveAttackRange=>Mathf.Max(.1f,AttackRange);
+
+  // 한 프레임의 이동량이 커도 사거리를 지나쳐 적 중심까지 들어가지 않습니다.
+  Vector2 ApproachTarget(Vector2 from,Vector2 target,float step)
+  {
+   float distance=Vector2.Distance(from,target);
+   if(distance<=EffectiveAttackRange)return from;
+   return Vector2.MoveTowards(from,target,Mathf.Min(step,distance-EffectiveAttackRange*.99f));
+  }
+  void LateUpdate()
+  {
+   // PaperCard(300)가 표시 위치를 계산한 뒤 외형만 조정합니다.
+   // 루트 이동 좌표와 그림자를 올리지 않으므로 전투 거리 판정은 유지됩니다.
+   if(art)
+   {
+    var card=art.GetComponent<PaperCard>();
+    if(card&&card.Visible)
+    {
+     card.Visible.transform.position=PaperWorld.Point(art.transform.position)+card.RenderOffset+Vector3.up*Mathf.Max(0,FlightHeight);
+     card.Visible.sortingOrder=RavenRenderOrder;
+     var group=card.Visible.GetComponent<UnityEngine.Rendering.SortingGroup>();
+     if(group){group.sortAtRoot=true;group.sortingOrder=RavenRenderOrder;}
+    }
+   }
+   var presentation=GetComponent<ActorPresentation>();
+   if(presentation&&presentation.UseCustomVisual&&presentation.CustomVisual)
+   {
+    if(presentation.SpriteFrames)
+     presentation.CustomVisual.position=PaperWorld.Point(presentation.SpriteFrames.transform.position)+presentation.VisualOffset+Vector3.up*Mathf.Max(0,FlightHeight);
+    var group=presentation.CustomVisual.GetComponent<UnityEngine.Rendering.SortingGroup>();
+    if(!group)group=presentation.CustomVisual.gameObject.AddComponent<UnityEngine.Rendering.SortingGroup>();
+    group.sortAtRoot=true;group.sortingOrder=RavenRenderOrder;
+   }
+  }
   public float Active,Cooldown,LinkWindow,LinkCooldown,ComboFlash;public string Status="동행";
   public RavenState CurrentState {get;private set;}
   public bool ComboBusy=>comboPhase!=0;
@@ -76,7 +116,7 @@ namespace WesternLemegeton
     comboPhase=2;comboElapsed=0;trailClock=0;dashStart=transform.position;ComboDashStarts++;
    }
    CurrentState=RavenState.ComboDash;Status="콤보 돌진";
-   CombatArt.Pose(art,"Raven",1.45f);Vector2 end=comboTarget.transform.position;art.flipX=end.x<transform.position.x;
+   CombatArt.Pose(art,"Raven",1.45f);Vector2 end=ApproachTarget(dashStart,comboTarget.transform.position,float.MaxValue);art.flipX=comboTarget.transform.position.x<transform.position.x;
    Vector2 previous=transform.position;float t=Mathf.Clamp01(comboElapsed/ComboDashDuration);
    transform.position=Vector2.Lerp(dashStart,end,t*t*(3-2*t));art.transform.localRotation=Quaternion.Euler(0,0,(art.flipX?1:-1)*18);
    trailClock-=dt;if(trailClock<=0&&Vector2.Distance(previous,transform.position)>.01f)
@@ -101,18 +141,21 @@ namespace WesternLemegeton
    if(Linking)
    {
     CurrentState=RavenState.LinkAttack;linkTime-=dt;CombatArt.Pose(art,"RavenLink",1.8f);
-    if(linkTarget&&!linkTarget.Dead)transform.position=Vector2.MoveTowards(transform.position,linkTarget.transform.position,dt*25);
+    if(linkTarget&&!linkTarget.Dead)transform.position=ApproachTarget(transform.position,linkTarget.transform.position,dt*25);
     if(linkTime<=0){Vector2 p=linkTarget&&!linkTarget.Dead?(Vector2)linkTarget.transform.position:(Vector2)transform.position;foreach(var e in g.Enemies)if(e&&!e.Dead&&Vector2.Distance(p,e.transform.position)<2.5f)DealDamage(e,45,StigmaAttackKind.Link);Ink.Ring(p,2.5f,Ink.Cyan,.4f);LinkCooldown=8;linkTarget=null;}return;
    }
    CombatArt.Pose(art,"Raven",1.1f);
    Vector2 follow=g.Pos+new Vector2(-.95f,1.15f+Mathf.Sin(Time.time*3)*.15f),goal=follow;Enemy target=null;
-   if(Active>0&&!returning){target=marked&&!marked.Dead&&Vector2.Distance(marked.transform.position,g.Pos)<7?marked:g.Nearest(g.Pos,7);if(target){goal=(Vector2)target.transform.position+Vector2.up*.5f;Status="공격";}else Status="탐색";}
+   if(Active>0&&!returning){target=marked&&!marked.Dead&&Vector2.Distance(marked.transform.position,g.Pos)<7?marked:g.Nearest(g.Pos,7);if(target){goal=target.transform.position;Status="공격";}else Status="탐색";}
    else Status=returning?"복귀":Vector2.Distance(transform.position,follow)>1?"추적":"동행";
    if(returning&&Vector2.Distance(transform.position,follow)<.3f){returning=false;Status="동행";}
    if(Vector2.Distance(transform.position,g.Pos)>9){Ink.Burst(transform.position,Ink.Cyan,4);transform.position=follow;target=null;goal=follow;Status="복귀";}
    CurrentState=Status=="공격"?RavenState.Attack:Status=="복귀"?RavenState.Return:Status=="동행"?RavenState.Idle:RavenState.Follow;
-   art.flipX=goal.x<transform.position.x;transform.position=Vector2.MoveTowards(transform.position,goal,dt*Mathf.Max(5,g.PassiveStats.Evaluate(StigmaStats.RavenMove,10)));art.transform.localRotation=Quaternion.Euler(0,0,Mathf.Sin(Time.time*13)*8);
-   if(target&&Vector2.Distance(transform.position,target.transform.position)<1.3f&&attack<=0){attack=.5f/Mathf.Max(.1f,g.PassiveStats.Evaluate(StigmaStats.RavenSpeed,1));DealDamage(target,10,StigmaAttackKind.Basic);Ink.Line(transform.position,target.transform.position,Ink.Cyan,.13f,.2f);g.Sound();}
+   art.flipX=goal.x<transform.position.x;
+   float step=dt*Mathf.Max(5,g.PassiveStats.Evaluate(StigmaStats.RavenMove,10));
+   transform.position=target?ApproachTarget(transform.position,goal,step):Vector2.MoveTowards(transform.position,goal,step);
+   art.transform.localRotation=Quaternion.Euler(0,0,Mathf.Sin(Time.time*13)*8);
+   if(target&&Vector2.Distance(transform.position,target.transform.position)<=EffectiveAttackRange&&attack<=0){attack=.5f/Mathf.Max(.1f,g.PassiveStats.Evaluate(StigmaStats.RavenSpeed,1));DealDamage(target,10,StigmaAttackKind.Basic);Ink.Line(transform.position,target.transform.position,Ink.Cyan,.13f,.2f);g.Sound();}
   }
   void DealDamage(Enemy enemy,float damage,StigmaAttackKind kind)
   {

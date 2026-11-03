@@ -715,6 +715,7 @@ namespace WesternLemegeton
             foreach (var b in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(b.gameObject);
             foreach (var f in FindObjectsByType<Fade>(FindObjectsSortMode.None)) Destroy(f.gameObject);
             foreach (var f in FindObjectsByType<SkillEffects>(FindObjectsSortMode.None)) Destroy(f.gameObject);
+            foreach (var f in FindObjectsByType<WorldShotEffect>(FindObjectsSortMode.None)) Destroy(f.gameObject);
         }
 
         public void Tell(string text)

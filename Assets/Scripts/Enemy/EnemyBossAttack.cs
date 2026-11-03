@@ -183,7 +183,7 @@ namespace WesternLemegeton
                 {
                     float angle = (i / (float)count * 360 + cycle * Ranged.RotationPerAttack) * Mathf.Deg2Rad;
                     Bullet.Spawn(position, new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed,
-                        Ranged.Damage, true, Ranged.ProjectileLifetime);
+                        Ranged.Damage, true, Ranged.ProjectileLifetime, source: owner);
                 }
             }
         }

@@ -41,6 +41,7 @@ namespace WesternLemegeton
         static Sprite spinRingSprite;
         bool wasInRange;
         Vector2 shotAim, lassoDirection, lassoOrigin, lassoPosition;
+        Vector3 shotWorldAim;
         SpriteRenderer spinVisual, lassoVisual;
         public override bool Telegraphing => Action == ActionState.ShotWindup || Action == ActionState.Spin;
         public override float AttackPower => ShotDamage;
@@ -96,7 +97,7 @@ namespace WesternLemegeton
                 timer -= dt;
                 if (timer <= 0)
                 {
-                    FireFrom(transform.position, (Vector2)transform.position + shotAim);
+                    FireAt(shotWorldAim);
                     Owner.SetMeleeWarning(false, 1);
                     cooldown = ShotCooldown; Action = ActionState.Shoot;
                 }
@@ -105,6 +106,7 @@ namespace WesternLemegeton
             if (inRange && cooldown <= 0)
             {
                 shotAim = (game.Pos - (Vector2)transform.position).normalized;
+                shotWorldAim = CombatBody.For(game.Hero).Center;
                 timer = ShotWindup; Action = ActionState.ShotWindup;
                 Owner.SetMeleeWarning(true, WarningRadius); return true;
             }
@@ -136,14 +138,26 @@ namespace WesternLemegeton
         // 사격은 발사 순간의 탄환 수·간격각·피해·속도·수명을 적용합니다.
         public void FireFrom(Vector2 origin, Vector2 target)
         {
-            Vector2 direction = (target - origin).normalized;
-            if (direction.sqrMagnitude < .001f) direction = Vector2.right;
+            // 외부 도구에서 지정한 평면 발사 위치도 보존합니다.
+            Vector3 start = PaperWorld.Point(origin, CombatBody.For(Owner).Muzzle.y);
+            Vector3 direction = ProjectileSpace.Direction((target-origin).normalized);
+            if (direction.sqrMagnitude < .000001f) direction = Vector3.right;
             int count = Mathf.Max(1, ProjectileCount);
             for (int i = 0; i < count; i++)
             {
                 float angle = (i - (count - 1) * .5f) * SpreadAngle;
-                Bullet.Spawn(origin, Quaternion.Euler(0, 0, angle) * direction * BulletSpeed,
+                Bullet.SpawnWorld(start, Quaternion.AngleAxis(-angle, Vector3.up) * direction * BulletSpeed,
                     ShotDamage, true, ProjectileLifetime);
+            }
+        }
+
+        void FireAt(Vector3 target)
+        {
+            int count = Mathf.Max(1, ProjectileCount);
+            for (int i = 0; i < count; i++)
+            {
+                float angle = (i - (count - 1) * .5f) * SpreadAngle;
+                Bullet.SpawnAimed(Owner, target, BulletSpeed, angle, ShotDamage, true, ProjectileLifetime);
             }
         }
 

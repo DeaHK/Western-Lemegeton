@@ -15,7 +15,77 @@ namespace WesternLemegeton
         public readonly BonusHealth BonusHp = new BonusHealth();
         public float MaxHealth => Dungeon.I && Dungeon.I.PassiveStats ? Mathf.Max(1, Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MaxHealth, MaxHp)) : MaxHp;
         float hitStun;
-        public bool Stunned => hitStun > 0;
+        float chargeStun;
+        float knockbackElapsed, knockbackDuration, knockbackDistance, knockbackArcHeight;
+        Vector2 knockbackDirection;
+        public float KnockbackHeight { get; private set; }
+        public bool KnockedBack => knockbackDuration > 0;
+        HauntedBullAttack bullCarrier;
+        public bool IsCarriedBy(HauntedBullAttack carrier) => bullCarrier == carrier && Hp > 0;
+        public bool Stunned => hitStun > 0 || chargeStun > 0 || bullCarrier || KnockedBack;
+        // 돌진의 피해와 제어 효과는 회피/피격 무적을 함께 존중합니다.
+        public bool TryReceiveChargeHit(float damage)
+        {
+            if (invulnerable > 0 || bullCarrier || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return false;
+            Hurt(damage);
+            return Hp > 0;
+        }
+        public void BeginBullCarry(HauntedBullAttack carrier)
+        {
+            ClearKnockback();
+            bullCarrier = carrier;
+            dashTime = 0; buffer = 0;
+            FinishSkill(); CancelBasic();
+            if (Tether) Tether.Release();
+        }
+        public void EndBullCarry(HauntedBullAttack carrier, float stunSeconds)
+        {
+            if (bullCarrier != carrier) return;
+            bullCarrier = null;
+            chargeStun = Mathf.Max(chargeStun, stunSeconds);
+        }
+        public void ApplyChargeKnockback(Vector2 direction, float distance, float duration = .3f, float arcHeight = .45f)
+        {
+            ClearKnockback();
+            knockbackDirection = direction.normalized;
+            knockbackDistance = Mathf.Max(0, distance);
+            knockbackDuration = Mathf.Max(.01f, duration);
+            knockbackArcHeight = Mathf.Max(0, arcHeight);
+            dashTime = 0; buffer = 0;
+            FinishSkill(); CancelBasic();
+        }
+        void TickChargeKnockback(float dt)
+        {
+            float before = knockbackElapsed / knockbackDuration;
+            knockbackElapsed = Mathf.Min(knockbackDuration, knockbackElapsed + Mathf.Max(0, dt));
+            float t = knockbackElapsed / knockbackDuration;
+            float distance = knockbackDistance * (t - before);
+            int steps = Mathf.Max(1, Mathf.CeilToInt(distance / .1f));
+            for (int i = 0; i < steps; i++)
+                transform.position = Rules.ResolveObstacles(transform.position,
+                    (Vector2)transform.position + knockbackDirection * (distance / steps), .38f);
+            // 지면 이동과 표시 높이를 분리하여 그림자는 바닥에 유지합니다.
+            SetKnockbackHeight(4 * knockbackArcHeight * t * (1 - t));
+            if (t >= 1) ClearKnockback();
+        }
+        void SetKnockbackHeight(float height)
+        {
+            Vector3 delta = Vector3.up * (height - KnockbackHeight);
+            if (art)
+            {
+                var card = art.GetComponent<PaperCard>();
+                if (card) card.RenderOffset += delta;
+            }
+            var presentation = GetComponent<ActorPresentation>();
+            if (presentation) presentation.VisualOffset += delta;
+            KnockbackHeight = height;
+        }
+        void ClearKnockback()
+        {
+            SetKnockbackHeight(0);
+            knockbackElapsed = knockbackDuration = 0;
+        }
+        void OnDisable() => ClearKnockback();
         float invulnerable;
         public bool Invulnerable => invulnerable > 0;
         public int DamageEvents { get; private set; }
@@ -57,6 +127,8 @@ namespace WesternLemegeton
 
         //aim
         Vector2 aimDirection = Vector2.right;
+        Vector3 worldAim, basicWorldAim, skillWorldAim;
+        bool hasWorldAim;
 
         // Combo / Raven follow-up deduplication
         public int Combo, HitCombo;
@@ -100,7 +172,11 @@ namespace WesternLemegeton
                 (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0),
                 (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0)).normalized;
             if (move.sqrMagnitude > 0) LastMove = move;
-            Vector2 aim = PaperWorld.Mouse(g.Cam, Input.mousePosition) - (Vector2)transform.position;
+            worldAim = ProjectileSpace.Aim(g, Input.mousePosition);
+            hasWorldAim = true;
+            // 근접 이동은 지면 기준을 유지하고, 사격의 몸 방향은 3D 조준 방향을 지면에 투영합니다.
+            Vector2 aim = Weapon == 1 ? ProjectileSpace.Ground(worldAim - CombatBody.For(this).Muzzle) :
+                PaperWorld.Mouse(g.Cam, Input.mousePosition) - (Vector2)transform.position;
             if (aim.sqrMagnitude > .1f) aimDirection = aim.normalized;
             Facing = Weapon == 0 ? LastMove : aim.sqrMagnitude > .1f ? aim.normalized : Facing;
 
@@ -131,6 +207,8 @@ namespace WesternLemegeton
 
         private void AdvanceActions(float dt, Vector2 move)
         {
+            if (KnockedBack) { TickChargeKnockback(dt); Locomotion.Reset(LastMove); Animate(Vector2.zero); return; }
+            if (Stunned) { Locomotion.Reset(LastMove); Animate(Vector2.zero); return; }
             move = Vector2.ClampMagnitude(move, 1);
             Vector2 before = transform.position;
             // Capture before ticking actions: locomotion suppression uses the entry state.
@@ -255,6 +333,7 @@ namespace WesternLemegeton
             basicWeapon = Weapon;
             basicCost = cost;
             basicDirection = aimDirection;
+            basicWorldAim = hasWorldAim ? worldAim : CombatBody.For(this).Muzzle + ProjectileSpace.Direction(basicDirection) * 20;
             basicDuration = attackCd = (Weapon == 0 ? .25f : .3f) / Mathf.Max(.1f, g.PassiveStats.Evaluate(StigmaStats.PlayerSpeed, 1));
             comboTime = Weapon == 0 ? 1.2f : 4;
             basicTime = 0;
@@ -319,10 +398,13 @@ namespace WesternLemegeton
             if (Ammo <= 3 && Reload <= 0) BeginReload();
             for (int i = 0; i < basicCost; i++)
             {
-                Vector2 dir = Quaternion.Euler(0, 0, (i - (basicCost - 1) * .5f) * 7) * basicDirection;
-                Bullet.Spawn((Vector2)transform.position + basicDirection * .65f, dir * 21, finisher ? 24 : 20, false, .23f, basicStage, basicId);
+                float angle = (i - (basicCost - 1) * .5f) * 7;
+                Bullet.SpawnAimed(this, basicWorldAim, 21, angle, finisher ? 24 : 20, false, .23f, basicStage, basicId);
             }
-            SkillEffects.Shot(transform.position, basicDirection, 1.1f);
+            Vector3 origin = CombatBody.For(this).Muzzle;
+            Vector3 direction = (basicWorldAim-origin).normalized;
+            float flashLength = ProjectileSpace.WallDistance(new Ray(origin, direction), .45f, .05f);
+            SkillEffects.WorldShot(origin, origin + direction * flashLength);
         }
 
         void BeginReload(bool useAttackSpeed = false, bool resetDodge = false, int effectRevision = 0)
@@ -373,6 +455,7 @@ namespace WesternLemegeton
             buffer = 0;
             skillDirection = (Weapon == 1 ? Facing : LastMove).normalized;
             if (skillDirection.sqrMagnitude < .1f) skillDirection = Vector2.right;
+            skillWorldAim = hasWorldAim ? worldAim : CombatBody.For(this).Muzzle + ProjectileSpace.Direction(skillDirection) * 20;
             dashTime = 0;
             skill = Weapon == 0 ? slot + 1 : slot + 3;
             PresentationSequence++;
@@ -468,15 +551,22 @@ namespace WesternLemegeton
                     Ammo = 0;
                     BeginReload(true, profile.ResetDodgeOnReload, revision);
                 }
-                foreach (var e in Dungeon.I.Enemies)
+                Vector3 origin = CombatBody.For(this).Muzzle;
+                Vector3 direction = (skillWorldAim-origin).normalized;
+                if (direction.sqrMagnitude < .0001f) direction = ProjectileSpace.Direction(skillDirection);
+                var ray = new Ray(origin, direction);
+                float range = ProjectileSpace.WallDistance(ray, profile.Range, .05f);
+                // 관통 사격은 몸통 영역을 검사하되 벽 뒤의 대상에는 피해를 주지 않습니다.
+                foreach (var e in Dungeon.I.Enemies.ToArray())
                     if (e && !e.Dead)
                     {
-                        Vector2 v = (Vector2)e.transform.position - (Vector2)transform.position;
-                        float along = Vector2.Dot(v, skillDirection);
-                        if (along >= 0 && along <= profile.Range && Mathf.Abs(v.x * skillDirection.y - v.y * skillDirection.x) < .8f)
+                        if (e.gameObject.activeInHierarchy && CombatBody.For(e).Cast(ray, range, .15f, out float distance) && distance < range)
+                        {
+                            SkillEffects.WorldImpact(ray.GetPoint(distance), Ink.Gold);
                             Hit(e, 42 * profile.DamageMultiplier, 0, actionId, true);
+                        }
                     }
-                SkillEffects.Shot(transform.position, skillDirection, profile.Range);
+                SkillEffects.WorldShot(origin, ray.GetPoint(range));
                 Dungeon.I.Sound(true);
             }
             if (elapsed >= HunterMotion.ShotDuration) FinishSkill();
@@ -600,6 +690,7 @@ namespace WesternLemegeton
             reloadUsesAttackSpeed = reloadResetsDodge = false;
             System.Array.Clear(cds, 0, cds.Length);
             LastMove = Facing = Vector2.right;
+            hasWorldAim = false;
             actionId = basicId = 0;
             lastComboAttack = -1;
             dashHits.Clear();
@@ -608,6 +699,8 @@ namespace WesternLemegeton
 
         public void SafeEntry()
         {
+            ClearKnockback();
+            bullCarrier = null; chargeStun = 0;
             hitStun = 0;
             invulnerable = 1;
             dashTime = 0;
@@ -636,6 +729,14 @@ namespace WesternLemegeton
 
         private void TickTimers(float dt)
         {
+            // 기절/끌려가는 동안 재사용 대기는 정지하고 제어 효과의 시간만 감소합니다.
+            if (Stunned)
+            {
+                hitStun = Mathf.Max(0, hitStun - dt);
+                chargeStun = Mathf.Max(0, chargeStun - dt);
+                invulnerable = Mathf.Max(0, invulnerable - dt);
+                return;
+            }
             hitStun = Mathf.Max(0, hitStun - dt);
             DashCd = Mathf.Max(0, DashCd - dt);
             TagCd = Mathf.Max(0, TagCd - dt);

@@ -17,6 +17,8 @@ RobeMan은 기존 Enemy, EnemyHealth, EnemyBasicBrain, EnemyChaseMovement를 재
 
 ## 파일별 역할
 
+**2026-11-03 독 피해 대상 확장**: 독 위험구역은 Hunter뿐 아니라 `RobeManAttack`이 없는 적에게도 피해를 줍니다. 모든 RobeMan은 면역입니다. 대상마다 노출 시간을 따로 누적하고, 범위를 벗어나면 초기화합니다. 프리팹의 현재 독 피해는 5, 간격은 1초입니다. 적에게는 `Enemy.TakeEnvironmentDamage`를 사용하여 정상 사망 처리를 하되 헌터·까마귀의 처치 성흔 효과는 발동하지 않습니다. 별도 Inspector 연결 없이 적용됩니다. 추가 회귀 검사 코드는 `Editor/RobeManChecks.cs`에 있으며 C# 컴파일만 확인했고 Unity 실행 검사는 아직 수행하지 않았습니다.
+
 **2026-10-28 공통 처리 변경**: 독병은 `ISlowMovementSkill` 분류를 사용합니다. 조준·투척 후딜 중 `Poison Move Multiplier`(초기값 0.35)를 `EnemyBasicBrain`에서 이동 배율에 곱합니다. 독병 비행이나 독 구역의 수명은 감속을 연장하지 않습니다. 공통 규칙은 `Docs/EnemyModulesGuide.md`의 슬로우 무브먼트 항목을 참고하세요.
 
 - RobeManAttack.cs: 근접 공격, 5초 체류 판정, 고정 조준, 투척 순서를 결정합니다. EnemyAttackModule을 상속하므로 기존 Brain이 일반 공격 부품처럼 사용할 수 있습니다. 상속은 기존 부품의 사용 규칙을 따르면서 전용 동작을 작성하는 방식입니다.

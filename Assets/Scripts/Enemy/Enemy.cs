@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace WesternLemegeton
 {
@@ -36,6 +36,7 @@ namespace WesternLemegeton
         // Common attack timing / aim
         float cooldown, windup = -1;
         Vector2 aim;
+        Vector3 projectileAim;
 
         // Charge (shared by Kind 1 and Kind 3)
         float chargeTime;
@@ -184,6 +185,7 @@ namespace WesternLemegeton
         private void BeginAttackWindup(Vector2 p, Vector2 delta)
         {
             aim = delta.normalized;
+            if (Dungeon.I && Dungeon.I.Hero) projectileAim = CombatBody.For(Dungeon.I.Hero).Center;
             windup = Kind == 0 ? .65f : Kind == 1 ? .85f : .9f;
             ShowAttackWarning(p);
         }
@@ -231,7 +233,7 @@ namespace WesternLemegeton
 
         private void FireRangedProjectiles(Vector2 p)
         {
-            for (int i = -1; i <= 1; i++) Bullet.Spawn(p, Quaternion.Euler(0, 0, i * 16) * aim * 6.5f, 13, true, 3);
+            for (int i = -1; i <= 1; i++) Bullet.SpawnAimed(this, projectileAim, 6.5f, i * 16, 13, true, 3);
         }
 
         #endregion
@@ -260,7 +262,7 @@ namespace WesternLemegeton
             for (int i = 0; i < count; i++)
             {
                 float a = (i / (float)count * 360 + cycle * 13) * Mathf.Deg2Rad;
-                Bullet.Spawn(p, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (Hp < MaxHp * .5f ? 6 : 4.5f), 17, true, 5);
+                Bullet.Spawn(p, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (Hp < MaxHp * .5f ? 6 : 4.5f), 17, true, 5, source: this);
             }
         }
 
@@ -277,6 +279,21 @@ namespace WesternLemegeton
         public void TakeDamage(float damage)
         {
             TakeStigmaDamage(damage, StigmaOwner.Player, Stigma.Slow(Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction) > 0);
+        }
+
+        // 적의 독처럼 헌터나 까마귀의 공격이 아닌 피해입니다. 처치 시 소유자 성흔 효과를 발동하지 않습니다.
+        public void TakeEnvironmentDamage(float damage)
+        {
+            if (damage <= 0 || !gameObject.activeInHierarchy || Dead || !Dungeon.I || !Dungeon.I.Running) return;
+            if (AuxiliaryTarget)
+            {
+                Hp = 0;
+                Damaged?.Invoke(this);
+                return;
+            }
+            ApplyDamageImpact(damage);
+            Damaged?.Invoke(this);
+            if (Dead) Die(false);
         }
 
         private void ApplyDamageImpact(float damage)
@@ -312,7 +329,7 @@ namespace WesternLemegeton
 
         #region Death
 
-        private void Die()
+        private void Die(bool triggerOwnerEffects = true)
         {
             Dying?.Invoke(this);
             if (AuxiliaryTarget) { Destroy(gameObject); return; }
@@ -321,7 +338,7 @@ namespace WesternLemegeton
             {
                 var rules = Dungeon.I.Stigmas.Database.Rules;
                 Dungeon.I.Wallet.Add(Kind == 3 ? rules.BossCopper : rules.EnemyCopper);
-                Dungeon.I.Stigmas.Combat?.Killed(lastDamageOwner, slowedAtDeath);
+                if (triggerOwnerEffects) Dungeon.I.Stigmas.Combat?.Killed(lastDamageOwner, slowedAtDeath);
             }
             warning.enabled = false;
             Ink.Burst(transform.position, Ink.Red, 14);
@@ -409,126 +426,84 @@ namespace WesternLemegeton
 
     public class Bullet : MonoBehaviour
     {
-        #region Bullet Fields / Initialization
-
-        // Movement / lifetime
+        // velocity는 기존 검사/도구용 평면 방향입니다. 비행과 충돌은 worldVelocity를 사용합니다.
         Vector2 velocity;
-        float life;
-
-        // Hit payload / allegiance
-        float damage;
+        Vector3 worldPosition, worldVelocity;
+        float life, damage;
         bool hostile;
         int stage;
         long attackId;
+        SpriteRenderer sprite;
+        PaperCard card;
+        public Vector3 WorldPosition => worldPosition;
+        public Vector3 WorldVelocity => worldVelocity;
 
-        public static void Spawn(Vector2 p, Vector2 v, float damage, bool hostile, float life, int stage = 0, long attackId = 0)
+        // 원형 탄막은 평면 방향을 유지하되 표시와 판정을 같은 높이에서 처리합니다.
+        public static void Spawn(Vector2 p, Vector2 v, float damage, bool hostile, float life,
+            int stage = 0, long attackId = 0, Component source = null)
         {
-            var sr = CreatePresentation(p, v, hostile);
-            ApplyMuzzleOffset(sr, hostile);
-            var b = sr.gameObject.AddComponent<Bullet>();
-            InitializeBullet(b, v, damage, hostile, life, stage, attackId);
+            Vector3 origin = source ? CombatBody.For(source).Muzzle : PaperWorld.Point(p, .95f);
+            SpawnWorld(origin, ProjectileSpace.Direction(v), damage, hostile, life, stage, attackId);
         }
 
-        private static void InitializeBullet(Bullet b, Vector2 v, float damage, bool hostile, float life, int stage, long attackId)
+        public static Bullet SpawnWorld(Vector3 origin, Vector3 velocity, float damage, bool hostile,
+            float life, int stage = 0, long attackId = 0)
         {
-            b.velocity = v;
-            b.damage = damage;
-            b.hostile = hostile;
-            b.life = life;
-            b.stage = stage;
-            b.attackId = attackId;
+            var sr = Ink.Shape(hostile ? "Hostile bullet" : "Revolver bullet", null,
+                ProjectileSpace.Ground(origin), hostile ? Vector2.one * .25f : new Vector2(.4f, .1f),
+                hostile ? Ink.Red : Ink.Gold, 1000, hostile);
+            var bullet = sr.gameObject.AddComponent<Bullet>();
+            bullet.sprite = sr; bullet.card = sr.GetComponent<PaperCard>();
+            if (bullet.card) bullet.card.Flat = false;
+            bullet.worldPosition = origin; bullet.worldVelocity = velocity;
+            bullet.velocity = ProjectileSpace.Ground(velocity).normalized * velocity.magnitude;
+            bullet.damage = damage; bullet.hostile = hostile; bullet.life = life;
+            bullet.stage = stage; bullet.attackId = attackId;
+            bullet.Show();
+            return bullet;
         }
 
-        #endregion
-
-        #region Bullet Movement / Collision / Lifetime
-
-        private void Update()
+        public static void SpawnAimed(Component source, Vector3 target, float speed, float angle,
+            float damage, bool hostile, float life, int stage = 0, long attackId = 0)
         {
-            var g = Dungeon.I;
-            if (!g.Running) return;
-            float dt = Time.deltaTime;
-            life -= dt;
-            if (life <= 0)
+            Vector3 origin = CombatBody.For(source).Muzzle;
+            Vector3 direction = target-origin;
+            if (direction.sqrMagnitude < .000001f) direction = Vector3.right;
+            // XY 각도 증가를 XZ로 옮기면 Y축 회전 부호가 반대입니다.
+            direction = Quaternion.AngleAxis(-angle, Vector3.up) * direction.normalized;
+            SpawnWorld(origin, direction * speed, damage, hostile, life, stage, attackId);
+        }
+
+        void Update()
+        {
+            var game = Dungeon.I;
+            if (!game || !game.Running) return;
+            float dt = Mathf.Min(Time.deltaTime, Mathf.Max(0, life));
+            Vector3 next = worldPosition + worldVelocity * dt;
+            // 프레임 사이 전체 경로를 검사하므로 빠른 탄환도 몸통/얇은 벽을 건너뛰지 않습니다.
+            if (ProjectileSpace.Sweep(game, worldPosition, next, hostile, hostile ? .125f : .05f,
+                out var impact, out var enemy, out bool hunter))
             {
-                Destroy(gameObject);
-                return;
+                worldPosition = impact; Show();
+                SkillEffects.WorldImpact(impact, hostile ? Ink.Red : Ink.Gold);
+                if (hunter) game.Hero.Hurt(damage);
+                else if (enemy) game.Hero.Hit(enemy, damage, stage, attackId);
+                Destroy(gameObject); return;
             }
-            // Substeps avoid tunnelling at low frame rates and into cover.
-            int steps = GetSubstepCount(dt);
-            for (int i = 0; i < steps; i++)
-            {
-                MoveSubstep(dt, steps);
-                Vector2 p = transform.position;
-                if (Mathf.Abs(p.x - Rules.RoomOrigin.x) > 14.8f || Mathf.Abs(p.y - Rules.RoomOrigin.y) > 8.8f)
-                {
-                    Destroy(gameObject);
-                    return;
-                }
-                foreach (Rect r in Dungeon.Obstacles)
-                    if (r.Contains(p))
-                    {
-                        HitObstacle(p);
-                        return;
-                    }
-                if (hostile)
-                {
-                    if (Vector2.Distance(p, g.Pos) < .48f)
-                    {
-                        HitPlayer(g);
-                        return;
-                    }
-                }
-                else
-                    foreach (var e in g.Enemies)
-                        if (e && !e.Dead && Vector2.Distance(p, e.transform.position) < (e.Kind == 3 ? 1 : .55f))
-                        {
-                            HitEnemy(g, e);
-                            return;
-                        }
-            }
+            worldPosition = next; Show();
+            life -= Time.deltaTime;
+            if (life <= 0) Destroy(gameObject);
         }
 
-        private int GetSubstepCount(float dt) => Mathf.Max(1, Mathf.CeilToInt(velocity.magnitude * dt / .16f));
-
-        private void MoveSubstep(float dt, int steps)
+        void LateUpdate() => Show();
+        void Show()
         {
-            transform.position += (Vector3)(velocity * dt / steps);
+            transform.position = ProjectileSpace.Ground(worldPosition);
+            if (card) card.RenderOffset = Vector3.up * worldPosition.y;
+            // 탄환 그림도 화면에 투영된 실제 비행 방향으로 회전합니다.
+            var rotation = Quaternion.Euler(PaperWorld.Pitch, 0, 0);
+            Vector3 viewDirection = Quaternion.Inverse(rotation) * worldVelocity;
+            transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(viewDirection.y, viewDirection.x) * Mathf.Rad2Deg);
         }
-
-        private void HitObstacle(Vector2 p)
-        {
-            Ink.Burst(p, Ink.Gold, 2);
-            Destroy(gameObject);
-        }
-
-        private void HitPlayer(Dungeon g)
-        {
-            g.Hero.Hurt(damage);
-            Destroy(gameObject);
-        }
-
-        private void HitEnemy(Dungeon g, Enemy e)
-        {
-            g.Hero.Hit(e, damage, stage, attackId);
-            Destroy(gameObject);
-        }
-
-        #endregion
-
-        #region Bullet Presentation / Utility
-
-        private static SpriteRenderer CreatePresentation(Vector2 p, Vector2 v, bool hostile) => Ink.Shape(hostile ? "Hostile bullet" : "Revolver bullet", null, p, hostile ? Vector2.one * .25f : new Vector2(.4f, .1f), hostile ? Ink.Red : Ink.Gold, 1000, hostile, Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg);
-
-        private static void ApplyMuzzleOffset(SpriteRenderer sr, bool hostile)
-        {
-            if (!hostile)
-            {
-                var card = sr.GetComponent<PaperCard>();
-                if (card) card.RenderOffset = SkillEffects.MuzzleOffset;
-            }
-        }
-
-        #endregion
     }
 }

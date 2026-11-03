@@ -176,11 +176,69 @@ namespace WesternLemegeton.EditorTools
                 bull.Tick(game, 1, 2);
                 Check(bull.Action == HauntedBullAttack.ActionState.Stunned && bullEnemy.transform.position.y < 2,
                     "Swept charge hits thin obstacle and recoils");
+                Check(Mathf.Abs(bull.FullChargeCooldownRemaining - 10) < .001f, "Full charge ends with ten-second cooldown");
                 bull.Tick(game, 1, 2.9f);
                 Check(bull.Action == HauntedBullAttack.ActionState.Stunned, "Impact stun lasts three seconds");
                 bull.Tick(game, 1, .11f);
                 Check(bull.Action == HauntedBullAttack.ActionState.Chase, "Bull resumes after stun");
                 Dungeon.Obstacles = Array.Empty<Rect>(); bullEnemy.transform.position = Vector2.zero;
+                Check(Mathf.Abs(bull.FullChargeCooldownRemaining - 10) < .001f,
+                    "Full cooldown freezes during stun");
+                game.Hero.transform.position = Vector2.right * 4;
+                Check(!bull.Tick(game, 1, 0), "Cooldown allows chase toward short charge range");
+                game.Hero.transform.position = Vector2.right * 2;
+                bull.Tick(game, 1, 0);
+                Check(bull.CurrentCharge == HauntedBullAttack.ChargeKind.ShortCharge && bull.Action == HauntedBullAttack.ActionState.Stomp,
+                    "Close Hunter triggers short charge during full cooldown");
+                bull.Tick(game, 1, bull.ShortStompSeconds + .01f);
+                bull.Tick(game, 1, bull.ShortLockSeconds + .01f);
+                bull.Tick(game, 1, 1);
+                Check(bull.Action == HauntedBullAttack.ActionState.Chase && Mathf.Abs(bullEnemy.transform.position.x - bull.ShortDistance) < .001f,
+                    "Short charge stops at its distance even with a large frame");
+                Check(bull.FullChargeCooldownRemaining < 10 && bull.FullChargeCooldownRemaining > 0,
+                    "Short charge does not restart full cooldown");
+                bull.Tick(game, 1, 0);
+                Check(bull.Action == HauntedBullAttack.ActionState.Chase, "Short cooldown prevents immediate repeat");
+                bull.Tick(game, 1, 10);
+                Check(bull.CurrentCharge == HauntedBullAttack.ChargeKind.FullCharge && bull.Action == HauntedBullAttack.ActionState.Stomp,
+                    "Full charge takes priority when cooldown expires");
+                bull.Cancel();
+                // 풀 차지에 잡힌 헌터는 함께 이동하고 벽 충돌 뒤 1초 기절합니다.
+                bull.Initialize(bullEnemy); bullEnemy.transform.position = Vector2.zero;
+                game.Hero.transform.position = Vector2.right;
+                typeof(Player).GetField("invulnerable", Private).SetValue(game.Hero, 0f);
+                WindUp(bull, game);
+                bull.Tick(game, 1, .02f);
+                Check(game.Hero.IsCarriedBy(bull), "Full charge captures Hunter");
+                float carriedX = game.Hero.transform.position.x;
+                bull.Tick(game, 1, .05f);
+                Check(game.Hero.transform.position.x > carriedX, "Captured Hunter moves with bull");
+                Dungeon.Obstacles = new[] { new Rect(3, -2, .3f, 4) };
+                bull.Tick(game, 1, 1);
+                Check(!game.Hero.IsCarriedBy(bull) && game.Hero.Stunned && game.Hero.transform.position.x < 3,
+                    "Wall releases Hunter outside obstacle with stun");
+                float stun = (float)typeof(Player).GetField("chargeStun", Private).GetValue(game.Hero);
+                Check(Mathf.Abs(stun - 1) < .001f, "Wall stun lasts one second");
+                game.Hero.DashCd = 5;
+                typeof(Player).GetMethod("TickTimers", Private).Invoke(game.Hero, new object[] { .5f });
+                Check(game.Hero.DashCd == 5, "Hunter cooldown freezes while stunned");
+                game.Hero.SafeEntry();
+                Dungeon.Obstacles = Array.Empty<Rect>();
+                game.Hero.transform.position = Vector2.zero;
+                game.Hero.ApplyChargeKnockback(Vector2.right, 3, .3f, .45f);
+                Check(game.Hero.transform.position.x == 0 && game.Hero.KnockedBack,
+                    "Knockback begins without teleporting");
+                var stepKnockback = typeof(Player).GetMethod("TickChargeKnockback", Private);
+                stepKnockback.Invoke(game.Hero, new object[] { .15f });
+                Check(Mathf.Abs(game.Hero.transform.position.x - 1.5f) < .001f && Mathf.Abs(game.Hero.KnockbackHeight - .45f) < .001f,
+                    "Knockback reaches half distance and arc apex halfway through duration");
+                stepKnockback.Invoke(game.Hero, new object[] { .15f });
+                Check(Mathf.Abs(game.Hero.transform.position.x - 3) < .001f && game.Hero.KnockbackHeight == 0 && !game.Hero.KnockedBack,
+                    "Knockback lands at configured distance and releases control");
+                game.Hero.ApplyChargeKnockback(Vector2.left, 3);
+                stepKnockback.Invoke(game.Hero, new object[] { .1f });
+                game.Hero.SafeEntry();
+                Check(!game.Hero.KnockedBack && game.Hero.KnockbackHeight == 0, "Safe entry clears airborne offset");
                 bullEnemy.transform.position = Vector2.left * 12;
                 cowboy.Initialize(cowboyEnemy); cowboyEnemy.transform.position = Vector2.zero;
                 game.Hero.transform.position = Vector2.right * 4; cowboy.Tick(game, 1, 0);
