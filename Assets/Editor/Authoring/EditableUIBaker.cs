@@ -77,7 +77,7 @@ namespace WesternLemegeton.EditorTools
    var wave=Box(p,"Wave",new Rect(491,91,343,40),panel);Label(wave.transform,"WaveText",new Rect(12,7,319,31),"WAVE 1 / 3 · 남은 적 3");
    var waveBreak=Box(p,"WaveBreak",new Rect(436,255,410,90),panel);Label(waveBreak.transform,"WaveBreakText",new Rect(20,12,370,65),"다음 웨이브",24,null,TextAnchor.MiddleCenter);
    Label(p,"CombatStatus",new Rect(27,605,360,25),"회피 ● · COMBO 0",14,muted);Bar(p,"HP",new Rect(27,638,322,16),Ink.Red,"100 / 100");Bar(p,"Ammo",new Rect(27,664,322,13),Ink.Cyan,"리볼버 6 / 6");
-   string[] keys={"Q","SPACE","2","3","1","R"},icons={"SlashIcon","HunterDash","SlashIcon","SlamIcon","Raven","RavenPortrait"};
+   string[] keys={"좌클릭","SPACE","2","3","1","R"},icons={"ShotIcon","HunterDash","SlashIcon","SlamIcon","Raven","RavenPortrait"};
    for(int i=0;i<6;i++)
    {float x=382+i*87;Label(p,"SkillKey"+i,new Rect(x,587,88,22),keys[i],13,muted);Box(p,"SkillFrame"+i,new Rect(x,610,69,67),panel);Icon(p,"SkillIcon"+i,new Rect(x+6,617,57,52),icons[i]);var cd=Box(p,"SkillCooldown"+i,new Rect(x,610,69,67),new Color(0,0,0,.67f));Label(cd.transform,"SkillCooldownText"+i,new Rect(2,20,65,31),"0.0",20,null,TextAnchor.MiddleCenter);Label(p,"SkillLabel"+i,new Rect(x-6,684,96,28),"기술",14,muted);}
    string[] stigma={"FireIcon","NatureIcon","Raven"};
@@ -107,7 +107,7 @@ namespace WesternLemegeton.EditorTools
   }
   void PauseAndSettings()
   {
-   var pause=Panel("Pause");view.PausePanel=pause.gameObject;Label(pause,"Pause_Title",new Rect(430,210,480,45),"잠시 숨을 고르다",27);Label(pause,"Controls",new Rect(430,273,520,100),"WASD 달리기 · SHIFT 걷기 · 좌클릭 공격\nQ 태그 · SPACE 회피 · 2 / 3 기술\n1 까마귀 명령 · R 연계 · M 지도");Button(pause,"Resume",new Rect(430,390,420,52),"계속하기",GameUIAction.Resume);Button(pause,"Pause_Settings",new Rect(430,458,420,48),"설정",GameUIAction.OpenSettings);
+   var pause=Panel("Pause");view.PausePanel=pause.gameObject;Label(pause,"Pause_Title",new Rect(430,210,480,45),"잠시 숨을 고르다",27);Label(pause,"Controls",new Rect(430,273,520,100),"WASD 달리기 · SHIFT 걷기 · 좌클릭 리볼버 공격\n무기 전환은 추후 추가 · SPACE 회피 · 2 / 3 기술\n1 까마귀 명령 · R 연계 · M 지도");Button(pause,"Resume",new Rect(430,390,420,52),"계속하기",GameUIAction.Resume);Button(pause,"Pause_Settings",new Rect(430,458,420,48),"설정",GameUIAction.OpenSettings);
    var result=Panel("Results");view.ResultsPanel=result.gameObject;Label(result,"ResultsTitle",new Rect(330,240,700,65),"다시, 잿빛 황야로",27);Label(result,"ResultsDetail",new Rect(330,317,700,35),"탐험 기록");Button(result,"Results_Town",new Rect(330,410,620,60),"히르바로 돌아가기",GameUIAction.EnterTown);
    var settings=Panel("Settings");view.SettingsPanel=settings.gameObject;Label(settings,"Settings_Title",new Rect(431,210,450,45),"설정",27);Label(settings,"Volume_Label",new Rect(431,290,450,27),"효과음 음량");
    var track=Box(settings,"Volume_Slider",new Rect(431,333,418,22),muted,true);var slider=track.gameObject.AddComponent<Slider>();slider.minValue=0;slider.maxValue=1;slider.value=1;var handle=Box(track.transform,"Volume_Handle",new Rect(0,-3,20,28),paper,true);slider.handleRect=handle.rectTransform;slider.targetGraphic=handle;
