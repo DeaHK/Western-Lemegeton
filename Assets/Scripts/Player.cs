@@ -4,6 +4,7 @@ using WesternLemegeton.Stigmas;
 
 namespace WesternLemegeton
 {
+    public enum DebugInvincibilityMode { Off, Full, HealthOnly }
     public class Player : MonoBehaviour
     {
         public CowboyRope Tether { get; set; }
@@ -12,6 +13,28 @@ namespace WesternLemegeton
         // Health / Damage / Invulnerability
         public const float MaxHp = 100;
         public float Hp = 100;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // 일반 피격 무적과 별도로 유지하는 디버그 설정입니다. 새 게임에서는 해제합니다.
+        DebugInvincibilityMode debugInvincibility;
+        public DebugInvincibilityMode DebugInvincibility
+        {
+            get => debugInvincibility;
+            set
+            {
+                debugInvincibility = value;
+                if (value != DebugInvincibilityMode.Full) return;
+                // 완전 무적으로 전환하면 이미 걸린 이동 제한도 해제합니다.
+                hitStun = chargeStun = 0;
+                bullCarrier = null;
+                ClearKnockback();
+                if (Tether) Tether.Release();
+            }
+        }
+#else
+        public DebugInvincibilityMode DebugInvincibility => DebugInvincibilityMode.Off;
+#endif
+        public bool DebugInvincible => DebugInvincibility == DebugInvincibilityMode.Full;
+        public bool DebugHealthProtected => DebugInvincibility != DebugInvincibilityMode.Off;
         public readonly BonusHealth BonusHp = new BonusHealth();
         public float MaxHealth => Dungeon.I && Dungeon.I.PassiveStats ? Mathf.Max(1, Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MaxHealth, MaxHp)) : MaxHp;
         float hitStun;
@@ -26,12 +49,13 @@ namespace WesternLemegeton
         // 돌진의 피해와 제어 효과는 회피/피격 무적을 함께 존중합니다.
         public bool TryReceiveChargeHit(float damage)
         {
-            if (invulnerable > 0 || bullCarrier || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return false;
+            if (DebugInvincible || invulnerable > 0 || bullCarrier || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return false;
             Hurt(damage);
             return Hp > 0;
         }
         public void BeginBullCarry(HauntedBullAttack carrier)
         {
+            if (DebugInvincible) return;
             ClearKnockback();
             bullCarrier = carrier;
             dashTime = 0; buffer = 0;
@@ -46,6 +70,7 @@ namespace WesternLemegeton
         }
         public void ApplyChargeKnockback(Vector2 direction, float distance, float duration = .3f, float arcHeight = .45f)
         {
+            if (DebugInvincible) return;
             ClearKnockback();
             knockbackDirection = direction.normalized;
             knockbackDistance = Mathf.Max(0, distance);
@@ -53,6 +78,13 @@ namespace WesternLemegeton
             knockbackArcHeight = Mathf.Max(0, arcHeight);
             dashTime = 0; buffer = 0;
             FinishSkill(); CancelBasic();
+        }
+        public bool TryApplyImpactControl(Vector2 direction, float distance, float stunSeconds)
+        {
+            if (Invulnerable || bullCarrier || Hp <= 0 || !Dungeon.I || !Dungeon.I.Running) return false;
+            ApplyChargeKnockback(direction, distance);
+            chargeStun = Mathf.Max(chargeStun, Mathf.Max(0, stunSeconds));
+            return true;
         }
         void TickChargeKnockback(float dt)
         {
@@ -87,12 +119,11 @@ namespace WesternLemegeton
         }
         void OnDisable() => ClearKnockback();
         float invulnerable;
-        public bool Invulnerable => invulnerable > 0;
+        public bool Invulnerable => DebugInvincible || invulnerable > 0;
         public int DamageEvents { get; private set; }
 
         // Weapon / Ammo / Reload
-        // 0 = dagger (preserved for later), 1 = revolver (current default weapon).
-        public int Weapon = 1, Ammo = 6;
+        public int Weapon, Ammo = 6;
         public float TagCd, Reload;
         [Min(.01f)] public float BaseReloadSeconds = 2;
         bool reloadUsesAttackSpeed, reloadResetsDodge;
@@ -194,8 +225,7 @@ namespace WesternLemegeton
         private void HandleActionInput(Dungeon g, Vector2 move)
         {
             if (Input.GetKeyDown(KeyCode.Space)) TryDodge(move);
-            // 무기 스왑 (추후 재활성화)
-            // if (Input.GetKeyDown(KeyCode.Q)) TryTag();
+            if (Input.GetKeyDown(KeyCode.Q)) TryTag();
             HandleRavenInput(g);
             if (Input.GetKeyDown(KeyCode.E)) TrySkill(0);
             if (Input.GetKeyDown(KeyCode.R)) TrySkill(1);
@@ -224,6 +254,7 @@ namespace WesternLemegeton
 
         private void TickMovement(float dt, Vector2 move)
         {
+            if (DebugInvincible && Tether) Tether.Release();
             if (Tether && Tether.IsBound) { dashTime = 0; Tether.Pull(dt); return; }
             if (dashTime > 0)
             {
@@ -302,8 +333,9 @@ namespace WesternLemegeton
 
         private void ApplyIncomingDamage(float damage, bool useHitInvulnerability)
         {
-            if ((useHitInvulnerability && invulnerable > 0) || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return;
-            Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
+            if (DebugInvincible || (useHitInvulnerability && invulnerable > 0) || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return;
+            // 체력 보호 모드에서도 이후 피격 연출·경직·일반 피격 무적은 그대로 실행합니다.
+            if (!DebugHealthProtected) Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
             if (Dungeon.I.Stigmas)
             {
                 hitStun = Mathf.Max(0, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
@@ -684,10 +716,12 @@ namespace WesternLemegeton
 
         public void ResetForRun()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugInvincibility = DebugInvincibilityMode.Off;
+#endif
             Hp = MaxHp;
             BonusHp.Clear(); hitStun = 0;
-            Weapon = 1; // Start every run with the revolver; dagger support remains available for later.
-            Combo = HitCombo = DamageEvents = 0;
+            Weapon = Combo = HitCombo = DamageEvents = 0;
             Ammo = 6;
             DashCd = TagCd = Reload = attackCd = comboTime = invulnerable = elapsed = buffer = hitTime = 0;
             reloadUsesAttackSpeed = reloadResetsDodge = false;

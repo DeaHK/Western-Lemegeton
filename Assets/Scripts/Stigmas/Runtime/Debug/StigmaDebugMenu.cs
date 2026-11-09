@@ -23,6 +23,8 @@ namespace WesternLemegeton.Stigmas
         GameHUD hud;
         StigmaOwner owner;
         int definitionIndex;
+        int tab, enemyIndex;
+        Vector2 enemyScroll;
         Vector2 scroll;
         string message = "획득 → 장착 → 단계 변경 순서로 확인합니다.";
         void Awake() { manager = GetComponent<StigmaManager>(); hud = GetComponent<GameHUD>(); }
@@ -41,6 +43,13 @@ namespace WesternLemegeton.Stigmas
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1));
             GUILayout.BeginArea(new Rect(12, 12, 490, 650), GUI.skin.window);
             GUILayout.Label("STIGMA DEBUG · F9 닫기 · 게임 진행 정지");
+            tab = GUILayout.Toolbar(tab, new[] { "성흔", "몬스터 / 무적" });
+            if (tab == 1)
+            {
+                DrawCombatDebug();
+                GUILayout.EndArea(); GUI.matrix = previous;
+                return;
+            }
             owner = (StigmaOwner)GUILayout.Toolbar((int)owner, new[] { "플레이어", "까마귀" });
             scroll = GUILayout.BeginScrollView(scroll);
             var definitions = manager.Database.Definitions.FindAll(d => d.SupportsOwner(owner));
@@ -100,6 +109,42 @@ namespace WesternLemegeton.Stigmas
             if (GUILayout.Button("닫기")) hud.StigmaDebugOpen = false;
             GUILayout.EndArea();
             GUI.matrix = previous;
+        }
+        void DrawCombatDebug()
+        {
+            var game = Dungeon.I;
+            GUI.enabled = game && game.Hero;
+            if (game && game.Hero)
+            {
+                int selected = GUILayout.SelectionGrid((int)game.Hero.DebugInvincibility,
+                    new[] { "무적 OFF", "완전 무적", "체력만 보호 (피격·넉백·기절 적용)" }, 1);
+                if (selected != (int)game.Hero.DebugInvincibility)
+                    game.Hero.DebugInvincibility = (DebugInvincibilityMode)selected;
+            }
+            GUILayout.Label("체력만 보호: 체력·보호막은 유지하고 피격 효과는 적용합니다. 회피·일반 피격 무적 시간은 기존 규칙을 따릅니다. 새 게임에서는 OFF입니다.");
+            GUI.enabled = true;
+            GUILayout.Space(12);
+            GUILayout.Label("Game Scene Bindings → Enemy Prefabs");
+            var prefabs = game && game.Scene ? game.Scene.EnemyPrefabs : null;
+            enemyScroll = GUILayout.BeginScrollView(enemyScroll, GUILayout.Height(270));
+            if (prefabs == null || prefabs.Length == 0) GUILayout.Label("연결된 몬스터가 없습니다.");
+            else
+            {
+                enemyIndex = Mathf.Clamp(enemyIndex, 0, prefabs.Length - 1);
+                for (int i = 0; i < prefabs.Length; i++)
+                {
+                    GUI.enabled = prefabs[i];
+                    string label = "[" + i + "] " + (prefabs[i] ? prefabs[i].name : "연결 없음");
+                    if (GUILayout.Toggle(enemyIndex == i, label, GUI.skin.button) && prefabs[i]) enemyIndex = i;
+                }
+            }
+            GUILayout.EndScrollView();
+            GUI.enabled = game && game.CanDebugSpawnEnemy && prefabs != null && prefabs.Length > 0 && prefabs[enemyIndex];
+            if (GUILayout.Button("선택한 몬스터 1마리 소환", GUILayout.Height(35))) game.TryDebugSpawnEnemy(enemyIndex, out message);
+            GUI.enabled = true;
+            if (!game || !game.CanDebugSpawnEnemy) GUILayout.Label("소환은 던전 전투 방에서 사용할 수 있습니다.");
+            GUILayout.Label(message);
+            if (GUILayout.Button("닫기")) hud.StigmaDebugOpen = false;
         }
 #endif
     }

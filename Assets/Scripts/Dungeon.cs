@@ -478,6 +478,37 @@ namespace WesternLemegeton
 
         #region Enemy Spawn / Enemy Tracking
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool CanDebugSpawnEnemy => Hero && Hero.Hp > 0 &&
+            (State == RunState.Combat || State == RunState.WaveBreak || State == RunState.Exit);
+
+        public bool TryDebugSpawnEnemy(int prefabIndex, out string message)
+        {
+            if (!CanDebugSpawnEnemy) { message = "던전 전투 방에서 소환할 수 있습니다."; return false; }
+            if (!Scene || Scene.EnemyPrefabs == null || prefabIndex < 0 || prefabIndex >= Scene.EnemyPrefabs.Length || !Scene.EnemyPrefabs[prefabIndex])
+            { message = "Game Scene Bindings의 몬스터 프리팹 연결을 확인하세요."; return false; }
+            Enemy prefab = Scene.EnemyPrefabs[prefabIndex];
+            // 슬롯 번호와 몬스터 Kind는 별개입니다. 목록 뒤에 추가한 전용 몬스터도 원래 종류로 초기화합니다.
+            Vector2 at = Vector2.zero;
+            bool found = false;
+            for (float radius = 4; radius <= 12 && !found; radius += 1)
+                for (int i = 0; i < 24; i++)
+                {
+                    float angle = i * Mathf.PI / 12;
+                    Vector2 candidate = Pos + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                    if ((Rules.ClampToRoom(candidate,1) - candidate).sqrMagnitude > .000001f || !SpawnSafe(candidate)) continue;
+                    at = candidate; found = true; break;
+                }
+            if (!found) { message = "헌터 주변에 장애물·다른 적과 겹치지 않는 소환 공간이 없습니다."; return false; }
+            var enemy = Instantiate(prefab, at, Quaternion.identity, actors ? actors : Scene.EnemyContainer);
+            enemy.Init(prefab.Kind, Room);
+            Enemies.Add(enemy);
+            Ink.Ring(at,.9f,Ink.Gold,.6f);
+            message = prefab.name + " 소환 완료. 창을 닫으면 몬스터가 행동합니다.";
+            return true;
+        }
+#endif
+
         private void SpawnWaveEnemies(int count)
         {
             for (int i = 0; i < count; i++)
@@ -711,6 +742,7 @@ namespace WesternLemegeton
             foreach (var attack in FindObjectsByType<RobeManAttack>(FindObjectsSortMode.None)) attack.Cancel();
             foreach (var bottle in FindObjectsByType<RobeManPoisonBottle>(FindObjectsSortMode.None)) Destroy(bottle.gameObject);
             foreach (var zone in FindObjectsByType<RobeManPoisonZone>(FindObjectsSortMode.None)) Destroy(zone.gameObject);
+            foreach (var volley in FindObjectsByType<LoganDynamiteVolley>(FindObjectsSortMode.None)) Destroy(volley.gameObject);
             if (Stigmas) Stigmas.Combat?.Skills.ClearWorldObjects();
             foreach (var b in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(b.gameObject);
             foreach (var f in FindObjectsByType<Fade>(FindObjectsSortMode.None)) Destroy(f.gameObject);
