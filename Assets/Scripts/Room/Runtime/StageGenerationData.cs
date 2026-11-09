@@ -1,4 +1,4 @@
-﻿// Western Lemegeton - StageGenerationData.cs
+// Western Lemegeton - StageGenerationData.cs
 // 역할: 공통 열거형과 룸/스테이지 데이터 및 ScriptableObject 정의
 // 주의: 기존 게임의 ExpeditionProgress.cs / RoomAuthoring 및 실제 Instantiate 로직은 수정하지 않음.
 
@@ -41,10 +41,4 @@ namespace WesternLemegeton
         [Min(0)] public int Count;
     }
 
-    [CreateAssetMenu(fileName = "StageRoleConfig", menuName = "Western Lemegeton/Stage Role Config")]
-    public class StageRoleConfig : ScriptableObject
-    {
-        public StageType Type = StageType.Basic;
-        public List<RoleCount> Counts = new List<RoleCount>();
-    }
 }

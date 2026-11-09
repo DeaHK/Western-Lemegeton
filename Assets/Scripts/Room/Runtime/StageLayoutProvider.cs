@@ -26,6 +26,7 @@ namespace WesternLemegeton
 
         public StageLayout CurrentLayout { get; private set; }
         public bool HasLayout => CurrentLayout != null;
+        public string LastError { get; private set; }
         public event Action<StageLayout> OnLayoutGenerated;
 
         /// <summary>Inspector 설정으로 최초 한 번 생성한다. 이미 있으면 캐시를 재사용한다.</summary>
@@ -40,9 +41,20 @@ namespace WesternLemegeton
         private bool TryGenerateStageInternal(StageRoleConfig config, int requestedSeed, bool forceRegenerate)
         {
             if (!forceRegenerate && HasLayout) return true;
+            if (!TryPrepareStage(config, requestedSeed, out StageLayout generated)) return false;
+            CommitPreparedStage(generated);
+            NotifyLayoutGenerated();
+            return true;
+        }
+
+        // Generation is transactional: preparation never changes the active layout or emits events.
+        internal bool TryPrepareStage(StageRoleConfig config, int requestedSeed, out StageLayout layout)
+        {
+            layout = null;
+            LastError = null;
             if (config == null || roomCatalog == null)
             {
-                Debug.LogError("StageLayoutProvider: assign Role Config and Room Catalog.", this);
+                LastError = "Assign Role Config and Room Catalog.";
                 return false;
             }
             try
@@ -52,16 +64,28 @@ namespace WesternLemegeton
                     : StageGenerator.Generate(requestedSeed, config, useRandomTemplate ? (TemplateId?)null : fixedTemplate);
                 StageLayoutValidator.Validate(generated, config, generationMode == RoomGenerationMode.ProceduralFixedFirstTwo);
                 roomCatalog.AssignPrefabs(generated, region);
-                CurrentLayout = generated;
-                seed = requestedSeed;
-                OnLayoutGenerated?.Invoke(CurrentLayout);
+                layout = generated;
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"StageLayoutProvider: generation failed: {ex.Message}", this);
+                LastError = ex.Message;
                 return false;
             }
+        }
+
+        internal void CommitPreparedStage(StageLayout layout)
+        {
+            CurrentLayout = layout;
+            seed = layout.Seed;
+        }
+
+        internal void NotifyLayoutGenerated()
+        {
+            if (OnLayoutGenerated == null) return;
+            foreach (Action<StageLayout> listener in OnLayoutGenerated.GetInvocationList())
+                try { listener(CurrentLayout); }
+                catch (Exception ex) { Debug.LogException(ex, this); }
         }
 
         public RoomNode GetRoom(int roomIndex)

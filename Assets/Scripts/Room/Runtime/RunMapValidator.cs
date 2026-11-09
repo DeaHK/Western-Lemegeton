@@ -17,6 +17,7 @@ namespace WesternLemegeton
             foreach (int size in sizes) expected += size;
             if (map.Nodes.Count != expected) throw new Exception("Node count mismatch.");
             var ids = new HashSet<int>();
+            int bossIncoming = 0;
             foreach (RunMapNode node in map.Nodes)
             {
                 if (!ids.Add(node.Id)) throw new Exception("Duplicate node ID.");
@@ -31,8 +32,11 @@ namespace WesternLemegeton
                     if (!unique.Add(nextId)) throw new Exception("Duplicate link.");
                     RunMapNode target = map.Find(nextId);
                     if (target == null || target.Layer != node.Layer + 1) throw new Exception("Invalid link target.");
+                    if (target.Layer == sizes.Length - 1) bossIncoming++;
                 }
             }
+            if (bossIncoming != 1 || sizes[sizes.Length - 2] != 1)
+                throw new Exception("The final Boss must have exactly one stage-entry node and one incoming path.");
             var reachable = new HashSet<int>();
             var queue = new Queue<int>();
             queue.Enqueue(map.Nodes[0].Id);
@@ -47,6 +51,7 @@ namespace WesternLemegeton
             {
                 if (node.Layer == 0 && node.Type != StageType.Basic) throw new Exception("Start must be Basic.");
                 if (node.Layer == sizes.Length - 1 && node.Type != StageType.Boss) throw new Exception("End must be Boss.");
+                if (node.Layer < sizes.Length - 1 && node.Type == StageType.Boss) throw new Exception("Boss is only allowed in the final layer.");
             }
         }
     }

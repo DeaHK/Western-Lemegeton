@@ -14,7 +14,11 @@ namespace WesternLemegeton
         {
             if (layerSizes == null || layerSizes.Length < 2 || layerSizes[0] != 1 || layerSizes[layerSizes.Length - 1] != 1)
                 throw new ArgumentException("First and last layers must each have one node.");
+            if (layerSizes.Length < 3 || layerSizes[layerSizes.Length - 2] != 1)
+                throw new ArgumentException("The final Boss must have exactly one stage-entry node.");
             if (middleTypes == null || middleTypes.Length == 0) throw new ArgumentException("Middle types required.");
+            foreach (StageType type in middleTypes)
+                if (type == StageType.Boss) throw new ArgumentException("Boss is only allowed in the final layer.");
             foreach (int size in layerSizes) if (size < 1) throw new ArgumentException("Layer size must be positive.");
             for (int i = 0; i < layerSizes.Length - 1; i++)
                 if (layerSizes[i + 1] > 2 * layerSizes[i])

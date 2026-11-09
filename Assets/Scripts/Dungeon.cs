@@ -35,6 +35,15 @@ namespace WesternLemegeton
 
         // Progress
         public readonly ExpeditionProgress Progress = new ExpeditionProgress();
+        public bool RunMapInputBlocked { get; set; }
+        public bool UsesGeneratedStage => Progress.GeneratedLayout != null;
+        public event System.Action GeneratedMapRequested;
+        public event System.Action GeneratedMapCloseRequested;
+        public event System.Func<bool> GeneratedRunStartRequested;
+        public event System.Action GeneratedStageReleased;
+        public event System.Func<bool> GeneratedStageCompletionRequested;
+        public event System.Func<int, bool> GeneratedRouteSelectionRequested;
+        public string GetRoomName(int index) => UsesGeneratedStage ? $"{Progress.GeneratedLayout.Rooms[index].Role} {index + 1:00}" : MapNames[index];
         public int Room => Progress.Segment;
         public int MapIndex => Progress.Map;
         public int WaveIndex => Progress.Wave;
@@ -47,14 +56,14 @@ namespace WesternLemegeton
         public float RunTime;
         public bool RouteTravel;
         public readonly bool[] Events = new bool[5];
-        public bool Running => (!hud || (!hud.SettingsOpen && !hud.StigmaDebugOpen)) && (State == RunState.Town || State == RunState.Combat || State == RunState.Exit || State == RunState.WaveBreak);
+        public bool Running => !RunMapInputBlocked && (!hud || (!hud.SettingsOpen && !hud.StigmaDebugOpen)) && (State == RunState.Town || State == RunState.Combat || State == RunState.Exit || State == RunState.WaveBreak);
 
         // Room / Logical XY footprints
         public static Rect[] Obstacles = System.Array.Empty<Rect>(), SolidObstacles = System.Array.Empty<Rect>();
         public bool IsTown { get; private set; }
         public ExplorationRoom[] Rooms { get; private set; }
         public ExplorationRoom CurrentRoom => IsTown || Rooms == null ? null : Rooms[MapIndex];
-        public ExplorationRoomKind CurrentKind => IsTown ? ExplorationRoomKind.Combat : RoomGraph.Kind(MapIndex);
+        public ExplorationRoomKind CurrentKind => IsTown ? ExplorationRoomKind.Combat : Progress.KindAt(MapIndex);
         public Vector2 Pos => Hero.transform.position;
         public Vector2 RoomCenter => IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
         public Vector2 LocalPos => Pos - RoomCenter;
@@ -130,6 +139,12 @@ namespace WesternLemegeton
 
         private void Update()
         {
+            if (RunMapInputBlocked)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.M))
+                    GeneratedMapCloseRequested?.Invoke();
+                return;
+            }
             if (hud && hud.StigmaDebugOpen) return;
             if (State == RunState.Cinematic)
             {
@@ -206,6 +221,11 @@ namespace WesternLemegeton
 
         private void ResetRun()
         {
+            if (UsesGeneratedStage)
+            {
+                if (Rooms != null) foreach (var room in Rooms) room.Layout.Root.gameObject.SetActive(false);
+                GeneratedStageReleased?.Invoke();
+            }
             Cinematics.Cancel();
             DestroyTrackedEnemies();
             ClearTransient();
@@ -243,6 +263,7 @@ namespace WesternLemegeton
 
         private void ClearEnvironment()
         {
+            if (Rooms != null) foreach (var room in Rooms) if (room.Layout.Root) room.Layout.Root.gameObject.SetActive(false);
             Scene.Hirva.gameObject.SetActive(false);
             foreach (var room in Scene.Rooms) room.gameObject.SetActive(false);
             Rooms = null;
@@ -277,6 +298,25 @@ namespace WesternLemegeton
             for (int i = 0; i < Rooms.Length; i++) Rooms[i] = Scene.Rooms[i].Bind();
         }
 
+        /// <summary>Installs validated generated room instances, retaining the existing progress object and activation pipeline.</summary>
+        public void EnterGeneratedStage(StageLayout layout, RoomAuthoring[] authored, int runSeed, int layer, bool newRun)
+        {
+            if (layout == null || authored == null || authored.Length != 6) throw new System.ArgumentException("Six authored rooms required.");
+            foreach (var room in authored) if (!room || !room.InitialSpawn) throw new System.ArgumentException("Room and InitialSpawn required.");
+            if (newRun) ResetRun();
+            else { Cinematics.Cancel(); DestroyTrackedEnemies(); ClearTransient(); }
+            ClearEnvironment();
+            Seed = runSeed;
+            Random.InitState(layout.Seed);
+            WaveCountdown = 0;
+            IsTown = false;
+            Progress.BeginGeneratedStage(layout, layer, runSeed);
+            Rooms = new ExplorationRoom[6];
+            for (int i = 0; i < 6; i++) Rooms[i] = authored[i].Bind();
+            RouteTravel = false;
+            ActivateRoom(-1);
+        }
+
         #endregion
 
         #region Room Activation / Travel
@@ -309,6 +349,7 @@ namespace WesternLemegeton
 
         private void BeginRoomContent(int from)
         {
+            if (CurrentKind == ExplorationRoomKind.Entry) Progress.CompleteService();
             if (Progress.MapComplete)
             {
                 State = RunState.Exit;
@@ -352,6 +393,7 @@ namespace WesternLemegeton
             float best = 2.1f;
             foreach (var d in CurrentRoom.Doors)
             {
+                if (!d || !d.gameObject.activeInHierarchy) continue;
                 float distance = Vector2.Distance(Pos, d.Position);
                 if (distance < best)
                 {
@@ -365,12 +407,31 @@ namespace WesternLemegeton
         public bool TryDoor(RoomDoor door)
         {
             if (!Running || door == null || CurrentRoom == null || !CurrentRoom.Doors.Contains(door) || Vector2.Distance(Pos, door.Position) > 2.1f) return false;
+            if (door.RunMapDestination >= 0)
+            {
+                if (!UsesGeneratedStage || !Progress.SegmentComplete || GeneratedRouteSelectionRequested == null ||
+                    !GeneratedRouteSelectionRequested(door.RunMapDestination))
+                {
+                    Tell("열려 있는 분기 표식 근처에서 F 키를 누르세요");
+                    return false;
+                }
+                return true;
+            }
             if (door.StageExit)
             {
                 if (!Progress.SegmentComplete)
                 {
                     Tell($"출구 봉인 · 아직 정리하지 않은 방 {6-MapsCleared}개");
                     return false;
+                }
+                if (UsesGeneratedStage)
+                {
+                    if (GeneratedStageCompletionRequested == null || !GeneratedStageCompletionRequested())
+                    {
+                        Tell("스테이지 완료 처리에 실패했습니다 · RunMap으로 돌아갈 수 없습니다");
+                        return false;
+                    }
+                    return true;
                 }
                 OpenRoute(true);
                 return State == RunState.Route;
@@ -389,6 +450,7 @@ namespace WesternLemegeton
         {
             if (State == RunState.Town && Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f)
             {
+                if (GeneratedRunStartRequested != null) return GeneratedRunStartRequested();
                 OpenRoute(true);
                 return true;
             }
@@ -396,7 +458,7 @@ namespace WesternLemegeton
             var door = NearbyDoor();
             if (door) return TryDoor(door);
             // Door handling has priority over service-room interaction.
-            if (CurrentKind != ExplorationRoomKind.Combat && Vector2.Distance(Pos, RoomAuthoring.Point(CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f)
+            if (CurrentKind != ExplorationRoomKind.Combat && CurrentKind != ExplorationRoomKind.Entry && Vector2.Distance(Pos, RoomAuthoring.Point(CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f)
             {
                 if (Progress.MapComplete && CurrentKind != ExplorationRoomKind.Sigil)
                 {
@@ -457,7 +519,7 @@ namespace WesternLemegeton
             WaveCountdown = 0;
             int count = GetWaveEnemyCount();
             SpawnWaveEnemies(count);
-            Tell($"{MapNames[MapIndex]} · WAVE {WaveIndex+1}/{WavesInMap} · 적 전멸 시 연결문 개방");
+            Tell($"{GetRoomName(MapIndex)} · WAVE {WaveIndex+1}/{WavesInMap} · 적 전멸 시 연결문 개방");
             PlayBossEntrance();
         }
 
@@ -591,7 +653,7 @@ namespace WesternLemegeton
         {
             Hero.Hp = Mathf.Min(Hero.MaxHealth, Hero.Hp + 18);
             State = RunState.Exit;
-            Tell(Progress.SegmentComplete ? "여섯 방 정리 완료 · 출구방의 동쪽 문에서 F 키" : "전투방 정리 완료 · 열린 문으로 다음 방을 탐험하세요");
+            Tell(Progress.SegmentComplete ? (UsesGeneratedStage ? "여섯 방 정리 완료 · 출구 표식에서 F 키" : "여섯 방 정리 완료 · 출구방의 동쪽 문에서 F 키") : "전투방 정리 완료 · 열린 문으로 다음 방을 탐험하세요");
         }
 
         #endregion
@@ -614,6 +676,7 @@ namespace WesternLemegeton
         public void OpenRoute(bool travel = false)
         {
             if (!Running) return;
+            if (UsesGeneratedStage) { GeneratedMapRequested?.Invoke(); return; }
             BeforeRoute = State;
             RouteTravel = travel && (IsTown ? Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f : AtStageExit());
             State = RunState.Route;
@@ -626,6 +689,7 @@ namespace WesternLemegeton
 
         public bool ChooseRoom(int index)
         {
+            if (UsesGeneratedStage) return false;
             if (State != RunState.Route || !RouteTravel || index != NextRoom || index >= 5) return false;
             if (IsTown) StartRun();
             else
@@ -651,6 +715,7 @@ namespace WesternLemegeton
 
         public void FinishExpedition()
         {
+            if (UsesGeneratedStage) return;
             if (State == RunState.Route && RouteTravel && Room == 4 && Progress.SegmentComplete) State = RunState.Victory;
         }
 
@@ -778,4 +843,3 @@ namespace WesternLemegeton
         #endregion
     }
 }
-
