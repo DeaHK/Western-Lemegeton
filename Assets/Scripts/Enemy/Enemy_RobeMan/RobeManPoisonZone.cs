@@ -8,6 +8,7 @@ namespace WesternLemegeton
     {
         float remaining, insideTime;
         bool expired;
+        int crowdControl;
         readonly Dictionary<Enemy, float> enemyExposure = new Dictionary<Enemy, float>();
         readonly List<Enemy> enemySnapshot = new List<Enemy>();
         readonly List<Enemy> previousTargets = new List<Enemy>();
@@ -16,10 +17,11 @@ namespace WesternLemegeton
         public float Interval { get; private set; }
 
         // 원형 표시와 독 성능을 생성 시 고정하고 유효한 최소 반경·수명·피해 간격을 보장합니다.
-        public static RobeManPoisonZone Spawn(Vector2 center, float radius, float lifetime, float damage, float interval)
+        public static RobeManPoisonZone Spawn(Vector2 center, float radius, float lifetime, float damage, float interval, int crowdControl = 1)
         {
             var circle = CreateCircle("RobeMan / Poison danger zone", center, radius, new Color(.3f, .8f, .12f, .4f));
             var zone = circle.gameObject.AddComponent<RobeManPoisonZone>();
+            zone.crowdControl = crowdControl;
             zone.Radius = Mathf.Max(.01f, radius);
             zone.remaining = Mathf.Max(.01f, lifetime);
             zone.Damage = Mathf.Max(0, damage);
@@ -50,7 +52,7 @@ namespace WesternLemegeton
                 while (insideTime >= Interval)
                 {
                     insideTime -= Interval;
-                    game.Hero.HurtOverTime(Damage);
+                    game.Hero.HurtOverTime(Damage, crowdControl);
                 }
             }
             else insideTime = 0; // 나갔다 들어오면 다시 1초부터 셉니다.

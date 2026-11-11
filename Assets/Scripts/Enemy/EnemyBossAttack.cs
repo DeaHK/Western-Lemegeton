@@ -10,6 +10,7 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class MeleeSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
             [Min(0)] public float Damage = 15;
             [Min(0)] public float TriggerRange = 1.7f;
             [Min(0)] public float HitRange = 1.75f;
@@ -21,6 +22,7 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class ChargeSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
             [Min(0)] public float Damage = 22;
             [Min(0)] public float TriggerRange = 8.5f;
             [Min(0)] public float WindupSeconds = .9f;
@@ -35,6 +37,7 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class RangedSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
             [Min(0)] public float Damage = 17;
             [Min(0)] public float TriggerRange = 8.5f;
             [Min(0)] public float WindupSeconds = .9f;
@@ -131,7 +134,7 @@ namespace WesternLemegeton
                 transform.position = Rules.ResolveObstacles(position,
                     position + aim * Charge.ChargeSpeed * speedMultiplier * dt, Charge.BodyRadius);
                 // 기존 보스처럼 이동 전 거리로 명중을 판정하고 돌진 중에는 대기시간을 줄이지 않습니다.
-                if (distance < Charge.HitRange) game.Hero.Hurt(Charge.Damage);
+                if (distance < Charge.HitRange) game.Hero.Hurt(Charge.Damage, Charge.CrowdControl);
                 if (chargeTime <= 0) activePattern = Pattern.None;
                 return true;
             }
@@ -171,7 +174,7 @@ namespace WesternLemegeton
             else if (activePattern == Pattern.Melee)
             {
                 Ink.Ring(position, Melee.WarningRadius, Ink.Red);
-                if (Vector2.Distance(position, game.Pos) < Melee.HitRange) game.Hero.Hurt(Melee.Damage);
+                if (Vector2.Distance(position, game.Pos) < Melee.HitRange) game.Hero.Hurt(Melee.Damage, Melee.CrowdControl);
             }
             else if (activePattern == Pattern.Ranged)
             {
@@ -183,7 +186,7 @@ namespace WesternLemegeton
                 {
                     float angle = (i / (float)count * 360 + cycle * Ranged.RotationPerAttack) * Mathf.Deg2Rad;
                     Bullet.Spawn(position, new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed,
-                        Ranged.Damage, true, Ranged.ProjectileLifetime, source: owner);
+                        Ranged.Damage, true, Ranged.ProjectileLifetime, source: owner, crowdControl: Ranged.CrowdControl);
                 }
             }
         }

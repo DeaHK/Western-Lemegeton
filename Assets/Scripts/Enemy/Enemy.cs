@@ -10,6 +10,8 @@ namespace WesternLemegeton
 
         // Identity / health
         public int Kind;
+        [Tooltip("공격 모듈이 없는 기존 몬스터의 군중제어: 0 없음, 1 무적에 차단, 2 일반 무적 관통")]
+        [Range(0, 2)] public int CrowdControl = 1;
         [HideInInspector] public bool AuxiliaryTarget;
         public event System.Action<Enemy> Damaged;
         public event System.Action<Enemy> Dying;
@@ -173,7 +175,7 @@ namespace WesternLemegeton
             chargeTime -= dt;
             transform.position = Rules.ResolveObstacles(p, p + aim * 12 * StigmaMoveMultiplier * dt, .5f);
             // dist is captured before movement, as in the original charge branch.
-            if (dist < 1.15f) g.Hero.Hurt(22);
+            if (dist < 1.15f) g.Hero.Hurt(22, CrowdControl);
         }
 
         #endregion
@@ -233,7 +235,7 @@ namespace WesternLemegeton
 
         private void FireRangedProjectiles(Vector2 p)
         {
-            for (int i = -1; i <= 1; i++) Bullet.SpawnAimed(this, projectileAim, 6.5f, i * 16, 13, true, 3);
+            for (int i = -1; i <= 1; i++) Bullet.SpawnAimed(this, projectileAim, 6.5f, i * 16, 13, true, 3, crowdControl: CrowdControl);
         }
 
         #endregion
@@ -262,7 +264,7 @@ namespace WesternLemegeton
             for (int i = 0; i < count; i++)
             {
                 float a = (i / (float)count * 360 + cycle * 13) * Mathf.Deg2Rad;
-                Bullet.Spawn(p, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (Hp < MaxHp * .5f ? 6 : 4.5f), 17, true, 5, source: this);
+                Bullet.Spawn(p, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (Hp < MaxHp * .5f ? 6 : 4.5f), 17, true, 5, source: this, crowdControl: CrowdControl);
             }
         }
 
@@ -431,6 +433,7 @@ namespace WesternLemegeton
         Vector3 worldPosition, worldVelocity;
         float life, damage;
         bool hostile;
+        int crowdControl = 1;
         int stage;
         long attackId;
         SpriteRenderer sprite;
@@ -440,14 +443,14 @@ namespace WesternLemegeton
 
         // 원형 탄막은 평면 방향을 유지하되 표시와 판정을 같은 높이에서 처리합니다.
         public static void Spawn(Vector2 p, Vector2 v, float damage, bool hostile, float life,
-            int stage = 0, long attackId = 0, Component source = null)
+            int stage = 0, long attackId = 0, Component source = null, int crowdControl = 1)
         {
             Vector3 origin = source ? CombatBody.For(source).Muzzle : PaperWorld.Point(p, .95f);
-            SpawnWorld(origin, ProjectileSpace.Direction(v), damage, hostile, life, stage, attackId);
+            SpawnWorld(origin, ProjectileSpace.Direction(v), damage, hostile, life, stage, attackId, crowdControl);
         }
 
         public static Bullet SpawnWorld(Vector3 origin, Vector3 velocity, float damage, bool hostile,
-            float life, int stage = 0, long attackId = 0)
+            float life, int stage = 0, long attackId = 0, int crowdControl = 1)
         {
             var sr = Ink.Shape(hostile ? "Hostile bullet" : "Revolver bullet", null,
                 ProjectileSpace.Ground(origin), hostile ? Vector2.one * .25f : new Vector2(.4f, .1f),
@@ -458,20 +461,21 @@ namespace WesternLemegeton
             bullet.worldPosition = origin; bullet.worldVelocity = velocity;
             bullet.velocity = ProjectileSpace.Ground(velocity).normalized * velocity.magnitude;
             bullet.damage = damage; bullet.hostile = hostile; bullet.life = life;
+            bullet.crowdControl = Mathf.Clamp(crowdControl, 0, 2);
             bullet.stage = stage; bullet.attackId = attackId;
             bullet.Show();
             return bullet;
         }
 
         public static void SpawnAimed(Component source, Vector3 target, float speed, float angle,
-            float damage, bool hostile, float life, int stage = 0, long attackId = 0)
+            float damage, bool hostile, float life, int stage = 0, long attackId = 0, int crowdControl = 1)
         {
             Vector3 origin = CombatBody.For(source).Muzzle;
             Vector3 direction = target-origin;
             if (direction.sqrMagnitude < .000001f) direction = Vector3.right;
             // XY 각도 증가를 XZ로 옮기면 Y축 회전 부호가 반대입니다.
             direction = Quaternion.AngleAxis(-angle, Vector3.up) * direction.normalized;
-            SpawnWorld(origin, direction * speed, damage, hostile, life, stage, attackId);
+            SpawnWorld(origin, direction * speed, damage, hostile, life, stage, attackId, crowdControl);
         }
 
         void Update()
@@ -486,7 +490,7 @@ namespace WesternLemegeton
             {
                 worldPosition = impact; Show();
                 SkillEffects.WorldImpact(impact, hostile ? Ink.Red : Ink.Gold);
-                if (hunter) game.Hero.Hurt(damage);
+                if (hunter) game.Hero.Hurt(damage, crowdControl);
                 else if (enemy) game.Hero.Hit(enemy, damage, stage, attackId);
                 Destroy(gameObject); return;
             }

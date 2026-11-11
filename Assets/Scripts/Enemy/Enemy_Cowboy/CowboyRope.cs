@@ -18,6 +18,7 @@ namespace WesternLemegeton
         // 기존 구속을 해제하고 양쪽 참조를 연결한 뒤, 밧줄을 공격할 수 있는 보조 적 판정을 생성합니다.
         public static CowboyRope Bind(CowboyAttack cowboy, Player hunter, float speed, float maxLength)
         {
+            if (!cowboy || !hunter || !hunter.CanReceiveCrowdControl(cowboy.LassoCrowdControl)) return null;
             if (cowboy.Rope) cowboy.Rope.Release();
             if (hunter.Tether) hunter.Tether.Release();
             var root = new GameObject("Cowboy / Breakable rope");

@@ -1210,6 +1210,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
   Kind: 0
+  CrowdControl: 1
+  AuxiliaryTarget: 0
   legacyHp: 55
   legacyMaxHp: 55
   AuthoredArt: {fileID: 3186613369214940384}
@@ -1254,6 +1256,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f59f3360fd00ce54d8c50f7a917b8ba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RobeManAttack
+  CrowdControl: 0
   DetectionRadius: 10
   RequiredStaySeconds: 5
   MeleeRange: 1.7
@@ -1267,6 +1270,7 @@ MonoBehaviour:
   ArcHeight: 3
   ThrowRecovery: 0.4
   PoisonMoveMultiplier: 0.35
+  PoisonCrowdControl: 0
   PoisonRadius: 3
   PoisonLifetime: 6
   PoisonDamage: 5

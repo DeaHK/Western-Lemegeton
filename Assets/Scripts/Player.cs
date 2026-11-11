@@ -46,11 +46,21 @@ namespace WesternLemegeton
         HauntedBullAttack bullCarrier;
         public bool IsCarriedBy(HauntedBullAttack carrier) => bullCarrier == carrier && Hp > 0;
         public bool Stunned => hitStun > 0 || chargeStun > 0 || bullCarrier || KnockedBack;
-        // 돌진의 피해와 제어 효과는 회피/피격 무적을 함께 존중합니다.
+        // 피해를 주기 전에 검사합니다. 방금 준 피해의 피격 무적으로 제어가 취소되면 안 됩니다.
+        public bool CanReceiveCrowdControl(int crowdControl)
+            => crowdControl > 0 && !DebugInvincible && Hp > 0 && Dungeon.I &&
+                Dungeon.I.Running && !Dungeon.I.IsTown && (crowdControl >= 2 || invulnerable <= 0);
+
         public bool TryReceiveChargeHit(float damage)
+            => TryReceiveChargeHit(damage, 1, out _);
+        public bool TryReceiveChargeHit(float damage, int crowdControl, out bool applyControl)
         {
-            if (DebugInvincible || invulnerable > 0 || bullCarrier || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return false;
-            Hurt(damage);
+            applyControl = false;
+            if (DebugInvincible || bullCarrier || !Dungeon.I || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return false;
+            applyControl = CanReceiveCrowdControl(crowdControl);
+            if (invulnerable > 0 && !applyControl) return false;
+            Hurt(damage, crowdControl);
+            applyControl &= Hp > 0;
             return Hp > 0;
         }
         public void BeginBullCarry(HauntedBullAttack carrier)
@@ -79,9 +89,9 @@ namespace WesternLemegeton
             dashTime = 0; buffer = 0;
             FinishSkill(); CancelBasic();
         }
-        public bool TryApplyImpactControl(Vector2 direction, float distance, float stunSeconds)
+        public bool TryApplyImpactControl(Vector2 direction, float distance, float stunSeconds, int crowdControl = 1)
         {
-            if (Invulnerable || bullCarrier || Hp <= 0 || !Dungeon.I || !Dungeon.I.Running) return false;
+            if (!CanReceiveCrowdControl(crowdControl) || bullCarrier) return false;
             ApplyChargeKnockback(direction, distance);
             chargeStun = Mathf.Max(chargeStun, Mathf.Max(0, stunSeconds));
             return true;
@@ -324,24 +334,27 @@ namespace WesternLemegeton
             ResolveRavenFollowups(g, e, stage, attack, isSkill, chain);
         }
 
-        public void Hurt(float damage)
-            => ApplyIncomingDamage(damage, true);
+        public void Hurt(float damage, int crowdControl = 1)
+            => ApplyIncomingDamage(damage, true, crowdControl);
 
         // 지속 피해는 일반 피격 무적을 만들거나 사용하지 않습니다. 보호막은 그대로 적용합니다.
-        public void HurtOverTime(float damage)
-            => ApplyIncomingDamage(damage, false);
+        public void HurtOverTime(float damage, int crowdControl = 1)
+            => ApplyIncomingDamage(damage, false, crowdControl);
 
-        private void ApplyIncomingDamage(float damage, bool useHitInvulnerability)
+        private void ApplyIncomingDamage(float damage, bool useHitInvulnerability, int crowdControl)
         {
-            if (DebugInvincible || (useHitInvulnerability && invulnerable > 0) || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return;
+            if (DebugInvincible || !Dungeon.I || !Dungeon.I.Running || Dungeon.I.IsTown || Hp <= 0) return;
+            bool applyControl = CanReceiveCrowdControl(crowdControl);
+            bool applyDamage = invulnerable <= 0 || (!useHitInvulnerability && crowdControl < 2);
+            if (!applyDamage && !applyControl) return;
             // 체력 보호 모드에서도 이후 피격 연출·경직·일반 피격 무적은 그대로 실행합니다.
-            if (!DebugHealthProtected) Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
+            if (applyDamage && !DebugHealthProtected) Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
             if (Dungeon.I.Stigmas)
             {
-                hitStun = Mathf.Max(0, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
+                if (applyControl) hitStun = Mathf.Max(hitStun, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
                 Dungeon.I.Stigmas.Combat?.SyncShieldBuff();
             }
-            if (useHitInvulnerability) invulnerable = 1;
+            if (useHitInvulnerability && applyDamage) invulnerable = 1;
             Ink.Burst(transform.position, Ink.Red, 12);
             Dungeon.I.Sound();
             if (Hp <= 0) Dungeon.I.BeginDeath();

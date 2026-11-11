@@ -19,7 +19,7 @@ public static class TimelineSetup
  {
   string path=Folder+"/"+name+".playable";if(AssetDatabase.LoadAssetAtPath<TimelineAsset>(path))return;
   var timeline=ScriptableObject.CreateInstance<TimelineAsset>();AssetDatabase.CreateAsset(timeline,path);
-  timeline.editorSettings.fps=60;timeline.durationMode=TimelineAsset.DurationMode.FixedLength;timeline.fixedDuration=duration;
+  timeline.editorSettings.frameRate=60.0;timeline.durationMode=TimelineAsset.DurationMode.FixedLength;timeline.fixedDuration=duration;
   var camera=Track(timeline,CinematicCue.Camera,"01 Camera · focus and zoom");
   if(kind==CinematicKind.BossEntrance)
   {Clip(camera,"Focus on the seal keeper",0,1,0,1);Clip(camera,"Hold boss close-up",1,1.1,1,1);Clip(camera,"Return to combat camera",2.1,1.3,1,0);}

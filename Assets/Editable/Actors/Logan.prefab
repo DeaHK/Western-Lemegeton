@@ -1145,6 +1145,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
   Kind: 3
+  CrowdControl: 1
   AuxiliaryTarget: 0
   legacyHp: 55
   legacyMaxHp: 55
@@ -1164,7 +1165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9591859f6e347e1bac2962c78d3e004, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyHealth
-  BaseHealth: 350
+  BaseHealth: 750
   HealthPerRoom: 0
 --- !u!114 &900000002
 MonoBehaviour:
@@ -1198,9 +1199,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dadeb0042e941ef900874c608d8e71f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.LoganBossAttack
+  CrowdControl: 0
   EnableMachineGun: 1
   EnableBarrage: 1
   MachineGun:
+    CrowdControl: 0
     TriggerRange: 10
     AimSeconds: 1
     Damage: 10
@@ -1210,6 +1213,7 @@ MonoBehaviour:
     BulletSpeed: 10
     BulletLifetime: 3
   Barrage:
+    CrowdControl: 0
     TriggerRange: 10
     AimSeconds: 1
     Damage: 10
@@ -1226,12 +1230,12 @@ MonoBehaviour:
     SweepCyclesPerSecond: 1
   WhipRange: 3
   BodyRadius: 0.5
-  PhaseTwoHealth: 150
   TransitionSeconds: 5
   TransitionFov: 23
   PhaseTwoStarted:
     m_PersistentCalls:
       m_Calls: []
+  PhaseTwoHealth: 350
   EnableDynamiteDodge: 1
   DodgeDistance: 6
   DodgeSeconds: 0.4
@@ -1242,6 +1246,8 @@ MonoBehaviour:
   EnableDynamite: 1
   PhaseTwoMoveMultiplier: 1.2
   Shotgun:
+    CrowdControl: 0
+    SwingCrowdControl: 2
     RecoverySeconds: 0.5
     TriggerRange: 8
     AimSeconds: 1
@@ -1249,6 +1255,7 @@ MonoBehaviour:
     SwingAngle: 100
     SwingRange: 3
     SwingSeconds: 0.3
+    SwingRangeDisplaySeconds: 0.5
     KnockbackDistance: 3
     StunSeconds: 0.5
     PelletCount: 7
@@ -1256,15 +1263,17 @@ MonoBehaviour:
     BulletDistance: 8
     BulletSpeed: 12
   Whip:
+    CrowdControl: 0
     RecoverySeconds: 0.5
     WindupSeconds: 1
     Damage: 20
     HitInterval: 0.5
     Duration: 3
-    SlowFraction: 0.5
+    SlowFraction: -0.25
     AttackRadius: 3
     Cooldown: 8
   Dynamite:
+    CrowdControl: 0
     RecoverySeconds: 0.5
     TriggerRange: 14
     WindupSeconds: 1

@@ -42,7 +42,7 @@ namespace WesternLemegeton
                     for (int i = 0; i < ProjectileCount; i++)
                     {
                         float angle = (i - (ProjectileCount - 1) * .5f) * SpreadAngle;
-                        Bullet.SpawnAimed(owner, worldAim, ProjectileSpeed, angle, Damage, true, ProjectileLifetime);
+                        Bullet.SpawnAimed(owner, worldAim, ProjectileSpeed, angle, Damage, true, ProjectileLifetime, crowdControl: CrowdControl);
                     }
                     windup = -1;
                     cooldown = CooldownSeconds;

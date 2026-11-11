@@ -8,6 +8,8 @@ namespace WesternLemegeton
     {
         public enum ActionState { Chase, Stomp, Lock, Charge, Stunned }
         public enum ChargeKind { FullCharge, ShortCharge }
+        [Tooltip("풀 차지의 끌기와 충돌 기절. 숏 차지는 기본 Crowd Control 값을 사용합니다.")]
+        [Range(0, 2)] public int FullChargeCrowdControl = 2;
         public ChargeKind CurrentCharge { get; private set; }
         public float FullChargeCooldownRemaining => cooldown;
         public ActionState Action { get; private set; }
@@ -125,11 +127,15 @@ namespace WesternLemegeton
                     transform.position = next;
                     traveled += distance / steps;
 
-                    if (!hitHunter && Vector2.Distance(next, game.Pos) <= CurrentHitRadius && game.Hero.TryReceiveChargeHit(Damage))
+                    int control = shortCharge ? CrowdControl : FullChargeCrowdControl;
+                    if (!hitHunter && Vector2.Distance(next, game.Pos) <= CurrentHitRadius && game.Hero.TryReceiveChargeHit(Damage, control, out bool applyControl))
                     {
                         hitHunter = true;
-                        if (shortCharge) game.Hero.ApplyChargeKnockback(aim, Mathf.Max(0, ShortHitKnockback), ShortHitKnockbackDuration, ShortHitKnockbackHeight);
-                        else { carriedHunter = game.Hero; carriedHunter.BeginBullCarry(this); }
+                        if (applyControl)
+                        {
+                            if (shortCharge) game.Hero.ApplyChargeKnockback(aim, Mathf.Max(0, ShortHitKnockback), ShortHitKnockbackDuration, ShortHitKnockbackHeight);
+                            else { carriedHunter = game.Hero; carriedHunter.BeginBullCarry(this); }
+                        }
                     }
                 }
                 if (shortCharge && traveled >= ShortDistance - .0001f)

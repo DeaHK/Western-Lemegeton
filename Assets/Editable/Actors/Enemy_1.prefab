@@ -790,6 +790,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75c6310d2c42f904896768749a5f794c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
+  CrowdControl: 1
   Kind: 1
   legacyHp: 80
   legacyMaxHp: 80
@@ -843,6 +844,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65fc49ef70fc49dd9a9ccc7f80261709, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyChargeAttack
+  CrowdControl: 1
   Damage: 22
   TriggerRange: 6
   WindupSeconds: 0.85

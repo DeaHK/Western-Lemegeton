@@ -165,7 +165,9 @@ namespace WesternLemegeton
 
         private void UpdatePlayerSkillSlots(Player p)
         {
-            Skill(0, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", p.TagCd, p.Weapon == 0 ? "단검" : "리볼버");
+            // Slot 0 represents the always-available primary attack while weapon swapping is paused.
+            Text("SkillKey0", "좌클릭");
+            Skill(0, "ShotIcon", 0, "리볼버");
             Skill(1, "HunterDash", p.DashCd, "회피");
             Skill(2, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", p.Skill2Cd, p.Weapon == 0 ? "베어 가르기" : "원 샷");
             Skill(3, p.Weapon == 0 ? "SlamIcon" : "BarrageIcon", p.Skill3Cd, p.Weapon == 0 ? "내려찍기" : "난사");
@@ -327,7 +329,10 @@ namespace WesternLemegeton
                 else
                 {
                     var door = g.NearbyDoor();
-                    if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {g.GetRoomName(door.Destination)} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
+                    // 분기 표식은 방 번호가 아니라 다음 스테이지 노드를 가리킵니다.
+                    if (door && door.RunMapDestination >= 0)
+                        message = $"F · 다음 스테이지 ({door.RunMapDestinationType}) 이동";
+                    else if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {g.GetRoomName(door.Destination)} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
                     else if (g.CurrentKind != ExplorationRoomKind.Combat && g.CurrentKind != ExplorationRoomKind.Entry && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 획득 / 교체 / 강화" : g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : "F · 악마카드 진열대 / 카드 선택";
                 }
             }

@@ -42,7 +42,7 @@ namespace WesternLemegeton
                     Vector2 position = transform.position;
                     Ink.Ring(position, WarningRadius, Ink.Red);
                     // 준비 시작 때가 아니라 공격이 나가는 순간에 거리를 확인합니다.
-                    if (Vector2.Distance(position, game.Pos) < HitRange) game.Hero.Hurt(Damage);
+                    if (Vector2.Distance(position, game.Pos) < HitRange) game.Hero.Hurt(Damage, CrowdControl);
                     windup = -1;
                     cooldown = CooldownSeconds;
                 }

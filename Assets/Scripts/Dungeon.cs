@@ -357,6 +357,17 @@ namespace WesternLemegeton
             }
             else if (CurrentKind == ExplorationRoomKind.Combat)
             {
+                // TODO(BOSS-IMPLEMENTATION-PRIORITY-1): Replace this placeholder when the Boss enemy
+                // and its death callback are implemented. The real Boss defeat must complete this
+                // room through the normal final-wave flow; until then, entering the Boss room clears it.
+                if (UsesGeneratedStage && Progress.GeneratedLayout.StageType == StageType.Boss &&
+                    Progress.GeneratedLayout.Rooms[MapIndex].Role == RoomRole.Boss)
+                {
+                    while (!Progress.MapComplete) Progress.CompleteWave();
+                    State = RunState.Exit;
+                    Tell("임시 검증: Boss 방에 도착해 Boss 전투를 완료한 것으로 처리했습니다");
+                    return;
+                }
                 SpawnWave();
                 if (from < 0) Cinematics.Play(CinematicKind.DungeonEntrance);
             }

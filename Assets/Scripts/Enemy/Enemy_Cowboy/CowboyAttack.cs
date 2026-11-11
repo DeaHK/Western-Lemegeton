@@ -24,6 +24,7 @@ namespace WesternLemegeton
         public Vector2 InitialCooldownRange = Vector2.zero;
         // 올가미 준비 연출과 비행·끌림 설정입니다. 머리 위 고리는 공격 판정과 별개입니다.
         [Header("올가미")]
+        [Range(0, 2)] public int LassoCrowdControl = 2;
         [Min(0)] public float SpinSeconds = 3;
         [Header("올가미 준비 표시 (공격 판정과 별개)")]
         [Min(0)] public float SpinHeight = 1.8f;
@@ -147,7 +148,7 @@ namespace WesternLemegeton
             {
                 float angle = (i - (count - 1) * .5f) * SpreadAngle;
                 Bullet.SpawnWorld(start, Quaternion.AngleAxis(-angle, Vector3.up) * direction * BulletSpeed,
-                    ShotDamage, true, ProjectileLifetime);
+                    ShotDamage, true, ProjectileLifetime, crowdControl: CrowdControl);
             }
         }
 
@@ -157,7 +158,7 @@ namespace WesternLemegeton
             for (int i = 0; i < count; i++)
             {
                 float angle = (i - (count - 1) * .5f) * SpreadAngle;
-                Bullet.SpawnAimed(Owner, target, BulletSpeed, angle, ShotDamage, true, ProjectileLifetime);
+                Bullet.SpawnAimed(Owner, target, BulletSpeed, angle, ShotDamage, true, ProjectileLifetime, crowdControl: CrowdControl);
             }
         }
 

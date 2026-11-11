@@ -9,12 +9,13 @@ namespace WesternLemegeton
         PaperCard card;
         SpriteRenderer marker;
         bool landed;
+        int crowdControl;
         public Vector2 Target => target;
         public float VisualHeight { get; private set; }
 
         // 발사 시 목표 지점과 독 성능을 복사하고 조준 표시의 정리 책임을 넘겨받습니다.
         public static RobeManPoisonBottle Spawn(Vector2 start, Vector2 target, float duration, float arcHeight,
-            float radius, float lifetime, float damage, float interval, SpriteRenderer marker)
+            float radius, float lifetime, float damage, float interval, SpriteRenderer marker, int crowdControl = 1)
         {
             var sprite = Ink.Shape("RobeMan / Poison bottle", null, start, new Vector2(.28f, .4f),
                 new Color(.4f, .9f, .25f), 1000);
@@ -23,6 +24,7 @@ namespace WesternLemegeton
             bottle.duration = Mathf.Max(.01f, duration); bottle.arcHeight = Mathf.Max(0, arcHeight);
             bottle.radius = radius; bottle.lifetime = lifetime; bottle.damage = damage; bottle.interval = interval;
             bottle.marker = marker;
+            bottle.crowdControl = crowdControl;
             bottle.card = sprite.GetComponent<PaperCard>();
             return bottle;
         }
@@ -45,7 +47,7 @@ namespace WesternLemegeton
             if (card) card.RenderOffset = Vector3.up * VisualHeight;
             if (t < 1) return;
             landed = true;
-            RobeManPoisonZone.Spawn(target, radius, lifetime, damage, interval);
+            RobeManPoisonZone.Spawn(target, radius, lifetime, damage, interval, crowdControl);
             if (marker) RobeManPoisonZone.Remove(marker.gameObject);
             marker = null;
             RobeManPoisonZone.Remove(gameObject);

@@ -7,6 +7,9 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class ShotgunSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
+            [Tooltip("총 휘두르기 넉백·기절 전용 설정")]
+            [Range(0, 2)] public int SwingCrowdControl = 2;
             [Min(0)] public float RecoverySeconds = .5f;
             [Min(0)] public float TriggerRange = 8;
             [Min(0)] public float AimSeconds = 1;
@@ -14,6 +17,8 @@ namespace WesternLemegeton
             [Range(0,360)] public float SwingAngle = 100;
             [Min(0)] public float SwingRange = 3;
             [Min(0)] public float SwingSeconds = .3f;
+            [Tooltip("총 휘두르기 시작 시 실제 판정 범위를 표시하는 시간. 공격 선딜레이와는 별개입니다.")]
+            [Min(0)] public float SwingRangeDisplaySeconds = .5f;
             [Min(0)] public float KnockbackDistance = 1;
             [Min(0)] public float StunSeconds = .5f;
             [Min(1)] public int PelletCount = 7;
@@ -24,6 +29,7 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class WhipSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
             [Min(0)] public float RecoverySeconds = .5f;
             [Min(0)] public float WindupSeconds = 1;
             [Min(0)] public float Damage = 20;
@@ -37,6 +43,7 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class DynamiteSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
             [Min(0)] public float RecoverySeconds = .5f;
             [Min(0)] public float TriggerRange = 14;
             [Min(0)] public float WindupSeconds = 1;
@@ -130,8 +137,32 @@ namespace WesternLemegeton
             Action = ActionState.Aim;
             swingDirection = (game.Pos-(Vector2)transform.position).normalized;
             if (swingDirection.sqrMagnitude < .001f) swingDirection=Vector2.right;
-            if (Vector2.Distance(transform.position,game.Pos) <= WhipRange) Action = ActionState.Swing;
+            if (Vector2.Distance(transform.position,game.Pos) <= WhipRange)
+            {
+                Action = ActionState.Swing;
+                ShowShotgunSwingRange();
+            }
             return true;
+        }
+        // 고정된 휘두르기 방향과 판정 반경으로 부채꼴의 양 끝과 바깥 호를 표시합니다.
+        void ShowShotgunSwingRange()
+        {
+            float life = Mathf.Max(0, Shotgun.SwingRangeDisplaySeconds);
+            float radius = Mathf.Max(0, Shotgun.SwingRange);
+            if (life <= 0 || radius <= 0) return;
+            Vector2 center = transform.position;
+            float halfAngle = Mathf.Clamp(Shotgun.SwingAngle, 0, 360) * .5f;
+            Vector2 previous = center + (Vector2)(Quaternion.Euler(0, 0, -halfAngle) * swingDirection) * radius;
+            Ink.Line(center, previous, Ink.Gold, .06f, life);
+            int segments = Mathf.Max(1, Mathf.CeilToInt(halfAngle * 2 / 5));
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = Mathf.Lerp(-halfAngle, halfAngle, i / (float)segments);
+                Vector2 next = center + (Vector2)(Quaternion.Euler(0, 0, angle) * swingDirection) * radius;
+                Ink.Line(previous, next, Ink.Gold, .06f, life);
+                previous = next;
+            }
+            Ink.Line(center, previous, Ink.Gold, .06f, life);
         }
         bool TickPhaseTwo(Dungeon game, float speedMultiplier, float dt)
         {
@@ -157,7 +188,7 @@ namespace WesternLemegeton
                     // 현재 부채꼴 안의 헌터를 한 번만 밀어냅니다. 총 휘두르기는 피해 없는 제어 공격입니다.
                     Vector2 delta=game.Pos-(Vector2)transform.position;
                     if (!swingHit && delta.magnitude<=Shotgun.SwingRange && Vector2.Angle(swingDirection,delta)<=Shotgun.SwingAngle*.5f)
-                        swingHit=game.Hero.TryApplyImpactControl(delta,Shotgun.KnockbackDistance,Shotgun.StunSeconds);
+                        swingHit=game.Hero.TryApplyImpactControl(delta,Shotgun.KnockbackDistance,Shotgun.StunSeconds,Shotgun.SwingCrowdControl);
                     float angle=Mathf.Lerp(-Shotgun.SwingAngle*.5f,Shotgun.SwingAngle*.5f,Mathf.Clamp01(elapsed/Mathf.Max(.01f,Shotgun.SwingSeconds)));
                     Vector2 direction=Quaternion.Euler(0,0,angle)*swingDirection;
                     Ink.Line(transform.position,(Vector2)transform.position+direction*Shotgun.SwingRange,Ink.Gold,.12f,.08f);
@@ -174,7 +205,7 @@ namespace WesternLemegeton
                     {
                         float angle=count==1?0:Mathf.Lerp(-Shotgun.SpreadAngle*.5f,Shotgun.SpreadAngle*.5f,i/(float)(count-1));
                         float speed=Mathf.Max(.01f,Shotgun.BulletSpeed);
-                        Bullet.SpawnAimed(owner,LockedAim,speed,angle,Shotgun.Damage,true,Mathf.Max(.01f,Shotgun.BulletDistance)/speed);
+                        Bullet.SpawnAimed(owner,LockedAim,speed,angle,Shotgun.Damage,true,Mathf.Max(.01f,Shotgun.BulletDistance)/speed,crowdControl:Shotgun.CrowdControl);
                     }
                     BeginRecovery();
                 }
@@ -193,7 +224,7 @@ namespace WesternLemegeton
                 else elapsed+=dt;
                 while(nextShot<Mathf.Max(.01f,Whip.Duration) && nextShot<=elapsed)
                 {
-                    if(Vector2.Distance(transform.position,game.Pos)<=Whip.AttackRadius) game.Hero.HurtOverTime(Whip.Damage);
+                    if(Vector2.Distance(transform.position,game.Pos)<=Whip.AttackRadius) game.Hero.HurtOverTime(Whip.Damage,Whip.CrowdControl);
                     Ink.Ring(transform.position,Whip.AttackRadius,Ink.Red,.15f);
                     nextShot+=Mathf.Max(.01f,Whip.HitInterval);
                 }

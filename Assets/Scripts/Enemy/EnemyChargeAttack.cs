@@ -43,7 +43,7 @@ namespace WesternLemegeton
                 transform.position = Rules.ResolveObstacles(position,
                     position + aim * ChargeSpeed * speedMultiplier * dt, BodyRadius);
                 // 기존처럼 이동 전 거리로 명중을 판정하고 돌진 중에는 대기시간을 줄이지 않습니다.
-                if (distance < HitRange) game.Hero.Hurt(Damage);
+                if (distance < HitRange) game.Hero.Hurt(Damage, CrowdControl);
                 return true;
             }
             if (windup >= 0)

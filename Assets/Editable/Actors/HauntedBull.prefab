@@ -575,6 +575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75c6310d2c42f904896768749a5f794c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
+  CrowdControl: 1
   Kind: 1
   AuxiliaryTarget: 0
   legacyHp: 80
@@ -717,6 +718,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9e217c3a640f824f8945537f90d1c24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.HauntedBullAttack
+  CrowdControl: 1
+  FullChargeCrowdControl: 2
   WildTriggerRange: 6
   WildHitRadius: 1.1
   WildWarningLength: 30

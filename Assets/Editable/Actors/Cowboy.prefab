@@ -313,6 +313,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
   Kind: 2
+  CrowdControl: 1
   AuxiliaryTarget: 0
   legacyHp: 55
   legacyMaxHp: 55
@@ -454,6 +455,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d350b3990f665645b8658d1dfb58921, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.CowboyAttack
+  CrowdControl: 0
   ShootRange: 8
   ShotWindup: 0.6
   ShotCooldown: 1.5
@@ -464,6 +466,7 @@ MonoBehaviour:
   SpreadAngle: 16
   WarningRadius: 0.8
   InitialCooldownRange: {x: 0, y: 0}
+  LassoCrowdControl: 2
   SpinSeconds: 3
   SpinHeight: 1.8
   SpinOrbitRadius: 0.35
@@ -1436,4 +1439,3 @@ SortingGroup:
   m_SortingOrder: 0
   m_SortAtRoot: 1
   m_Sort3DAs2D: 0
-

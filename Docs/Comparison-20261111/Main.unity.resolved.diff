@@ -1,0 +1,212 @@
+--- 
++++ 
+@@ -461,145 +461,4 @@
+   m_Name: 
+   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomAuthoring
+---- !u!1001 &873524882
+-PrefabInstance:
+-  m_ObjectHideFlags: 0
+-  serializedVersion: 2
+-  m_Modification:
+-    serializedVersion: 3
+-    m_TransformParent: {fileID: 0}
+-    m_Modifications:
+-    - target: {fileID: 2449912314272859915, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: coordinator
+-      value: 
+-      objectReference: {fileID: 1410185166}
+-    - target: {fileID: 4317221962029335320, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_Name
+-      value: RunMapCanvas
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_Pivot.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_Pivot.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_AnchorMax.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_AnchorMax.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_AnchorMin.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_AnchorMin.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_SizeDelta.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_SizeDelta.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalPosition.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalPosition.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalPosition.z
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalRotation.w
+-      value: 1
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalRotation.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalRotation.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalRotation.z
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_AnchoredPosition.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_AnchoredPosition.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalEulerAnglesHint.x
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalEulerAnglesHint.y
+-      value: 0
+-      objectReference: {fileID: 0}
+-    - target: {fileID: 9133876315685098406, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      propertyPath: m_LocalEulerAnglesHint.z
+-      value: 0
+-      objectReference: {fileID: 0}
+-    m_RemovedComponents: []
+-    m_RemovedGameObjects: []
+-    m_AddedGameObjects: []
+-    m_AddedComponents:
+-    - targetCorrespondingSourceObject: {fileID: 4317221962029335320, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-      insertIndex: -1
+-      addedObject: {fileID: 873524885}
+-  m_SourcePrefab: {fileID: 100100000, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+---- !u!1 &873524883 stripped
+-GameObject:
+-  m_CorrespondingSourceObject: {fileID: 4317221962029335320, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-  m_PrefabInstance: {fileID: 873524882}
+-  m_PrefabAsset: {fileID: 0}
+---- !u!114 &873524884 stripped
+-MonoBehaviour:
+-  m_CorrespondingSourceObject: {fileID: 2449912314272859915, guid: Assets/Scripts/Room/Runtime/UI/RunMapCanvas.prefab, type: 3}
+-  m_PrefabInstance: {fileID: 873524882}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 0}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: Assets/Scripts/Room/Runtime/UI/RunMapView.cs, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunMapView
+---- !u!114 &873524885
+-MonoBehaviour:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 873524883}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: Assets/Scripts/Room/Runtime/UI/RunStageSelectionController.cs, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RunStageSelectionController
+-  coordinator: {fileID: 1410185166}
+-  roomBridge: {fileID: 285334361}
+-  view: {fileID: 873524884}
+-  initialSeed: 12345
+-  showOnStart: 0
+-  showDeveloperControls: 0
+-  onStageReady:
+-    m_PersistentCalls:
+-      m_Calls: []
+ --- !u!1001 &970243128
+ PrefabInstance:
+@@ -1267,5 +1126,5 @@
+   startSeed: 12345
+   testCount: 400
+-  layerSizes: 0100000002000000030000000100000001000000
++  layerSizes: 0100000002000000030000000200000001000000
+   middleTypes: 000000000100000002000000
+ --- !u!114 &1410185166
+@@ -1283,6 +1142,6 @@
+   stageProvider: {fileID: 1527023425}
+   runSeed: 12345
+-  layerSizes: 0100000002000000030000000100000001000000
+-  middleTypes: 00000000
++  layerSizes: 0100000002000000030000000200000001000000
++  middleTypes: 0000000003000000
+   stageConfigs:
+   - Type: 0
+@@ -1324,5 +1183,5 @@
+   seed: 12345
+   useRandomTemplate: 1
+-  fixedTemplate: 1
++  fixedTemplate: 0
+   generationMode: 1
+   allowLoops: 1
+@@ -1542,5 +1401,4 @@
+   - component: {fileID: 1954788961}
+   - component: {fileID: 1954788960}
+-  - component: {fileID: 1954788962}
+   m_Layer: 0
+   m_Name: Game_Systems
+@@ -1718,7 +1576,7 @@
+   EnemyContainer: {fileID: 217853482}
+   EnemyPrefabs:
+-  - {fileID: 6045581329847303124, guid: Assets/Editable/Actors/Enemy_0.prefab, type: 3}
+-  - {fileID: 9030929874692762983, guid: Assets/Editable/Actors/Enemy_1.prefab, type: 3}
+-  - {fileID: 3448459361593370134, guid: Assets/Editable/Actors/Enemy_2.prefab, type: 3}
++  - {fileID: 2638676454961308732, guid: Assets/Editable/Actors/RobeMan.prefab, type: 3}
++  - {fileID: 7388577224520322663, guid: Assets/Editable/Actors/HauntedBull.prefab, type: 3}
++  - {fileID: 5806485708312099170, guid: Assets/Editable/Actors/Cowboy.prefab, type: 3}
+   - {fileID: 4263070132024738417, guid: Assets/Editable/Actors/Boss.prefab, type: 3}
+   UI: {fileID: 2088121561}
+@@ -1841,19 +1699,4 @@
+   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Stigmas.StigmaManager
+   database: {fileID: 11400000, guid: Assets/Resources/Stigmas/StigmaDatabase.asset, type: 2}
+---- !u!114 &1954788962
+-MonoBehaviour:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 1954788947}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: Assets/Scripts/Room/Runtime/StageDungeonBuilder.cs, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.StageDungeonBuilder
+-  controller: {fileID: 873524885}
+-  dungeon: {fileID: 1954788954}
+-  gridSpacing: {x: 60, y: 44}
+ --- !u!1001 &2043279049
+ PrefabInstance:
+@@ -2130,3 +1973,2 @@
+   - {fileID: 1174311531}
+   - {fileID: 1861781159}
+-  - {fileID: 873524882}

@@ -237,6 +237,14 @@ namespace WesternLemegeton
                 CheckRouteChoiceReadability(choices);
                 int next = choices[0].RunMapDestination;
                 d.Hero.transform.position = choices[0].Position;
+                // 분기 표식의 Destination=-1을 일반 방 인덱스로 조회하지 않는지 검사합니다.
+                var gameView = UnityEngine.Object.FindAnyObjectByType<GameUIView>();
+                Check(gameView, "Game HUD exists at the field route choice");
+                typeof(GameUIView).GetMethod("Prompt", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(gameView, new object[] { d });
+                bool routePrompt = false;
+                foreach (var label in gameView.GetComponentsInChildren<UnityEngine.UI.Text>(true))
+                    if (label.name == "PromptText" && label.text.Contains("다음 스테이지")) routePrompt = true;
+                Check(routePrompt, "Field route prompt describes the next stage without indexing a room");
                 Check(d.TryTravel(), "Select a connected next stage through field interaction");
                 float deadline = Time.realtimeSinceStartup + 120;
                 while (Builder.IsBuilding && Time.realtimeSinceStartup < deadline) yield return null;

@@ -206,6 +206,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75c6310d2c42f904896768749a5f794c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Enemy
+  CrowdControl: 1
   Kind: 3
   legacyHp: 650
   legacyMaxHp: 650
@@ -259,10 +260,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28e0c73cb23b435ca36d710cc8d56fda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.EnemyBossAttack
+  CrowdControl: 1
   EnableMelee: 0
   EnableCharge: 1
   EnableRanged: 1
   Melee:
+    CrowdControl: 1
     Damage: 15
     TriggerRange: 1.7
     HitRange: 1.75
@@ -270,6 +273,7 @@ MonoBehaviour:
     CooldownSeconds: 1.5
     WarningRadius: 1.55
   Charge:
+    CrowdControl: 1
     Damage: 22
     TriggerRange: 8.5
     WindupSeconds: 0.9
@@ -280,6 +284,7 @@ MonoBehaviour:
     BodyRadius: 0.5
     WarningRadius: 2.5
   Ranged:
+    CrowdControl: 1
     Damage: 17
     TriggerRange: 8.5
     WindupSeconds: 0.9

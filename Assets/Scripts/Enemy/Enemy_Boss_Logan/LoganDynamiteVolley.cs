@@ -20,6 +20,7 @@ namespace WesternLemegeton
         Vector2 start;
         float age, damage, radius, fuse, height;
         bool hunterHit;
+        int crowdControl;
         public int BombCount => bombs.Count;
         // 비행 중인 폭탄도 고정된 착지 예정 범위를 위험 구역으로 제공합니다.
         public bool Threatens(Vector2 position, float margin)
@@ -33,6 +34,7 @@ namespace WesternLemegeton
         {
             var volley=new GameObject("Logan / Dynamite volley").AddComponent<LoganDynamiteVolley>();
             volley.start=origin; volley.damage=Mathf.Max(0,settings.Damage);
+            volley.crowdControl=settings.CrowdControl;
             volley.radius=Mathf.Max(.01f,settings.ExplosionRadius); volley.fuse=Mathf.Max(0,settings.FuseSeconds);
             volley.height=Mathf.Max(0,settings.ArcHeight);
             int count=1+Mathf.Max(0,settings.AdditionalCount);
@@ -84,7 +86,7 @@ namespace WesternLemegeton
                 if(enemy && !enemy.Dead && enemy.gameObject.activeInHierarchy && Vector2.Distance(center,enemy.transform.position)<=radius && victims.Add(enemy.GetInstanceID()))
                     enemy.TakeEnvironmentDamage(damage);
             if(!hunterHit && game.Hero && game.Hero.Hp>0 && Vector2.Distance(center,game.Pos)<=radius)
-            { hunterHit=true; game.Hero.Hurt(damage); }
+            { hunterHit=true; game.Hero.Hurt(damage,crowdControl); }
         }
     }
 }

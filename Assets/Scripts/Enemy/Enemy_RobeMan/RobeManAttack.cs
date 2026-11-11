@@ -24,6 +24,7 @@ namespace WesternLemegeton
         [Min(0)] public float ThrowRecovery = .4f;
         [Range(0, 1)] public float PoisonMoveMultiplier = .35f;
         [Header("독 위험구역 (임시 표시)")]
+        [Range(0, 2)] public int PoisonCrowdControl = 1;
         [Min(.01f)] public float PoisonRadius = 4;
         [Min(.01f)] public float PoisonLifetime = 6;
         [Min(0)] public float PoisonDamage = 5;
@@ -75,7 +76,7 @@ namespace WesternLemegeton
                 if (timer <= 0)
                 {
                     owner.SetMeleeWarning(false, MeleeRange);
-                    if (Vector2.Distance(transform.position, game.Pos) <= MeleeHitRange) game.Hero.Hurt(MeleeDamage);
+                    if (Vector2.Distance(transform.position, game.Pos) <= MeleeHitRange) game.Hero.Hurt(MeleeDamage, CrowdControl);
                     CurrentPhase = Phase.MeleeRecovery;
                     timer = MeleeRecovery;
                     if (timer <= 0) FinishMelee(game);
@@ -95,7 +96,7 @@ namespace WesternLemegeton
                 if (timer <= 0)
                 {
                     RobeManPoisonBottle.Spawn(transform.position, LockedTarget, FlightSeconds, ArcHeight,
-                        PoisonRadius, PoisonLifetime, PoisonDamage, PoisonInterval, marker);
+                        PoisonRadius, PoisonLifetime, PoisonDamage, PoisonInterval, marker, PoisonCrowdControl);
                     marker = null; // 조준 표시는 이제 독병이 관리합니다.
                     CurrentPhase = Phase.ThrowRecovery;
                     timer = ThrowRecovery;

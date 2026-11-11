@@ -12,6 +12,7 @@ namespace WesternLemegeton
         [System.Serializable]
         public class GunSettings
         {
+            [Range(0, 2)] public int CrowdControl = 1;
             [Min(0)] public float TriggerRange = 10;
             [Min(0)] public float AimSeconds = 1;
             [Min(0)] public float Damage = 10;
@@ -40,7 +41,6 @@ namespace WesternLemegeton
         [Tooltip("채찍 시작 거리 및 총 난사 도약/샷건 휘두르기의 근접 경계")]
         [Min(0)] public float WhipRange = 3;
         [Min(.01f)] public float BodyRadius = .5f;
-        public float PhaseTwoHealth = 150;
         [Min(.01f)] public float TransitionSeconds = 5;
         [Range(10,60)] public float TransitionFov = 23;
         public UnityEvent PhaseTwoStarted = new UnityEvent();
@@ -63,6 +63,9 @@ namespace WesternLemegeton
         public override bool Telegraphing => Action == ActionState.Aim || Action == ActionState.Leap || Action == ActionState.Windup || Action == ActionState.Swing;
         public override float AttackPower => Phase == 2 ? Mathf.Max(EnableShotgun ? Shotgun.Damage : 0, EnableWhip ? Whip.Damage : 0, EnableDynamite ? Dynamite.Damage : 0) : Mathf.Max(EnableMachineGun ? MachineGun.Damage : 0, EnableBarrage ? Barrage.Damage : 0);
         public override float AttackRange => Phase == 2 ? Shotgun.TriggerRange : Mathf.Max(EnableMachineGun ? MachineGun.TriggerRange : 0, EnableBarrage ? Barrage.TriggerRange : 0);
+
+        [Min(0)] public float PhaseTwoHealth = 350;
+
 
         public override void Initialize(Enemy enemy)
         {
@@ -165,7 +168,7 @@ namespace WesternLemegeton
                 {
                     float angle = ActivePattern == Pattern.Barrage ?
                         Mathf.Sin(nextShot * Mathf.PI * 2 * Barrage.SweepCyclesPerSecond) * Barrage.SweepAngle * .5f : 0;
-                    Bullet.SpawnAimed(owner, LockedAim, Settings.BulletSpeed, angle, Settings.Damage, true, Settings.BulletLifetime);
+                    Bullet.SpawnAimed(owner, LockedAim, Settings.BulletSpeed, angle, Settings.Damage, true, Settings.BulletLifetime, crowdControl: Settings.CrowdControl);
                     nextShot += Mathf.Max(.01f, Settings.ShotInterval);
                 }
                 if (elapsed >= duration) BeginRecovery();

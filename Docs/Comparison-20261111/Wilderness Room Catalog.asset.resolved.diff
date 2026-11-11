@@ -1,0 +1,34 @@
+--- 
++++ 
+@@ -27,10 +27,10 @@
+     Role: 1
+     Region: Wilderness
+-    Prefab: {fileID: 8504877256074678598, guid: Assets/Editable/Rooms/Room_02.prefab, type: 3}
++    Prefab: {fileID: 7759318815682765975, guid: Assets/Editable/Rooms/Room_03.prefab, type: 3}
+     Weight: 1
+   - PrefabId: Combat_03
+     Role: 1
+     Region: Wilderness
+-    Prefab: {fileID: 8073388664799014232, guid: Assets/Editable/Rooms/Room_05.prefab, type: 3}
++    Prefab: {fileID: 8217752345500370232, guid: Assets/Editable/Rooms/Room_04.prefab, type: 3}
+     Weight: 1
+   - PrefabId: Combat_04
+@@ -39,17 +39,7 @@
+     Prefab: {fileID: 8073388664799014232, guid: Assets/Editable/Rooms/Room_05.prefab, type: 3}
+     Weight: 1
+-  - PrefabId: Sigil_01
+-    Role: 2
+-    Region: Wilderness
+-    Prefab: {fileID: 7759318815682765975, guid: Assets/Editable/Rooms/Room_03.prefab, type: 3}
+-    Weight: 1
+   - PrefabId: Shop_01
+     Role: 3
+     Region: Wilderness
+-    Prefab: {fileID: 8217752345500370232, guid: Assets/Editable/Rooms/Room_04.prefab, type: 3}
++    Prefab: {fileID: 6275819343580966066, guid: Assets/Editable/Rooms/Room_06.prefab, type: 3}
+     Weight: 1
+-  - PrefabId: Boss_01
+-    Role: 5
+-    Region: Wilderness
+-    Prefab: {fileID: 8073388664799014232, guid: Assets/Editable/Rooms/Room_05.prefab, type: 3}
+-    Weight: 1

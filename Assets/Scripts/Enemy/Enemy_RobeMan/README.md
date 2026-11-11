@@ -33,13 +33,13 @@ RobeManAttack의 Phase는 현재 행동 상태를 나타내는 이름입니다. 
 
 | 항목 | 기본값 | 의미 |
 | --- | --- | --- |
-| Detection Radius | 3 | 독병 사용을 위한 체류 감지 반지름 |
+| Detection Radius | 10 | 독병 사용을 위한 체류 감지 반지름 |
 | Required Stay Seconds | 5초 | 필요한 연속 체류 시간 |
 | Aim Delay | 1초 | 위치 고정 후 발사까지의 시간 |
 | Flight Seconds | 0.8초 | 독병 비행 시간 |
 | Arc Height | 3 | 비행 중간의 최대 표시 높이 |
 | Throw Recovery | 0.4초 | 발사 후 일반 행동을 재개하기까지의 시간 |
-| Poison Radius | 4 | 독 위험구역 반지름, 지름은 8 |
+| Poison Radius | 3 | 독 위험구역 반지름, 지름은 6 |
 | Poison Lifetime | 6초 | 독 구역 유지 시간 |
 | Poison Damage / Interval | 5 / 1초 | 주기 피해량과 주기 |
 | Melee Range / Hit Range | 1.7 / 1.75 | 근접 공격 시작 거리 / 타격 순간 판정 거리 |
