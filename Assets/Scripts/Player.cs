@@ -229,11 +229,13 @@ namespace WesternLemegeton
             }
 
             HandleActionInput(g, move);
+            if (!g.Running) return;
             AdvanceActions(dt, move);
         }
 
         private void HandleActionInput(Dungeon g, Vector2 move)
         {
+            if (Input.GetKeyDown(KeyCode.F) && g.TryInteractTownNpc()) return;
             if (Input.GetKeyDown(KeyCode.Space)) TryDodge(move);
             if (Input.GetKeyDown(KeyCode.Q)) TryTag();
             HandleRavenInput(g);

@@ -1538,6 +1538,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc57520a97b334442afa2815d27cdc62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.RoomAuthoring
+--- !u!114 &1760643453 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7384338683059156401, guid: 03db8ff9100d600479442f2f8aa1b561, type: 3}
+  m_PrefabInstance: {fileID: 2088121560}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32c3bfa79359cd1498d971edee62c863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.GameUIView
 --- !u!1 &1861781158
 GameObject:
   m_ObjectHideFlags: 0
@@ -1681,7 +1692,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22f4cb27829f3044f910686c65bfa52a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.GameHUD
-  View: {fileID: 2088121561}
+  View: {fileID: 1760643453}
 --- !u!114 &1954788949
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1841,7 +1852,7 @@ MonoBehaviour:
   - {fileID: 7388577224520322663, guid: 4457ba550e8e7c44a878ebdc81dc86f4, type: 3}
   - {fileID: 5806485708312099170, guid: 21ca3ee3b02ae4c4daa778cf07c89647, type: 3}
   - {fileID: 6045581329847303124, guid: 4a6fd5ccab0642538d76330fba2fe199, type: 3}
-  UI: {fileID: 2088121561}
+  UI: {fileID: 1760643453}
 --- !u!114 &1954788954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2064,6 +2075,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameUI
       objectReference: {fileID: 0}
+    - target: {fileID: 5342129496531045243, guid: 03db8ff9100d600479442f2f8aa1b561, type: 3}
+      propertyPath: m_Text
+      value: "ESC \uB2EB\uAE30"
+      objectReference: {fileID: 0}
     - target: {fileID: 8710299410860641713, guid: 03db8ff9100d600479442f2f8aa1b561, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -2149,17 +2164,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 03db8ff9100d600479442f2f8aa1b561, type: 3}
---- !u!114 &2088121561 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7384338683059156401, guid: 03db8ff9100d600479442f2f8aa1b561, type: 3}
-  m_PrefabInstance: {fileID: 2088121560}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32c3bfa79359cd1498d971edee62c863, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.GameUIView
 --- !u!1001 &2146540724
 PrefabInstance:
   m_ObjectHideFlags: 0
