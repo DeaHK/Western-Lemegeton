@@ -205,7 +205,7 @@ namespace WesternLemegeton
                     {
                         float angle=count==1?0:Mathf.Lerp(-Shotgun.SpreadAngle*.5f,Shotgun.SpreadAngle*.5f,i/(float)(count-1));
                         float speed=Mathf.Max(.01f,Shotgun.BulletSpeed);
-                        Bullet.SpawnAimed(owner,LockedAim,speed,angle,Shotgun.Damage,true,Mathf.Max(.01f,Shotgun.BulletDistance)/speed,crowdControl:Shotgun.CrowdControl);
+                        FireGunBullet(LockedAim,speed,angle,Shotgun.Damage,Mathf.Max(.01f,Shotgun.BulletDistance)/speed,Shotgun.CrowdControl);
                     }
                     BeginRecovery();
                 }

@@ -154,7 +154,7 @@ namespace WesternLemegeton
             {
                 LockedAim = CombatBody.For(game.Hero).Center;
                 elapsed += dt;
-                owner.SetMeleeWarning(true, ActivePattern == Pattern.Barrage ? WhipRange : 1);
+                owner.SetMeleeWarning(false, 0);
                 if (elapsed >= Settings.AimSeconds)
                 { Action = ActionState.Fire; elapsed = nextShot = 0; owner.SetMeleeWarning(false, 0); }
                 return Action == ActionState.Fire;
@@ -168,7 +168,7 @@ namespace WesternLemegeton
                 {
                     float angle = ActivePattern == Pattern.Barrage ?
                         Mathf.Sin(nextShot * Mathf.PI * 2 * Barrage.SweepCyclesPerSecond) * Barrage.SweepAngle * .5f : 0;
-                    Bullet.SpawnAimed(owner, LockedAim, Settings.BulletSpeed, angle, Settings.Damage, true, Settings.BulletLifetime, crowdControl: Settings.CrowdControl);
+                    FireGunBullet(LockedAim, Settings.BulletSpeed, angle, Settings.Damage, Settings.BulletLifetime, Settings.CrowdControl);
                     nextShot += Mathf.Max(.01f, Settings.ShotInterval);
                 }
                 if (elapsed >= duration) BeginRecovery();
@@ -236,6 +236,7 @@ namespace WesternLemegeton
         }
         void LateUpdate()
         {
+            UpdateGunRange();
             if(!transitioning || !cinematicGame || !cinematicGame.Cam) return;
             float t=Mathf.SmoothStep(0,1,Mathf.Clamp01(elapsed/.5f));
             cinematicGame.Cam.transform.position=Vector3.Lerp(savedCameraPosition,PaperWorld.CameraPosition(transform.position),t);
@@ -281,6 +282,7 @@ namespace WesternLemegeton
         }
         void CancelAttack(bool startCooldown = true)
         {
+            if (gunRange) gunRange.enabled = false;
             CancelDodge();
             RestoreWhipMovement();
             if(startCooldown && Action!=ActionState.Recovery) StartPatternCooldown();
@@ -290,6 +292,6 @@ namespace WesternLemegeton
         }
         public override void Cancel() { EndTransition(false); CancelAttack(); }
         void OnDisable() { Cancel(); }
-        void OnDestroy() { if(owner) owner.Damaged-=OnDamaged; }
+        void OnDestroy() { if(owner) owner.Damaged-=OnDamaged; if(gunRangeMaterial) Destroy(gunRangeMaterial); }
     }
 }
