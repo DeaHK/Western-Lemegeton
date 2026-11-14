@@ -324,7 +324,8 @@ namespace WesternLemegeton
             {
                 if (g.IsTown)
                 {
-                    if (Vector2.Distance(g.Pos, RoomAuthoring.Point(g.Scene.Hirva.TownExit)) < 3) message = "F · 황야로 출발";
+                    if (g.NpcDialogue && g.NpcDialogue.NearbyNpc) message = $"F · {g.NpcDialogue.NearbyNpcName}와 대화";
+                    else if (Vector2.Distance(g.Pos, RoomAuthoring.Point(g.Scene.Hirva.TownExit)) < 3) message = "F · 황야로 출발";
                 }
                 else
                 {

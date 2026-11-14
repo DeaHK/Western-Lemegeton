@@ -5,7 +5,7 @@ using WesternLemegeton.Stigmas;
 
 namespace WesternLemegeton
 {
-    public enum RunState { Title, Town, Combat, Reward, Exit, Paused, Dead, Victory, Route, WaveBreak, SigilChoice, CardChoice, Cinematic }
+    public enum RunState { Title, Town, Combat, Reward, Exit, Paused, Dead, Victory, Route, WaveBreak, SigilChoice, CardChoice, Cinematic, Dialogue }
 
     public class Dungeon : MonoBehaviour
     {
@@ -16,6 +16,7 @@ namespace WesternLemegeton
         public GameSceneBindings Scene;
         public Player Hero;
         public Raven Crow;
+        public TownNpcDialogueController NpcDialogue { get; private set; }
         GameHUD hud;
         public StigmaManager Stigmas { get; private set; }
         public readonly RunWallet Wallet = new RunWallet();
@@ -119,6 +120,8 @@ namespace WesternLemegeton
             Cinematics = GetComponent<CinematicDirector>();
             actors = Scene.EnemyContainer;
             BuildTown();
+            NpcDialogue = gameObject.AddComponent<TownNpcDialogueController>();
+            NpcDialogue.Initialize(this, Scene.UI);
             Hero.transform.position = RoomAuthoring.Point(Scene.Hirva.InitialSpawn);
             Crow.ResetAt(Pos);
             ResetCamera();
@@ -151,6 +154,11 @@ namespace WesternLemegeton
                 HandleCinematicInput();
                 return;
             }
+            if (State == RunState.Dialogue)
+            {
+                NpcDialogue?.HandleInput();
+                return;
+            }
             if (GetComponent<GameHUD>().SettingsOpen)
             {
                 HandleSettingsInput();
@@ -174,6 +182,7 @@ namespace WesternLemegeton
             HandlePauseInput();
             TickNotice();
             if (!Running) return;
+            if (Input.GetKeyDown(KeyCode.F) && TryInteractTownNpc()) return;
             if (Input.GetKeyDown(KeyCode.F) && TryTravel()) return;
             if (IsTown) return;
             RunTime += Time.deltaTime;
@@ -487,6 +496,11 @@ namespace WesternLemegeton
                 return true;
             }
             return false;
+        }
+
+        public bool TryInteractTownNpc()
+        {
+            return Running && IsTown && State == RunState.Town && NpcDialogue && NpcDialogue.TryInteract();
         }
 
         #endregion
