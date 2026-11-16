@@ -7,7 +7,7 @@ namespace WesternLemegeton
 {
     public enum RunState { Title, Town, Combat, Reward, Exit, Paused, Dead, Victory, Route, WaveBreak, SigilChoice, CardChoice, Cinematic, Dialogue }
 
-    public class Dungeon : MonoBehaviour
+    public partial class Dungeon : MonoBehaviour
     {
         #region Fields and state by responsibility
 
@@ -30,7 +30,9 @@ namespace WesternLemegeton
         // 피격 처리의 foreach 도중에도 안전하게 생성된 적/밧줄을 등록합니다.
         public void QueueEnemy(Enemy enemy)
         {
-            if (enemy && !Enemies.Contains(enemy) && !pendingEnemies.Contains(enemy)) pendingEnemies.Add(enemy);
+            if (!enemy || Enemies.Contains(enemy) || pendingEnemies.Contains(enemy)) return;
+            if (!enemy.AuxiliaryTarget) enemy.Dying += RollMonsterSeal;
+            pendingEnemies.Add(enemy);
         }
         Transform actors;
 
@@ -66,7 +68,7 @@ namespace WesternLemegeton
         public ExplorationRoom CurrentRoom => IsTown || Rooms == null ? null : Rooms[MapIndex];
         public ExplorationRoomKind CurrentKind => IsTown ? ExplorationRoomKind.Combat : Progress.KindAt(MapIndex);
         public Vector2 Pos => Hero.transform.position;
-        public Vector2 RoomCenter => IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
+        public Vector2 RoomCenter => InsideHouse ? HouseCenter : InPractice ? practiceRoom.Center : IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
         public Vector2 LocalPos => Pos - RoomCenter;
         public static readonly string[] MapNames = { "붉은 바위 입구", "마차 잔해 전투지", "성흔 제단", "악마카드 역참", "풍차 언덕", "스테이지 출구" };
         public static readonly string[] RoomNames = { "붉은 모래길", "버려진 마차길", "외딴 예배당", "메마른 풍차", "망자의 분지" };
@@ -174,7 +176,7 @@ namespace WesternLemegeton
                 HandleServiceInput();
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.M) && Running)
+            if (Input.GetKeyDown(KeyCode.M) && Running && !InsideHouse && !InPractice)
             {
                 OpenRoute();
                 return;
@@ -182,6 +184,9 @@ namespace WesternLemegeton
             HandlePauseInput();
             TickNotice();
             if (!Running) return;
+            HandlePracticeWeaponInput();
+            if (Input.GetKeyDown(KeyCode.F) && TryEntryInteraction()) return;
+            if (InsideHouse || InPractice) return;
             if (Input.GetKeyDown(KeyCode.F) && TryInteractTownNpc()) return;
             if (Input.GetKeyDown(KeyCode.F) && TryTravel()) return;
             if (IsTown) return;
@@ -230,6 +235,7 @@ namespace WesternLemegeton
 
         private void ResetRun()
         {
+            ResetEntrance();
             if (UsesGeneratedStage)
             {
                 if (Rooms != null) foreach (var room in Rooms) room.Layout.Root.gameObject.SetActive(false);
@@ -263,7 +269,7 @@ namespace WesternLemegeton
         {
             ResetRun();
             BuildStage();
-            ActivateRoom(-1);
+            BeginPractice();
         }
 
         #endregion
@@ -285,6 +291,7 @@ namespace WesternLemegeton
             Scene.Hirva.gameObject.SetActive(true);
             var l = Scene.Hirva.Capture();
             ApplyFootprints(l, Scene.Hirva.Center);
+            PrepareHouseEntrance();
         }
 
         public void EnterTown()
@@ -323,7 +330,7 @@ namespace WesternLemegeton
             Rooms = new ExplorationRoom[6];
             for (int i = 0; i < 6; i++) Rooms[i] = authored[i].Bind();
             RouteTravel = false;
-            ActivateRoom(-1);
+            if (newRun) BeginPractice(); else ActivateRoom(-1);
         }
 
         #endregion
@@ -426,7 +433,7 @@ namespace WesternLemegeton
 
         public bool TryDoor(RoomDoor door)
         {
-            if (!Running || door == null || CurrentRoom == null || !CurrentRoom.Doors.Contains(door) || Vector2.Distance(Pos, door.Position) > 2.1f) return false;
+            if (InPractice || !Running || door == null || CurrentRoom == null || !CurrentRoom.Doors.Contains(door) || Vector2.Distance(Pos, door.Position) > 2.1f) return false;
             if (door.RunMapDestination >= 0)
             {
                 if (!UsesGeneratedStage || !Progress.SegmentComplete || GeneratedRouteSelectionRequested == null ||
@@ -468,6 +475,8 @@ namespace WesternLemegeton
 
         public bool TryTravel()
         {
+            if (Running && (HousePrompt != null || InPractice)) return TryEntryInteraction();
+            if (InsideHouse || InPractice) return false;
             if (State == RunState.Town && Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f)
             {
                 if (GeneratedRunStartRequested != null) return GeneratedRunStartRequested();
@@ -486,7 +495,8 @@ namespace WesternLemegeton
                     return false;
                 }
                 if (CurrentKind == ExplorationRoomKind.DevilCards &&
-                    !PassiveOffers.PrepareOffer(PassiveAcquisitionSource.EventReward, Seed, Room, MapIndex, 3))
+                    !PassiveOffers.PrepareOffer(PassiveAcquisitionSource.EventReward, Seed, Room, MapIndex, 3,
+                        UsesGeneratedStage && Progress.GeneratedLayout.Rooms[MapIndex].Role == RoomRole.Shop))
                 {
                     Tell("카드 선택지를 준비하지 못했습니다 · 패시브 데이터 연결을 확인하세요");
                     Debug.LogError("Card room offer preparation failed; room state was preserved.", this);
@@ -500,7 +510,7 @@ namespace WesternLemegeton
 
         public bool TryInteractTownNpc()
         {
-            return Running && IsTown && State == RunState.Town && NpcDialogue && NpcDialogue.TryInteract();
+            return !InsideHouse && HousePrompt == null && Running && IsTown && State == RunState.Town && NpcDialogue && NpcDialogue.TryInteract();
         }
 
         #endregion
@@ -515,12 +525,14 @@ namespace WesternLemegeton
 
         public void CloseService()
         {
+            if (FinishEntryChoice(-1)) return;
             if (State == RunState.SigilChoice) Progress.CompleteService();
             if (State == RunState.SigilChoice || State == RunState.CardChoice) State = RunState.Exit;
         }
 
         public bool ClaimCard(int choice)
         {
+            if (EntryChoiceActive) return choice >= 0 && choice < 3 && FinishEntryChoice(choice);
             if (State != RunState.CardChoice || CurrentKind != ExplorationRoomKind.DevilCards || Progress.MapComplete || choice < 0 || choice > 2) return false;
             if (!PassiveOffers.TryClaim(choice, out PassiveAcquireResult result) || !result.Success)
             {
@@ -590,6 +602,7 @@ namespace WesternLemegeton
             var enemy = Instantiate(prefab, at, Quaternion.identity, actors ? actors : Scene.EnemyContainer);
             enemy.Init(prefab.Kind, Room);
             Enemies.Add(enemy);
+            enemy.Dying += RollMonsterSeal;
             Ink.Ring(at,.9f,Ink.Gold,.6f);
             message = prefab.name + " 소환 완료. 창을 닫으면 몬스터가 행동합니다.";
             return true;
@@ -605,6 +618,7 @@ namespace WesternLemegeton
                 var e = Instantiate(Scene.EnemyPrefabs[kind], at, Quaternion.identity, actors);
                 e.Init(kind, Room);
                 Enemies.Add(e);
+                e.Dying += RollMonsterSeal;
                 Ink.Ring(at, .9f, Ink.Gold, .6f);
             }
         }
@@ -700,7 +714,7 @@ namespace WesternLemegeton
 
         public void OpenRoute(bool travel = false)
         {
-            if (!Running) return;
+            if (!Running || InsideHouse || InPractice) return;
             if (UsesGeneratedStage) { GeneratedMapRequested?.Invoke(); return; }
             BeforeRoute = State;
             RouteTravel = travel && (IsTown ? Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f : AtStageExit());

@@ -61,7 +61,7 @@ namespace WesternLemegeton
   public void ResetForRun(){Cooldown=LinkCooldown=attack=0;offerId=-1;ComboDashStarts=ComboEffects=LastComboHits=0;ResetAt(Vector2.zero);}
   public void ResetAt(Vector2 p){transform.position=p+new Vector2(-1,1);Active=LinkWindow=linkTime=ComboFlash=0;returning=false;marked=linkTarget=null;Status="동행";comboPhase=0;comboTarget=null;comboQueue.Clear();comboVictims.Clear();CurrentState=RavenState.Idle;}
   public void Mark(Enemy e){marked=e;}
-  public void Command(){if(Cooldown>0||!Dungeon.I.Running||Dungeon.I.IsTown)return;Active=60;Cooldown=10;attack=0;Ink.Ring(transform.position,1.1f,Ink.Cyan);}
+  public void Command(){if(Cooldown>0||!Dungeon.I.Running||Dungeon.I.IsTown)return;Active=Dungeon.I.PassiveStats.Evaluate("CrowDuration",60);Cooldown=10;attack=0;Ink.Ring(transform.position,1.1f,Ink.Cyan);}
   public void OfferLink(Enemy e,long id)
   {
    if(LinkCooldown>0||Linking)return;var g=Dungeon.I;
@@ -130,7 +130,7 @@ namespace WesternLemegeton
   }
   void Update()
   {
-   var g=Dungeon.I;if(!g.Running)return;float dt=Time.deltaTime;
+   var g=Dungeon.I;if(!g.Running || g.InsideHouse)return;float dt=Time.deltaTime;
    if (Active == 0 && Cooldown > 0)
    {
    Cooldown = Mathf.Max(0, Cooldown - dt);
@@ -146,7 +146,8 @@ namespace WesternLemegeton
    }
    CombatArt.Pose(art,"Raven",1.1f);
    Vector2 follow=g.Pos+new Vector2(-.95f,1.15f+Mathf.Sin(Time.time*3)*.15f),goal=follow;Enemy target=null;
-   if(Active>0&&!returning){target=marked&&!marked.Dead&&Vector2.Distance(marked.transform.position,g.Pos)<7?marked:g.Nearest(g.Pos,7);if(target){goal=target.transform.position;Status="공격";}else Status="탐색";}
+   float searchRadius = g.PassiveStats.Evaluate(WesternPassiveStatKeys.RavenRange, ActivityRadius);
+   if(Active>0&&!returning){target=marked&&!marked.Dead&&Vector2.Distance(marked.transform.position,g.Pos)<searchRadius?marked:g.Nearest(g.Pos,searchRadius);if(target){goal=target.transform.position;Status="공격";}else Status="탐색";}
    else Status=returning?"복귀":Vector2.Distance(transform.position,follow)>1?"추적":"동행";
    if(returning&&Vector2.Distance(transform.position,follow)<.3f){returning=false;Status="동행";}
    if(Vector2.Distance(transform.position,g.Pos)>9){Ink.Burst(transform.position,Ink.Cyan,4);transform.position=follow;target=null;goal=follow;Status="복귀";}

@@ -12,7 +12,7 @@ namespace WesternLemegeton
         IEnumerator Start()
         {
             Application.runInBackground=true;output=Path.GetFullPath(Path.Combine(Application.dataPath,"../../../Logs"));
-            yield return new WaitForSeconds(.4f);game=Dungeon.I;game.StartRun();yield return null;game.Cinematics.Skip();game.Hero.enabled=false;game.Crow.enabled=false;
+            yield return new WaitForSeconds(.4f);game=Dungeon.I;game.StartRun();RuntimeSmoke.PassWeaponRoom(game);yield return null;game.Cinematics.Skip();game.Hero.enabled=false;game.Crow.enabled=false;
             int[] itinerary={0,1,2,3,2,4,5};
             for(int visit=0;visit<itinerary.Length;visit++)
             {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using WesternLemegeton.Passives;
@@ -45,6 +46,8 @@ namespace WesternLemegeton
         readonly Dictionary<string, GameObject> refs = new Dictionary<string, GameObject>();
         readonly List<PassiveSlotView> slots = new List<PassiveSlotView>();
         readonly List<PassiveInstance> passiveBuffer = new List<PassiveInstance>();
+        PassiveSlotView selectedSlot;
+        Text houseSign;
         readonly List<int> slotIds = new List<int>();
         readonly RectTransform[] miniNodeRects = new RectTransform[6];
         readonly RectTransform[] miniLabelRects = new RectTransform[6];
@@ -140,7 +143,7 @@ namespace WesternLemegeton
 
         private void UpdateCoreHud(Dungeon g, Player p)
         {
-            Show("Wave", !g.IsTown && g.CurrentKind == ExplorationRoomKind.Combat);
+            Show("Wave", !g.InPractice && !g.IsTown && g.CurrentKind == ExplorationRoomKind.Combat);
             Text("WaveText", $"WAVE {g.WaveIndex+1} / {g.WavesInMap} · 남은 적 {g.Enemies.Count}");
             Show("WaveBreak", g.State == RunState.WaveBreak);
             Text("WaveBreakText", $"다음 WAVE {g.WaveIndex+1}\n{Mathf.CeilToInt(g.WaveCountdown)}초 후 적이 접근합니다");
@@ -156,7 +159,7 @@ namespace WesternLemegeton
             Fill("HP", p.Hp / p.MaxHealth);
             Text("HPText", $"{Mathf.CeilToInt(p.Hp)} / {p.MaxHealth:0}  <color=#F5DF8A>+{p.BonusHp.Current:0.#}</color>");
             Fill("Ammo", p.Ammo / 6f);
-            Text("AmmoText", p.Reload > 0 ? $"장전 {p.ReloadRemaining:F1}s · {p.Ammo}/6" : $"리볼버 {p.Ammo}/6");
+            Text("AmmoText", p.Reload > 0 ? $"장전 {p.ReloadRemaining:F1}s · {p.Ammo}/6" : $"{Player.GunNames[(int)p.Gun]} {p.Ammo}/6");
         }
 
         #endregion
@@ -167,7 +170,8 @@ namespace WesternLemegeton
         {
             // Slot 0 represents the always-available primary attack while weapon swapping is paused.
             Text("SkillKey0", "좌클릭");
-            Skill(0, "ShotIcon", 0, "리볼버");
+            Skill(0, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", 0, p.WeaponLabel);
+            if (p.Weapon == 1) SetPassiveImage("SkillIcon0", Dungeon.I.GunIcon(p.Gun));
             Skill(1, "HunterDash", p.DashCd, "회피");
             Skill(2, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", p.Skill2Cd, p.Weapon == 0 ? "베어 가르기" : "원 샷");
             Skill(3, p.Weapon == 0 ? "SlamIcon" : "BarrageIcon", p.Skill3Cd, p.Weapon == 0 ? "내려찍기" : "난사");
@@ -204,7 +208,9 @@ namespace WesternLemegeton
         private void Passives(Dungeon g, GameHUD h)
         {
             g.Passives.CopyActivePassives(passiveBuffer);
-            Text("PassiveCount", $"획득 패시브 {g.Passives.Count} · 성흔과 별도");
+            long acquired = 0;
+            foreach (var item in passiveBuffer) if (g.PassiveOffers.Seals.Contains(item.Data)) acquired += item.Stack;
+            Text("PassiveCount", $"획득 인장 {acquired} · 성흔과 별도");
             Show("PassiveEmpty", passiveBuffer.Count == 0);
             bool rebuild = slots.Count != passiveBuffer.Count || slotIds.Count != passiveBuffer.Count;
             if (!rebuild)
@@ -224,6 +230,7 @@ namespace WesternLemegeton
                 var slot = Instantiate(PassivePrefab, PassiveContent);
                 slot.name = "Passive:" + item.PassiveID;
                 slot.Tooltip = PassiveTooltip;
+                slot.Selected = SelectPassive;
                 slots.Add(slot);
                 slotIds.Add(item.PassiveID);
             }
@@ -233,13 +240,37 @@ namespace WesternLemegeton
                 var slot = slots[i];
                 if (slot.Icon) slot.Icon.sprite = PassiveIcon(item.Data);
                 if (slot.Border) slot.Border.color = PassiveRarityColor(item.Rarity);
-                string description = item.Data.NameStringKey + "\n" + Rarity(item.Rarity) + " · " + Source(item.InitialSource) +
-                    $" · STACK {item.Stack} · LEVEL {item.Level}\n" + item.Data.DescriptionStringKey;
-                if (slot.Description != description && PassiveTooltip && PassiveTooltip.gameObject.activeSelf && PassiveTooltip.text == slot.Description)
-                    PassiveTooltip.text = description;
-                slot.Description = description;
+                slot.SetStack(item.Stack);
+                slot.Description = AppliedEffect(item);
+                if (selectedSlot == slot && PassiveTooltip) PassiveTooltip.text = slot.Description;
             }
             UpdatePassiveToast(g, h);
+        }
+
+        void SelectPassive(PassiveSlotView slot)
+        {
+            selectedSlot = selectedSlot == slot ? null : slot;
+            PassiveTooltip.text = selectedSlot ? selectedSlot.Description : "";
+            PassiveTooltip.gameObject.SetActive(selectedSlot);
+        }
+
+        static string AppliedEffect(PassiveInstance item)
+        {
+            string value = item.Value.ToString("+0.##;-0.##;0");
+            string amount = value + (item.ValueType == PassiveValueType.Percent ? "%" : "");
+            return item.StatType switch
+            {
+                "ATK" => "공격력 " + amount,
+                "HP" => "최대 체력 " + amount,
+                "Move" => "이동 속도 " + amount,
+                "CrowATK" => "까마귀 공격력 " + amount,
+                "CrowRange" => "까마귀 탐색 반경 " + amount,
+                "GunReload" => "장전 속도 " + amount,
+                "CritDamage" => "치명타 배율 " + value,
+                "CritRate" => $"치명타 확률 +{item.Value * 100:0.##}%p",
+                "CrowDuration" => $"까마귀 소환 +{item.Value:0.##}초 · 처치 공속 버프 +{item.Value / 15:0.##}초",
+                _ => item.StatType + " " + amount
+            };
         }
 
         private void UpdatePassiveToast(Dungeon g, GameHUD h)
@@ -262,8 +293,25 @@ namespace WesternLemegeton
         // Card choices refresh independently of the stigma management panel.
         private void UpdateCardChoices(Dungeon g)
         {
+            if (g.State != RunState.CardChoice) return;
+            bool raven = g.ChoosingFirstStigma;
+            bool entrance = g.EntryChoiceActive;
+            Text("Card_Title", raven ? "까마귀의 첫 성흔" : entrance ? "던전 입구 · 인장 3택 1" : "악마카드 · 하나의 계약을 선택하세요");
+            Text("Card_Subtitle", raven ? "첫 성흔 하나를 무료로 획득합니다." : entrance ? "이번 런에 적용할 첫 인장을 선택하세요." : "획득한 카드는 이번 런 동안 유지됩니다.");
+            Text("Cards_CloseText", entrance ? "선택 없이 출발 · ESC" : "나중에 선택 · ESC");
             for (int n = 0; n < 3; n++)
             {
+                Text("Card_Choose_" + n + "Text", raven ? "이 성흔 선택" : entrance ? "이 인장 선택" : "이 카드 선택");
+                if (raven)
+                {
+                    var definition = g.FirstStigma(n);
+                    Color("CardBorder" + n, ActiveColor);
+                    Text("CardRarity" + n, "까마귀 · 첫 획득 무료");
+                    Text("CardName" + n, definition.DisplayName);
+                    Text("CardEffect" + n, definition.Level(1)?.Description);
+                    SetPassiveImage("CardIcon" + n, definition.Icon ? definition.Icon : Art.Get(definition.FallbackIconKey));
+                    continue;
+                }
                 var offer = g.PassiveOffers.GetOffer(n);
                 if (!offer)
                 {
@@ -273,7 +321,7 @@ namespace WesternLemegeton
                     continue;
                 }
                 Color("CardBorder" + n, PassiveRarityColor(offer.Rarity));
-                Text("CardRarity" + n, Rarity(offer.Rarity) + " · 악마카드");
+                Text("CardRarity" + n, Rarity(offer.Rarity) + (entrance ? " · 인장" : " · 악마카드"));
                 bool hasName = Element<Text>("CardName" + n);
                 Text("CardName" + n, offer.NameStringKey);
                 string detail = (hasName ? "" : offer.NameStringKey + "\n") + offer.DescriptionStringKey +
@@ -312,9 +360,36 @@ namespace WesternLemegeton
 
         private void UpdateLocationAndSupplies(Dungeon g)
         {
-            Text("Location", g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {g.GetRoomName(g.MapIndex)}");
-            Text("Notice", g.Notice);
+            Text("Location", g.InsideHouse ? "히르바 · 사냥꾼의 집" : g.InPractice ? "던전 입구 · 무기 테스트실" : g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {g.GetRoomName(g.MapIndex)}");
+            Text("Notice", g.UsesGeneratedStage && !g.IsTown && g.Progress.SegmentComplete
+                ? "방 6/6 완료 · M으로 지도를 열고 다음 스테이지를 선택하세요" : g.Notice);
+            UpdateHouseSign(g);
             Text("Supplies", $"구리동전 {g.Wallet.Copper} · 보급품 {g.Supplies}\n방 완료 {g.MapsCleared} / 6");
+        }
+
+        void UpdateHouseSign(Dungeon g)
+        {
+            if (!g.ShowHouseSign)
+            {
+                if (houseSign) houseSign.gameObject.SetActive(false);
+                return;
+            }
+            if (!houseSign)
+            {
+                houseSign = Instantiate(Element<Text>("Notice"), HudPanel.transform);
+                houseSign.name = "Hunter House Sign";
+                houseSign.text = "사냥꾼의 집";
+                houseSign.color = Ink.Gold;
+                houseSign.alignment = TextAnchor.MiddleCenter;
+                houseSign.raycastTarget = false;
+                houseSign.rectTransform.sizeDelta = new Vector2(135,26);
+                houseSign.rectTransform.pivot = new Vector2(.5f,0);
+                houseSign.gameObject.AddComponent<Outline>().effectColor = UnityEngine.Color.black;
+            }
+            houseSign.gameObject.SetActive(true);
+            var screen = g.Cam.WorldToViewportPoint(PaperWorld.Point(g.HouseDoor, .3f));
+            houseSign.rectTransform.anchorMin = houseSign.rectTransform.anchorMax = new Vector2(screen.x,screen.y);
+            houseSign.rectTransform.anchoredPosition = Vector2.zero;
         }
 
         private void Prompt(Dungeon g)
@@ -322,9 +397,12 @@ namespace WesternLemegeton
             string message = "";
             if (g.Running)
             {
-                if (g.IsTown)
+                if (g.InPractice) message = g.PracticePrompt();
+                else if (g.IsTown)
                 {
-                    if (g.NpcDialogue && g.NpcDialogue.NearbyNpc) message = $"F · {g.NpcDialogue.NearbyNpcName}와 대화";
+                    if (g.HousePrompt != null) message = g.HousePrompt;
+                    else if (g.InsideHouse) message = "";
+                    else if (g.NpcDialogue && g.NpcDialogue.NearbyNpc) message = $"F · {g.NpcDialogue.NearbyNpcName}와 대화";
                     else if (Vector2.Distance(g.Pos, RoomAuthoring.Point(g.Scene.Hirva.TownExit)) < 3) message = "F · 황야로 출발";
                 }
                 else
@@ -624,6 +702,7 @@ namespace WesternLemegeton
             if (!passive) return null;
             if (passive.Icon) return passive.Icon;
             if (!Art) return null;
+            if (!string.IsNullOrEmpty(passive.PassiveIconResource)) return Art.Get(passive.PassiveIconResource);
             string key = passive.StatType == WesternPassiveStatKeys.PlayerAttack ? "BulletIcon" :
                 passive.StatType == WesternPassiveStatKeys.MoveSpeed ? "WaterIcon" :
                 passive.StatType == WesternPassiveStatKeys.RavenAttack ? "RavenPortrait" : null;

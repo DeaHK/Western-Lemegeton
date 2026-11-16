@@ -21,6 +21,7 @@ namespace WesternLemegeton
   {
    if(GeneratedLayout==null)return RoomGraph.Kind(room);
    var role=GeneratedLayout.Rooms[room].Role;
+   if(Segment==0 && room==GeneratedLayout.EntryIndex && role==RoomRole.Entry)return ExplorationRoomKind.Combat;
    return role==RoomRole.Combat||role==RoomRole.Boss?ExplorationRoomKind.Combat:
     role==RoomRole.Sigil?ExplorationRoomKind.Sigil:
     role==RoomRole.Shop||role==RoomRole.CardMerchant?ExplorationRoomKind.DevilCards:ExplorationRoomKind.Entry;

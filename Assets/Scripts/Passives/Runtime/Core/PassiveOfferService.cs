@@ -16,13 +16,20 @@ namespace WesternLemegeton.Passives
         PassiveAcquisitionSource source;
 
         public IReadOnlyList<PassiveSO> CurrentOffers => offerView ??= offers.AsReadOnly();
+        private PassiveSO[] seals;
+        public IReadOnlyList<PassiveSO> Seals => seals ??= Resources.LoadAll<PassiveSO>("Seals");
         public bool HasOffer => offers.Count > 0;
         public int OfferCount => offers.Count;
 
         void Awake() => manager = GetComponent<PassiveManager>();
 
+        public static bool IsOfferCandidate(PassiveSO passive) =>
+            passive && passive.PassiveID > 0 && passive.Category == PassiveCategory.Flat &&
+            passive.HasValue && passive.ValueType != PassiveValueType.None &&
+            WesternPassiveStatKeys.IsInitialRuntimeSupported(passive.StatType);
+
         public bool PrepareOffer(PassiveAcquisitionSource source, int runSeed,
-            int contextA, int contextB, int count = 3)
+            int contextA, int contextB, int count = 3, bool shopSeals = false)
         {
             if (hasContext && seed == runSeed && this.contextA == contextA &&
                 this.contextB == contextB && this.source == source && requestedCount == count)
@@ -37,12 +44,10 @@ namespace WesternLemegeton.Passives
 
             var candidates = new List<PassiveSO>();
             var ids = new HashSet<int>();
-            foreach (var passive in manager.Database.Passives)
+            bool useSeals = source == PassiveAcquisitionSource.EntranceChoice || shopSeals;
+            foreach (var passive in useSeals ? Seals : manager.Database.Passives)
             {
-                if (!passive || passive.PassiveID <= 0 || passive.Category != PassiveCategory.Flat ||
-                    !passive.HasValue || passive.ValueType == PassiveValueType.None ||
-                    string.IsNullOrWhiteSpace(passive.StatType) ||
-                    !WesternPassiveStatKeys.IsInitialRuntimeSupported(passive.StatType)) continue;
+                if (!passive || (useSeals ? passive.Rarity != PassiveRarity.Common : !IsOfferCandidate(passive))) continue;
                 if (!ids.Add(passive.PassiveID))
                 {
                     Debug.LogError($"Duplicate PassiveID {passive.PassiveID} in offer database.", this);
@@ -92,11 +97,13 @@ namespace WesternLemegeton.Passives
                     "Passive offer is missing or the choice index is invalid.");
                 return false;
             }
-            result = manager.AcquirePassiveById(passive.PassiveID, source);
+            result = manager.AcquirePassive(passive, source);
             if (!result.Success) return false;
             offers.Clear();
             return true;
         }
+
+        public void DismissOffers() => offers.Clear();
 
         public void ResetRun()
         {

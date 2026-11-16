@@ -7,7 +7,13 @@ namespace WesternLemegeton
     {
         public static Vector2 RoomOrigin;
         public static int AmmoCost(int combo) => combo % 2 == 0 ? 1 : 2;
-        public static Vector2 ClampToRoom(Vector2 p, float radius = .4f) => new Vector2(Mathf.Clamp(p.x, RoomOrigin.x-15 + radius, RoomOrigin.x+15 - radius), Mathf.Clamp(p.y, RoomOrigin.y-9 + radius, RoomOrigin.y+9 - radius));
+        public static Vector2 ClampToRoom(Vector2 p, float radius = .4f)
+        {
+            bool house = Dungeon.I && Dungeon.I.InsideHouse;
+            var size = house ? new Vector2(6,4) : new Vector2(15,9);
+            return new Vector2(Mathf.Clamp(p.x, RoomOrigin.x-size.x+radius, RoomOrigin.x+size.x-radius),
+                Mathf.Clamp(p.y, RoomOrigin.y-size.y+radius, RoomOrigin.y+size.y-radius));
+        }
         public static Vector2 CameraTarget(Vector2 p, float halfHeight, float aspect)
         {
             float x = Mathf.Max(0, 15.8f - halfHeight * aspect);
@@ -44,7 +50,7 @@ namespace WesternLemegeton
             }
             return desired;
         }
-        public static Vector2 OutsideCover(Vector2 p, float radius)
+        public static Vector2 OutsideCover(Vector2 p, float radius = .38f)
         {
             foreach(Rect r in Dungeon.Obstacles)
             {

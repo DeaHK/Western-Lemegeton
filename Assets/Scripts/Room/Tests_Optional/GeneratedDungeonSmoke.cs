@@ -43,6 +43,8 @@ namespace WesternLemegeton
             float deadline = Time.realtimeSinceStartup + 120;
             while (Builder.IsBuilding && Time.realtimeSinceStartup < deadline) yield return null;
             Check(!Builder.IsBuilding && Builder.ActiveRoot && Builder.LastError == null, "First build installed");
+            RuntimeSmoke.PassWeaponRoom(d);
+            d.Cinematics.Skip();
             Check(d.Progress == progress && d.UsesGeneratedStage && d.MapIndex == flow.PreparedLayout.EntryIndex, "Reuse progress and enter Entry");
             yield return null;
             var gameView = UnityEngine.Object.FindAnyObjectByType<GameUIView>();
@@ -61,7 +63,7 @@ namespace WesternLemegeton
                             Mathf.Sign(mapDelta.y) == -Mathf.Sign(gridDelta.y) && Mathf.Abs(mapDelta.x) < .1f,
                             "HUD minimap connections follow generated grid positions");
                     }
-            Check(d.Progress.MapComplete && d.Enemies.Count == 0 && d.CurrentKind == ExplorationRoomKind.Entry, "Entry safe and clear");
+            Check(!d.Progress.MapComplete && d.Enemies.Count > 0 && d.CurrentKind == ExplorationRoomKind.Combat, "First field room starts combat after entrance choices");
             Check(Vector2.Distance(d.Pos, RoomAuthoring.Point(d.CurrentRoom.Layout.Authored.InitialSpawn)) < .1f, "Player at authored Entry spawn in logical XY");
             Check(Vector2.Distance((Vector2)d.Crow.transform.position, d.Pos) < 2, "Raven follows entry");
             Check(flow.View.transform.Find("StageSelectionControls") == null, "Default RunMap hides the old Start/Enter button bar");
@@ -134,27 +136,12 @@ namespace WesternLemegeton
             Check(d.Progress.SegmentComplete && d.Progress.VisitedMaps == 6, "All generated rooms reachable and tracked");
             var oldRoot = Builder.ActiveRoot;
             d.Hero.Hp = 57;
-            foreach (int target in FindPath(d.Progress.GeneratedLayout, d.MapIndex, d.Progress.GeneratedLayout.ExitIndex))
-            {
-                var door = d.CurrentRoom.Doors.Find(item => !item.StageExit && item.Destination == target);
-                Check(door, "Path to the generated exit room exists");
-                d.Hero.transform.position = door.Position; d.RunMapInputBlocked = false;
-                Check(d.TryTravel(), "Reach the exit room through the field interaction");
-                d.RunMapInputBlocked = true;
-                yield return null;
-            }
-            var stageExit = d.CurrentRoom.Doors.Find(item => item.StageExit);
-            d.Hero.transform.position = stageExit.Position;
             d.RunMapInputBlocked = false;
-            Check(d.TryTravel(), "Physical stage exit completes through the Dungeon adapter");
-            Check(flow.Coordinator.Progress.CurrentStageCompleted && flow.Coordinator.Progress.CompletedNodeIds.Count == 1 && !flow.View.gameObject.activeInHierarchy, "Stage clear records once and returns to field route choices");
-            var routeChoices = d.CurrentRoom.Doors.FindAll(item => item && item.RunMapDestination >= 0 && item.gameObject.activeInHierarchy);
-            Check(routeChoices.Count == flow.Coordinator.GetAvailableNextNodes().Count && routeChoices.Count > 0, "Available next nodes become physical field markers");
-            CheckRouteChoiceReadability(routeChoices);
-            Check(!flow.View.IsNodeInteractable(flow.Coordinator.GetAvailableNextNodes()[0].Id), "RunMap nodes are informational; route selection uses field markers");
-            int next = routeChoices[0].RunMapDestination;
-            d.Hero.transform.position = routeChoices[0].Position;
-            Check(d.TryTravel(), "F/proximity interaction selects the physical route marker");
+            d.OpenRoute();
+            Check(flow.View.gameObject.activeInHierarchy && flow.Coordinator.Progress.CurrentStageCompleted, "Opening the map after the sixth clear unlocks the next stage from any room");
+            var options = flow.Coordinator.GetAvailableNextNodes();
+            int next = options[0].Id;
+            Check(flow.View.IsNodeInteractable(next) && flow.View.TrySelectNode(next), "Choose an available next stage on the map");
             deadline = Time.realtimeSinceStartup + 120;
             while (Builder.IsBuilding && Time.realtimeSinceStartup < deadline) yield return null;
             yield return null;

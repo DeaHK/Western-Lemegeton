@@ -172,7 +172,8 @@ namespace WesternLemegeton.Stigmas
         {
             if (!Active) return;
             float speed = Effect(owner, "on_kill_attack_speed", "percent");
-            if (speed > 0) Modifier("kill/speed/" + owner, StigmaStats.Speed(owner), speed, Effect(owner, "on_kill_attack_speed", "seconds"));
+            if (speed > 0) Modifier("kill/speed/" + owner, StigmaStats.Speed(owner), speed, Effect(owner, "on_kill_attack_speed", "seconds") +
+                (owner == StigmaOwner.Raven ? game.PassiveStats.GetRawBonus("CrowDuration") / 15f : 0));
             float shield = Effect(owner, "on_kill_bonus_hp", "amount");
             if (shield > 0) GrantShield("kill/" + owner, shield);
             if (slowed) game.Hero.DashCd = Mathf.Max(0, game.Hero.DashCd - Bonus("slowed_kill_dash_refund"));

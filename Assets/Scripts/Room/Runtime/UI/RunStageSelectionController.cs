@@ -133,7 +133,7 @@ namespace WesternLemegeton
             else if (!string.IsNullOrEmpty(entryStatus)) message = entryStatus;
             else if (!HasPreparedStage) message = "마을 출구 근처에서 F를 눌러 원정을 시작하세요.";
             else if (coordinator.Progress.RunCompleted) message = "RUN COMPLETE — all selected stages completed.";
-            else if (coordinator.Progress.CurrentStageCompleted) message = "STAGE CLEARED  •  출구방의 분기 표식으로 이동해 F를 누르세요. 지도 노드는 경로 안내용입니다.";
+            else if (coordinator.Progress.CurrentStageCompleted) message = "스테이지 완료 · 다음 경로를 선택하세요.";
             else message = $"DATA READY  •  Node {coordinator.Progress.CurrentNodeId} / {PreparedLayout.StageType}  •  Seed {PreparedLayout.Seed}  •  {preparedRooms.Count} rooms  •  Entry {PreparedLayout.EntryIndex} / Exit {PreparedLayout.ExitIndex}  •  경로 선택은 출구방 분기 표식에서 F";
             view.StatusOverride = message; view.Refresh();
         }

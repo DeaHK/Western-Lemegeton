@@ -1865,6 +1865,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8c95c7f8e8c87548b029d05f59badcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WesternLemegeton.Dungeon
+  monsterSealPercent: 8
+  sealGradeWeights:
+  - Grade: 0
+    Weight: 100
+  - Grade: 1
+    Weight: 0
+  - Grade: 2
+    Weight: 0
+  - Grade: 3
+    Weight: 0
   Scene: {fileID: 1954788953}
   Hero: {fileID: 1276339837}
   Crow: {fileID: 1112908258}

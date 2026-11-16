@@ -24,6 +24,7 @@ namespace WesternLemegeton
             g.EnterTown();yield return new WaitForSeconds(.3f);Capture("town.png");yield return new WaitForEndOfFrame();
             Check(g.IsTown&&g.Enemies.Count==0,"Hirva remains peaceful");g.Hero.transform.position=new Vector2(13,0);
             Check(g.TryTravel()&&g.State==RunState.Route,"Town gate opens departure route");Check(g.ChooseRoom(0),"Select first segment");yield return null;
+            PassWeaponRoom(g);
             yield return EntranceChecks(g);
             g.OpenRoute(true);Check(!g.RouteTravel&&!g.ChooseRoom(1),"Map preview cannot unlock next segment early");g.CloseRoute();
             g.Hero.transform.position=Vector2.zero;yield return new WaitForSeconds(.3f);Capture("combat.png");yield return new WaitForEndOfFrame();
@@ -109,6 +110,17 @@ namespace WesternLemegeton
             while(g.Cinematics.IsPlaying&&Time.realtimeSinceStartup<until)yield return null;
             Check(!g.Cinematics.IsPlaying,"Timeline completes within its duration");
         }
+        internal static void PassWeaponRoom(Dungeon game)
+        {
+            if (!game.InPractice) throw new System.InvalidOperationException("Missing first-stage weapon test room.");
+            game.Hero.transform.position = game.PracticeExit;
+            if (!game.TryTravel() || !game.ChoosingFirstStigma) throw new System.InvalidOperationException("Missing free raven choice.");
+            game.CloseService();
+            if (game.InPractice || !game.EntryChoiceActive || game.PassiveOffers.OfferCount != 3)
+                throw new System.InvalidOperationException("Expected three first-room seals.");
+            game.CloseService();
+        }
+
         IEnumerator EntranceChecks(Dungeon g)
         {
             var c=g.Cinematics;
@@ -138,9 +150,9 @@ namespace WesternLemegeton
             {sawFade|=g.Cinematics.Shade>.8&&g.State==RunState.Cinematic;yield return null;}
             Check(sawFade,"Death fades to black before results");
             yield return WaitForCinematic(g);Check(g.State==RunState.Dead,"Death Timeline ends on results screen");Capture("cinematic-death-results.png");yield return new WaitForEndOfFrame();
-            g.EnterTown();g.StartRun();Check(g.Cinematics.IsPlaying,"Fresh run starts entrance again");
+            g.EnterTown();g.StartRun();PassWeaponRoom(g);Check(g.Cinematics.IsPlaying,"Fresh run starts entrance again");
             g.EnterTown();yield return new WaitForSecondsRealtime(3);Check(g.State==RunState.Town&&!g.Cinematics.IsPlaying,"Reset cancels Timeline without stale completion callbacks");
-            g.StartRun();yield return null;g.Cinematics.Skip();Check(g.State==RunState.Combat,"Skipping entrance resumes combat immediately");
+            g.StartRun();PassWeaponRoom(g);yield return null;g.Cinematics.Skip();Check(g.State==RunState.Combat,"Skipping entrance resumes combat immediately");
         }
         IEnumerator BossChecks(Dungeon g)
         {
@@ -214,7 +226,7 @@ namespace WesternLemegeton
             Check(stacked.WasStacked&&stacked.PreviousStack==1&&stacked.NewStack==2&&g.Passives.Count==3&&stacked.Instance.InitialSource==PassiveAcquisitionSource.MonsterDrop&&stacked.Instance.LastSource==PassiveAcquisitionSource.EventReward&&Mathf.Approximately(g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack),30)&&hud.PendingPassiveNotices==4,"Duplicate acquisition updates one stack, modifier and notification");
             yield return new WaitForSeconds(.12f);Capture("build-passives.png");yield return new WaitForSeconds(.2f);
             hud.OpenStigmaManagement();Check(g.State==RunState.Paused,"Stigma management pauses play");yield return new WaitForSeconds(.1f);Capture("build-tree.png");yield return new WaitForEndOfFrame();hud.CloseStigmaManagement();
-            g.StartRun();yield return null;g.Cinematics.Skip();
+            g.StartRun();PassWeaponRoom(g);yield return null;g.Cinematics.Skip();
             Check(g.Passives.Count==0&&!g.PassiveOffers.HasOffer&&g.PassiveStats.GetPercentBonus(WesternPassiveStatKeys.PlayerAttack)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.MoveSpeed)==0&&g.PassiveStats.GetRawBonus(WesternPassiveStatKeys.RavenAttack)==0&&state.TotalAcquiredCount==0&&!state.BothEquipped&&stigmas.Combat.Charges==0&&!hud.StigmaManagementOpen&&hud.PendingPassiveNotices==0,"New run clears passives, modifiers, offers, stigma and notification queue");
             var foes=g.Enemies.ToArray();g.Hero.transform.position=Vector2.zero;g.Crow.ResetAt(Vector2.zero);g.Crow.transform.position=new Vector2(-3,0);
             for(int i=0;i<foes.Length;i++){foes[i].enabled=false;foes[i].Hp=foes[i].MaxHp=500;foes[i].transform.position=new Vector2(i+1,0);}

@@ -135,8 +135,8 @@ namespace WesternLemegeton
                 link.Image.color = progress.CompletedNodeIds.Contains(link.From) && progress.CompletedNodeIds.Contains(link.To)
                     ? completedColor : link.From == progress.CurrentNodeId && CanSelectNode(link.To) ? availableColor : lockedColor * new Color(1, 1, 1, .55f);
             status.text = StatusOverride ?? (progress.RunCompleted ? "RUN COMPLETE" : SelectedNodeId >= 0
-                ? $"Node {SelectedNodeId} selected — stage entry is connected in the next implementation phase."
-                : progress.CurrentStageCompleted ? "Choose an AVAILABLE node.  •  Selection only; stage entry is not connected."
+                ? $"Node {SelectedNodeId} selected — entering the next stage."
+                : progress.CurrentStageCompleted ? "다음 스테이지로 이동할 경로를 선택하세요."
                 : $"Current node: {progress.CurrentNodeId}  •  Complete this stage to unlock the next route.");
         }
 
