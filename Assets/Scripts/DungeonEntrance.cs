@@ -182,6 +182,7 @@ namespace WesternLemegeton
             }
             Ink.Shape("Practice exit",practiceProps.transform,practiceDoor,new Vector2(2,.65f),Ink.Cyan,-2,true);
             State = RunState.Exit;
+            BuildTrainingStations(practiceProps.transform, center);
             PlaceAt(Rules.OutsideCover(center + new Vector2(0,-2.5f)));
             Tell("무기 테스트실 · 총 앞에서 T · 표적 시험 후 청록색 출구에서 F");
         }
@@ -208,6 +209,8 @@ namespace WesternLemegeton
 
         public string PracticePrompt()
         {
+            var station = NearbyTrainingStation();
+            if (station != null) return StationPrompt(station);
             if (Vector2.Distance(Pos,practiceDoor) < 2f) return "F · 무기 테스트실 나가기";
             int gun = NearbyGun();
             return gun < 0 ? "총 앞에서 T · 표적 시험 · 청록색 출구" : "T · " + Player.GunNames[gun] + " 착용 / 해제";
@@ -267,6 +270,7 @@ namespace WesternLemegeton
 
         void ClearPractice()
         {
+            if (practiceRoom) trainingStations.Clear();
             if (target) { target.Damaged -= PracticeHit; Enemies.Remove(target); target = null; }
             if (practiceProps) { practiceProps.SetActive(false); Destroy(practiceProps); practiceProps = null; }
             if (practiceRoom) { practiceRoom.gameObject.SetActive(false); Destroy(practiceRoom.gameObject); practiceRoom = null; }
@@ -274,6 +278,7 @@ namespace WesternLemegeton
 
         void ResetEntrance()
         {
+            ClearBossTrial();
             entranceChoice = EntranceChoice.None;
             ClearPractice();
             if (house) { Destroy(house); house = null; }

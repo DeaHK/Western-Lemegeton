@@ -21,13 +21,17 @@ namespace WesternLemegeton.Stigmas
         readonly StigmaManager manager;
         readonly Dictionary<int, RoomOffer> roomOffers = new Dictionary<int, RoomOffer>();
         bool committing;
+        RoomOffer trainingOffer;
+        public void BeginTrainingVisit() => trainingOffer = null;
         public StigmaRoomService(StigmaManager manager) { this.manager = manager; }
         public bool IsOpen
         {
             get
             {
                 var g = Dungeon.I;
-                if (!g || g.Stigmas != manager || g.State != RunState.SigilChoice || g.IsTown || g.CurrentKind != ExplorationRoomKind.Sigil) return false;
+                if (!g || g.Stigmas != manager || g.State != RunState.SigilChoice) return false;
+                if (g.InTrainingRoom) return true;
+                if (g.IsTown || g.CurrentKind != ExplorationRoomKind.Sigil) return false;
                 foreach (var e in g.Enemies) if (e && !e.Dead) return false;
                 return true;
             }
@@ -37,7 +41,9 @@ namespace WesternLemegeton.Stigmas
             if (!IsOpen) return null;
             var g = Dungeon.I;
             int key = g.Room * ExpeditionProgress.MapCount + g.MapIndex;
-            if (roomOffers.TryGetValue(key, out var stored)) return stored;
+            RoomOffer stored;
+            if (g.InTrainingRoom) { if (trainingOffer != null) return trainingOffer; }
+            else if (roomOffers.TryGetValue(key, out stored)) return stored;
             var pool = new List<StigmaCardOffer>();
             foreach (var d in manager.Database.Definitions)
                 if (d.InitialChoice)
@@ -52,12 +58,13 @@ namespace WesternLemegeton.Stigmas
             stored = new RoomOffer();
             stored.Cards.AddRange(pool.GetRange(0, Mathf.Min(3, pool.Count)));
             stored.View = stored.Cards.AsReadOnly();
-            roomOffers.Add(key, stored);
+            if (g.InTrainingRoom) trainingOffer = stored;
+            else roomOffers.Add(key, stored);
             return stored;
         }
         public IReadOnlyList<StigmaCardOffer> GetOffers() => CurrentOffer()?.View ?? System.Array.Empty<StigmaCardOffer>();
         public bool HasClaimedCard => CurrentOffer()?.Claimed ?? false;
-        public void ResetRun() => roomOffers.Clear();
+        public void ResetRun() { trainingOffer = null; roomOffers.Clear(); }
 
         public bool CanClaimCard(int index, out string error)
         {
@@ -83,7 +90,7 @@ namespace WesternLemegeton.Stigmas
                 // The loadout already replaces an equipped ancestor on upgrade acquisition.
                 // Otherwise only the first acquisition auto-equips; unrelated cards are stored.
                 if (!manager.Loadout.Get(card.Owner).IsEquipped) manager.TryEquip(card.Owner, card.Definition.Id, out _);
-                Dungeon.I.Progress.CompleteService();
+                if (!Dungeon.I.InTrainingRoom) Dungeon.I.Progress.CompleteService();
                 return true;
             }
             finally { committing = false; }
@@ -120,7 +127,7 @@ namespace WesternLemegeton.Stigmas
                 if (upgrade) manager.TrySetLevel(owner, manager.Loadout.Get(owner).Level + 1, out error);
                 else manager.TryEquip(owner, id, out error);
                 if (error != null) { g.Wallet.Add(cost); return false; }
-                g.Progress.CompleteService();
+                if (!g.InTrainingRoom) g.Progress.CompleteService();
                 return true;
             }
             finally { committing = false; }

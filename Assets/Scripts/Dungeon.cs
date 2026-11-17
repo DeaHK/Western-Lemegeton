@@ -68,7 +68,7 @@ namespace WesternLemegeton
         public ExplorationRoom CurrentRoom => IsTown || Rooms == null ? null : Rooms[MapIndex];
         public ExplorationRoomKind CurrentKind => IsTown ? ExplorationRoomKind.Combat : Progress.KindAt(MapIndex);
         public Vector2 Pos => Hero.transform.position;
-        public Vector2 RoomCenter => InsideHouse ? HouseCenter : InPractice ? practiceRoom.Center : IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
+        public Vector2 RoomCenter => InBossTrial ? TrialCenter : InsideHouse ? HouseCenter : InPractice ? practiceRoom.Center : IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
         public Vector2 LocalPos => Pos - RoomCenter;
         public static readonly string[] MapNames = { "붉은 바위 입구", "마차 잔해 전투지", "성흔 제단", "악마카드 역참", "풍차 언덕", "스테이지 출구" };
         public static readonly string[] RoomNames = { "붉은 모래길", "버려진 마차길", "외딴 예배당", "메마른 풍차", "망자의 분지" };
@@ -176,7 +176,7 @@ namespace WesternLemegeton
                 HandleServiceInput();
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.M) && Running && !InsideHouse && !InPractice)
+            if (Input.GetKeyDown(KeyCode.M) && Running && !InsideHouse && !InPractice && !InBossTrial)
             {
                 OpenRoute();
                 return;
@@ -184,6 +184,8 @@ namespace WesternLemegeton
             HandlePauseInput();
             TickNotice();
             if (!Running) return;
+            if (HandleTrialInput()) return;
+            if (InPractice && Input.GetKeyDown(KeyCode.G) && UseTrainingStation()) return;
             HandlePracticeWeaponInput();
             if (Input.GetKeyDown(KeyCode.F) && TryEntryInteraction()) return;
             if (InsideHouse || InPractice) return;
@@ -292,6 +294,7 @@ namespace WesternLemegeton
             var l = Scene.Hirva.Capture();
             ApplyFootprints(l, Scene.Hirva.Center);
             PrepareHouseEntrance();
+            PrepareTrialGate();
         }
 
         public void EnterTown()
@@ -475,6 +478,7 @@ namespace WesternLemegeton
 
         public bool TryTravel()
         {
+            if (InBossTrial || NearTrialGate) return Running && TravelTrial();
             if (Running && (HousePrompt != null || InPractice)) return TryEntryInteraction();
             if (InsideHouse || InPractice) return false;
             if (State == RunState.Town && Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f)
@@ -526,7 +530,7 @@ namespace WesternLemegeton
         public void CloseService()
         {
             if (FinishEntryChoice(-1)) return;
-            if (State == RunState.SigilChoice) Progress.CompleteService();
+            if (State == RunState.SigilChoice && !InTrainingRoom) Progress.CompleteService();
             if (State == RunState.SigilChoice || State == RunState.CardChoice) State = RunState.Exit;
         }
 
@@ -714,7 +718,7 @@ namespace WesternLemegeton
 
         public void OpenRoute(bool travel = false)
         {
-            if (!Running || InsideHouse || InPractice) return;
+            if (!Running || InsideHouse || InPractice || InBossTrial) return;
             if (UsesGeneratedStage) { GeneratedMapRequested?.Invoke(); return; }
             BeforeRoute = State;
             RouteTravel = travel && (IsTown ? Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f : AtStageExit());
@@ -748,6 +752,7 @@ namespace WesternLemegeton
 
         public void BeginDeath()
         {
+            if (InBossTrial) { retryTrial = true; return; }
             if (Stigmas) Stigmas.Combat?.OnDeath();
             if (!Cinematics.Play(CinematicKind.PlayerDeath)) State = RunState.Dead;
         }
@@ -780,7 +785,9 @@ namespace WesternLemegeton
 
         private void ResetCamera()
         {
-            Cam.transform.position = PaperWorld.CameraPosition(RoomCenter + new Vector2(Mathf.Clamp(LocalPos.x * .7f, -6, 6), Mathf.Clamp(LocalPos.y * .45f, -2.5f, 2.5f)));
+            Cam.orthographic = InJudicatorArena;
+            if (InJudicatorArena) Cam.orthographicSize = SanctuaryCameraSize();
+            Cam.transform.position = PaperWorld.CameraPosition(FollowFocus());
             cameraVelocity = Vector3.zero;
         }
 
@@ -797,9 +804,33 @@ namespace WesternLemegeton
 
         private void UpdateFollowCamera()
         {
-            Cam.fieldOfView = Cam.aspect < 1.5f ? 48 : 38;
-            Vector2 focus = RoomCenter + new Vector2(Mathf.Clamp(LocalPos.x * (IsTown ? .42f : .7f), -6, 6), Mathf.Clamp(LocalPos.y * .45f, -2.5f, 2.5f));
+            if (InJudicatorArena)
+                Cam.orthographicSize = Mathf.MoveTowards(Cam.orthographicSize, SanctuaryCameraSize(), 18 * Time.unscaledDeltaTime);
+            else Cam.fieldOfView = Cam.aspect < 1.5f ? 48 : 38;
+            Vector2 focus = FollowFocus();
             Cam.transform.position = Vector3.SmoothDamp(Cam.transform.position, PaperWorld.CameraPosition(focus), ref cameraVelocity, .24f, Mathf.Infinity, Time.unscaledDeltaTime);
+        }
+
+        Vector2 FollowFocus()
+        {
+            if (InJudicatorArena)
+            {
+                if (trialBoss is PaladinEncounter paladin && paladin.FramingSlam) return RoomCenter + LocalPos * .5f;
+                if (EchoBarrier) return RoomCenter + Vector2.up*1.2f + LocalPos*(.55f*(1-EchoBarrier.Closure));
+                return RoomCenter + Vector2.up*2 + Vector2.Scale(LocalPos,new Vector2(.65f,.55f));
+            }
+            float horizontalLimit = InTrainingRoom ? TrainingHalfWidth - 6 : 6;
+            return RoomCenter + new Vector2(Mathf.Clamp(LocalPos.x * (IsTown ? .42f : .7f), -horizontalLimit, horizontalLimit),
+                Mathf.Clamp(LocalPos.y * .45f, -2.5f, 2.5f));
+        }
+
+        float SanctuaryCameraSize()
+        {
+            float size = Mathf.Max(13f, 10 / Cam.aspect);
+            if (EchoBarrier) return Mathf.Lerp(size, Mathf.Max(8,6 / Cam.aspect), EchoBarrier.Closure);
+            if (trialBoss is PaladinEncounter paladin && paladin.FramingSlam)
+                size = Mathf.Max(size,(Mathf.Abs(LocalPos.x)*.5f+4)/Cam.aspect);
+            return size;
         }
 
         #endregion

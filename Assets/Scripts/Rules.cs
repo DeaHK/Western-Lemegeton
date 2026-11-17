@@ -11,8 +11,12 @@ namespace WesternLemegeton
         {
             bool house = Dungeon.I && Dungeon.I.InsideHouse;
             var size = house ? new Vector2(6,4) : new Vector2(15,9);
-            return new Vector2(Mathf.Clamp(p.x, RoomOrigin.x-size.x+radius, RoomOrigin.x+size.x-radius),
+            if (Dungeon.I && Dungeon.I.InTrialGallery) size.x = Dungeon.I.TrainingHalfWidth;
+            if (Dungeon.I && Dungeon.I.InJudicatorArena) size = PaladinArea.ArenaHalfSize;
+            p = new Vector2(Mathf.Clamp(p.x, RoomOrigin.x-size.x+radius, RoomOrigin.x+size.x-radius),
                 Mathf.Clamp(p.y, RoomOrigin.y-size.y+radius, RoomOrigin.y+size.y-radius));
+            var barrier = Dungeon.I ? Dungeon.I.EchoBarrier : null;
+            return barrier ? barrier.Clamp(p,radius) : p;
         }
         public static Vector2 CameraTarget(Vector2 p, float halfHeight, float aspect)
         {

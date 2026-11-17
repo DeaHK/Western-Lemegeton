@@ -35,6 +35,7 @@ namespace WesternLemegeton
 #endif
         public bool DebugInvincible => DebugInvincibility == DebugInvincibilityMode.Full;
         public bool DebugHealthProtected => DebugInvincibility != DebugInvincibilityMode.Off;
+        public bool TrainingDamageProtection { get; internal set; }
         public readonly BonusHealth BonusHp = new BonusHealth();
         public float MaxHealth => Dungeon.I && Dungeon.I.PassiveStats ? Mathf.Max(1, Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MaxHealth, MaxHp)) : MaxHp;
         float hitStun;
@@ -43,6 +44,26 @@ namespace WesternLemegeton
         Vector2 knockbackDirection;
         public float KnockbackHeight { get; private set; }
         public bool KnockedBack => knockbackDuration > 0;
+        public void BindForTrial(float seconds)
+        {
+            if (DebugInvincible || Hp <= 0) return;
+            ClearKnockback();
+            dashTime = buffer = 0;
+            FinishSkill();
+            CancelBasic();
+            chargeStun = Mathf.Max(chargeStun, seconds);
+        }
+
+        internal void TrialLift(float height)
+        {
+            if (!DebugInvincible) SetKnockbackHeight(height);
+        }
+
+        internal void ReleaseTrialBind()
+        {
+            chargeStun = 0;
+            SetKnockbackHeight(0);
+        }
         HauntedBullAttack bullCarrier;
         public bool IsCarriedBy(HauntedBullAttack carrier) => bullCarrier == carrier && Hp > 0;
         public bool Stunned => hitStun > 0 || chargeStun > 0 || bullCarrier || KnockedBack;
@@ -368,7 +389,8 @@ namespace WesternLemegeton
             bool applyDamage = invulnerable <= 0 || (!useHitInvulnerability && crowdControl < 2);
             if (!applyDamage && !applyControl) return;
             // 체력 보호 모드에서도 이후 피격 연출·경직·일반 피격 무적은 그대로 실행합니다.
-            if (applyDamage && !DebugHealthProtected) Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
+            if (applyDamage && !DebugHealthProtected && !TrainingDamageProtection)
+                Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
             if (Dungeon.I.Stigmas)
             {
                 if (applyControl) hitStun = Mathf.Max(hitStun, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
@@ -769,10 +791,13 @@ namespace WesternLemegeton
         {
             int selected = Weapon;
             var gun = Gun;
+            bool protection = TrainingDamageProtection;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var debugMode = DebugInvincibility;
 #endif
             ResetForRun();
+            TrainingDamageProtection = protection;
+            Hp = MaxHealth;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             DebugInvincibility = debugMode;
 #endif
@@ -782,6 +807,7 @@ namespace WesternLemegeton
 
         public void ResetForRun()
         {
+            TrainingDamageProtection = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             DebugInvincibility = DebugInvincibilityMode.Off;
 #endif

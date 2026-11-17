@@ -82,6 +82,7 @@ namespace WesternLemegeton
             foreach (var r in References)
                 if (r.Target) refs[r.Key] = r.Target;
             CacheMinimap();
+            PlaceBossBar();
             var font = FontOverride ? FontOverride : Font.CreateDynamicFontFromOSFont(SystemFonts, 18);
             foreach (var t in GetComponentsInChildren<Text>(true))
                 if (FontOverride || !t.font || t.font.name == "LegacyRuntime") t.font = font;
@@ -112,7 +113,7 @@ namespace WesternLemegeton
             UpdateCardChoices(g);
             Passives(g, h);
             UpdateResults(g);
-            UpdateBossPrototype(g);
+            UpdateBossHealth(g);
             UpdateRavenPrompt(g);
             if (cinematic)
             {
@@ -143,11 +144,16 @@ namespace WesternLemegeton
 
         private void UpdateCoreHud(Dungeon g, Player p)
         {
-            Show("Wave", !g.InPractice && !g.IsTown && g.CurrentKind == ExplorationRoomKind.Combat);
+            Show("Minimap", !g.InBossTrial);
+            Show("Map_Button", !g.InBossTrial);
+            Show("Supply_Panel", !g.InBossTrial);
+            Show("Supplies", !g.InBossTrial);
+            Show("Wave", !g.InBossTrial && !g.InPractice && !g.IsTown && g.CurrentKind == ExplorationRoomKind.Combat);
             Text("WaveText", $"WAVE {g.WaveIndex+1} / {g.WavesInMap} · 남은 적 {g.Enemies.Count}");
             Show("WaveBreak", g.State == RunState.WaveBreak);
             Text("WaveBreakText", $"다음 WAVE {g.WaveIndex+1}\n{Mathf.CeilToInt(g.WaveCountdown)}초 후 적이 접근합니다");
-            Text("CombatStatus", $"회피 {(p.DashCd>0?p.DashCd.ToString("F1")+"s":"●")}  COMBO {p.HitCombo}");
+            string protection = p.TrainingDamageProtection ? "  ·  피해 무적" : "";
+            Text("CombatStatus", $"회피 {(p.DashCd>0?p.DashCd.ToString("F1")+"s":"●")}  COMBO {p.HitCombo}{protection}");
         }
 
         #endregion
@@ -360,7 +366,7 @@ namespace WesternLemegeton
 
         private void UpdateLocationAndSupplies(Dungeon g)
         {
-            Text("Location", g.InsideHouse ? "히르바 · 사냥꾼의 집" : g.InPractice ? "던전 입구 · 무기 테스트실" : g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {g.GetRoomName(g.MapIndex)}");
+            Text("Location", g.InBossTrial ? g.TrialLocation : g.InsideHouse ? "히르바 · 사냥꾼의 집" : g.InPractice ? "던전 입구 · 무기 테스트실" : g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {g.GetRoomName(g.MapIndex)}");
             Text("Notice", g.UsesGeneratedStage && !g.IsTown && g.Progress.SegmentComplete
                 ? "방 6/6 완료 · M으로 지도를 열고 다음 스테이지를 선택하세요" : g.Notice);
             UpdateHouseSign(g);
@@ -397,7 +403,8 @@ namespace WesternLemegeton
             string message = "";
             if (g.Running)
             {
-                if (g.InPractice) message = g.PracticePrompt();
+                if (g.InBossTrial || g.NearTrialGate) message = g.TrialPrompt;
+                else if (g.InPractice) message = g.PracticePrompt();
                 else if (g.IsTown)
                 {
                     if (g.HousePrompt != null) message = g.HousePrompt;
@@ -607,13 +614,62 @@ namespace WesternLemegeton
 
         #endregion
 
-        #region Existing Boss Prototype UI
+        #region Boss health
 
-        // Existing dormant/prototype display path; no boss functionality is added.
-        private void UpdateBossPrototype(Dungeon g)
+        private void PlaceBossBar()
         {
-            Show("Boss", g.IsBossWave && g.Enemies.Count > 0);
-            if (g.IsBossWave && g.Enemies.Count > 0 && g.Enemies[0]) Fill("BossHP", g.Enemies[0].Hp / g.Enemies[0].MaxHp);
+            var bar = Element<RectTransform>("Boss");
+            if (!bar) return;
+            bar.anchorMin = new Vector2(.20f,.845f);
+            bar.anchorMax = new Vector2(.80f,.845f);
+            bar.pivot = Vector2.one * .5f;
+            bar.anchoredPosition = Vector2.zero;
+            bar.sizeDelta = new Vector2(0,42);
+            var track = Element<Image>("BossHP_Background");
+            var health = Element<Image>("BossHP");
+            // The bezel artwork has an inset opening between its two garnets.
+            FitBossLayer(track.rectTransform, new Vector2(.091f,.31f), new Vector2(.909f,.69f));
+            FitBossLayer(health.rectTransform, track.rectTransform.anchorMin, track.rectTransform.anchorMax);
+            track.color = new Color(.13f,.042f,.052f);
+            health.sprite = Resources.Load<Sprite>("Paladin/JudgmentVitality");
+            health.color = UnityEngine.Color.white;
+            health.type = UnityEngine.UI.Image.Type.Filled;
+            health.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+            health.fillOrigin = (int)UnityEngine.UI.Image.OriginHorizontal.Left;
+            var bezel = new GameObject("Engraved brass bezel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            bezel.transform.SetParent(bar,false);
+            bezel.raycastTarget = false;
+            bezel.sprite = Resources.Load<Sprite>("Paladin/JudgmentFrame");
+            FitBossLayer(bezel.rectTransform, Vector2.zero, Vector2.one);
+            var name = Element<Text>("BossHPText");
+            FitBossLayer(name.rectTransform, Vector2.up, Vector2.one);
+            name.rectTransform.pivot = new Vector2(.5f,0);
+            name.rectTransform.sizeDelta = new Vector2(0,33);
+            name.rectTransform.anchoredPosition = Vector2.down * 4;
+            name.alignment = TextAnchor.MiddleCenter;
+            name.resizeTextForBestFit = false;
+            name.fontSize = 25;
+            name.fontStyle = FontStyle.Bold;
+            name.color = new Color(1,.97f,.86f);
+            var outline = name.GetComponent<Outline>() ?? name.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(.09f,.052f,.034f,1);
+            outline.effectDistance = new Vector2(1.8f,-1.8f);
+            name.transform.SetAsLastSibling();
+        }
+
+        static void FitBossLayer(RectTransform layer, Vector2 min, Vector2 max)
+        {
+            layer.anchorMin = min;
+            layer.anchorMax = max;
+            layer.offsetMin = layer.offsetMax = Vector2.zero;
+        }
+        private void UpdateBossHealth(Dungeon g)
+        {
+            Enemy boss = g.InBossTrial ? g.TrialBoss : g.IsBossWave && g.Enemies.Count > 0 ? g.Enemies[0] : null;
+            Show("Boss", boss);
+            if (!boss) return;
+            Fill("BossHP", boss.Hp / Mathf.Max(1, boss.MaxHp));
+            Text("BossHPText", g.InBossTrial ? g.TrialBossName : "봉인의 파수꾼");
         }
 
         #endregion
@@ -697,7 +753,7 @@ namespace WesternLemegeton
             if (image) image.fillAmount = Mathf.Clamp01(value);
         }
 
-        private Sprite PassiveIcon(PassiveSO passive)
+        internal Sprite PassiveIcon(PassiveSO passive)
         {
             if (!passive) return null;
             if (passive.Icon) return passive.Icon;
