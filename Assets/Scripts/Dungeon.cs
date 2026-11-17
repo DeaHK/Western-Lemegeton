@@ -816,6 +816,8 @@ namespace WesternLemegeton
             if (InJudicatorArena)
             {
                 if (trialBoss is PaladinEncounter paladin && paladin.FramingSlam) return RoomCenter + LocalPos * .5f;
+                if (Judicator && Judicator.ShowingSummon) return (Pos+Judicator.SummonPosition)*.5f+Vector2.up;
+                if (Judicator && Judicator.IslandRadius>0) return RoomCenter+Vector2.up*.9f;
                 if (EchoBarrier) return RoomCenter + Vector2.up*1.2f + LocalPos*(.55f*(1-EchoBarrier.Closure));
                 return RoomCenter + Vector2.up*2 + Vector2.Scale(LocalPos,new Vector2(.65f,.55f));
             }
@@ -827,6 +829,10 @@ namespace WesternLemegeton
         float SanctuaryCameraSize()
         {
             float size = Mathf.Max(13f, 10 / Cam.aspect);
+            if (Judicator && Judicator.ShowingSummon)
+                return Mathf.Max(size,(Mathf.Abs(Pos.x-Judicator.SummonPosition.x)*.5f+3)/Cam.aspect);
+            // All eight silhouettes must clear the health bar and the lower skill HUD.
+            if (Judicator && Judicator.IslandRadius>0) return Mathf.Max(14.5f,13/Cam.aspect);
             if (EchoBarrier) return Mathf.Lerp(size, Mathf.Max(8,6 / Cam.aspect), EchoBarrier.Closure);
             if (trialBoss is PaladinEncounter paladin && paladin.FramingSlam)
                 size = Mathf.Max(size,(Mathf.Abs(LocalPos.x)*.5f+4)/Cam.aspect);

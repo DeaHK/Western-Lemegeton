@@ -16,7 +16,9 @@ namespace WesternLemegeton
             p = new Vector2(Mathf.Clamp(p.x, RoomOrigin.x-size.x+radius, RoomOrigin.x+size.x-radius),
                 Mathf.Clamp(p.y, RoomOrigin.y-size.y+radius, RoomOrigin.y+size.y-radius));
             var barrier = Dungeon.I ? Dungeon.I.EchoBarrier : null;
-            return barrier ? barrier.Clamp(p,radius) : p;
+            if (barrier) return barrier.Clamp(p,radius);
+            var judge = Dungeon.I ? Dungeon.I.Judicator : null;
+            return judge && judge.SecondPhase ? judge.ClampFloor(p,radius) : p;
         }
         public static Vector2 CameraTarget(Vector2 p, float halfHeight, float aspect)
         {

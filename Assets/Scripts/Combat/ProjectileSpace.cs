@@ -48,12 +48,14 @@ namespace WesternLemegeton
                     new Vector3(r.xMax+radius,10000,r.yMax+radius), length, out float t)) nearest = Mathf.Min(nearest, t);
             // 방 경계 및 지면도 탄환을 막습니다.
             Vector2 room = Rules.RoomOrigin;
-            if (ray.origin.x < room.x-14.8f || ray.origin.x > room.x+14.8f ||
-                ray.origin.z < room.y-8.8f || ray.origin.z > room.y+8.8f || ray.origin.y < 0) return 0;
-            if (ray.direction.x > 0) nearest = Mathf.Min(nearest, (room.x+14.8f-ray.origin.x)/ray.direction.x);
-            if (ray.direction.x < 0) nearest = Mathf.Min(nearest, (room.x-14.8f-ray.origin.x)/ray.direction.x);
-            if (ray.direction.z > 0) nearest = Mathf.Min(nearest, (room.y+8.8f-ray.origin.z)/ray.direction.z);
-            if (ray.direction.z < 0) nearest = Mathf.Min(nearest, (room.y-8.8f-ray.origin.z)/ray.direction.z);
+            Vector2 extent = Dungeon.I && Dungeon.I.InJudicatorArena ?
+                PaladinArea.ArenaHalfSize-Vector2.one*.2f : new Vector2(14.8f,8.8f);
+            if (ray.origin.x < room.x-extent.x || ray.origin.x > room.x+extent.x ||
+                ray.origin.z < room.y-extent.y || ray.origin.z > room.y+extent.y || ray.origin.y < 0) return 0;
+            if (ray.direction.x > 0) nearest = Mathf.Min(nearest, (room.x+extent.x-ray.origin.x)/ray.direction.x);
+            if (ray.direction.x < 0) nearest = Mathf.Min(nearest, (room.x-extent.x-ray.origin.x)/ray.direction.x);
+            if (ray.direction.z > 0) nearest = Mathf.Min(nearest, (room.y+extent.y-ray.origin.z)/ray.direction.z);
+            if (ray.direction.z < 0) nearest = Mathf.Min(nearest, (room.y-extent.y-ray.origin.z)/ray.direction.z);
             if (ray.direction.y < 0) nearest = Mathf.Min(nearest, -ray.origin.y/ray.direction.y);
             return Mathf.Max(0, nearest);
         }

@@ -58,6 +58,9 @@ namespace WesternLemegeton
             var wall=Dungeon.I.EchoBarrier;
             paint.SetVector("_HunterCourt",new Vector4(hunter.x,hunter.y,1,0));
             paint.SetVector("_EchoCourt",new Vector4(wall ? wall.Radius : 0,PaladinEchoBarrier.Spine,wall ? wall.Closure : 0,0));
+            var judge=Dungeon.I.Judicator;
+            paint.SetVector("_Ruin",judge ? judge.RuinForPainting : Vector4.zero);
+            paint.SetFloat("_Island",judge ? judge.IslandRadius : 0);
         }
 
         public void SetDusk(float amount)

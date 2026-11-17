@@ -48,3 +48,7 @@ MonoBehaviour:
   NormalDamage: 10
   JudgmentDamagePerHit: 5
   PerfectHeal: 6
+  UnjudgedHealth: 2400
+  UnjudgedDamage: 12
+  DangerDamage: 32
+  IdentityMusic: {fileID: 8300000, guid: 37107fd731f7466da0160c858246f87f, type: 3}

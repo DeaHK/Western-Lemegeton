@@ -5,11 +5,11 @@ namespace WesternLemegeton
     // Music has its own looping channel; all channels still obey the existing master volume.
     public sealed class BossTrialAudio : MonoBehaviour
     {
-        internal enum Cue { Charge, Cut, Miracle, Ground, Armor, Wave }
+        internal enum Cue { Charge, Cut, Miracle, Ground, Armor, Wave, Fist, Shock, Recall, Beam }
         [Range(0,1)] public float MusicVolume = .16f;
         [Range(0,1)] public float EffectVolume = .23f;
         AudioSource music, intro, effects;
-        readonly AudioClip[] cues = new AudioClip[6];
+        readonly AudioClip[] cues = new AudioClip[System.Enum.GetValues(typeof(Cue)).Length];
 
         void Awake()
         {

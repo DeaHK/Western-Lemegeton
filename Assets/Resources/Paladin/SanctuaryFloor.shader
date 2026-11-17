@@ -14,6 +14,7 @@ Shader "Western/SanctuaryFloor"
             #include "UnityCG.cginc"
             float4 _Tint, _Shape, _Room, _Lights, _LightRadii, _EchoCourt;
             float _EchoPreview;
+            float _DeathRay, _Pulse, _ElectricField, _Ricochet;
             struct Data { float4 position : SV_POSITION; float2 p : TEXCOORD0; float2 world : TEXCOORD1; };
             Data vert(appdata_base v)
             {
@@ -59,6 +60,32 @@ Shader "Western/SanctuaryFloor"
                     edge = _Shape.y > 0 ? min(1-r,r-_Shape.y) : 1-r;
                 }
                 float4 c = _Tint;
+                if (_Ricochet>.5)
+                {
+                    float turn=atan2(i.p.y,i.p.x)-_Time.y*17.1;
+                    float sweep=frac(turn*.31831+r*.36);
+                    float bladeTrail=smoothstep(.58,.98,sweep)*smoothstep(.16,.82,r);
+                    float rim=smoothstep(.965,.985,r);
+                    return float4(lerp(c.rgb,float3(1,.82,1),max(bladeTrail,rim)),
+                        saturate(c.a*.66+bladeTrail*.34+rim*.38));
+                }
+                if (_ElectricField>.5)
+                {
+                    float theta=atan2(i.p.y,i.p.x);
+                    float jitter=sin(r*25+floor(_Time.y*9))*.32+sin(r*61)*.11;
+                    float arc=pow(saturate(.5+.5*cos(theta*7+jitter*5+floor(_Time.y*5)*1.3)),20);
+                    float crest=1-smoothstep(.012,.07,abs(r-frac(_Time.y*.85)));
+                    return float4(lerp(c.rgb,float3(.90,.80,1),max(arc,crest)),c.a+max(arc,crest)*.4);
+                }
+                if (_DeathRay>.5)
+                {
+                    float angle=atan2(i.p.y,max(i.p.x,.0001));
+                    float fan=saturate(abs(angle)/.2618);
+                    float strands=pow(.5+.5*cos(angle*145+sin(r*46-_Pulse*43)*.8),4);
+                    float core=(1-smoothstep(0,.22,fan))*.82+strands*.45;
+                    return float4(lerp(float3(.45,.075,.83),float3(1,.91,1),saturate(core)),
+                        .74+.22*(1-fan));
+                }
                 if (_EchoPreview>.5)
                 {
                     if (_Shape.x<.5 && _Shape.z>-.9999) edge=min(edge,i.p.x-r*_Shape.z);

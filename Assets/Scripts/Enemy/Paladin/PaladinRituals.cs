@@ -26,10 +26,11 @@ namespace WesternLemegeton
 
         IEnumerator Ritual(Break ritual)
         {
+            if (ritual==Break.LastStand) { yield return LastStand(); yield break; }
             if (ritual==Break.Reveal)
             {
                 yield return Unmask();
-                game.EndTrialBattle();
+                BeginUnjudged();
                 yield break;
             }
             if (ritual==Break.Echo) { yield return Echoes(); enhanced=true; }
@@ -239,6 +240,19 @@ namespace WesternLemegeton
             });
             audioBus.Play(Cue.Armor);
             yield return Wait(.18f,t=>card.RenderOffset=Vector3.up*(.30f+Mathf.Sin(t*Mathf.PI)*.15f));
+            yield return Wait(.30f);
+            var dust=new Color(.74f,.60f,.86f);
+            Ink.Burst(Center+offset,dust,4);
+            Vector3 settled=piece.transform.localScale;
+            yield return Wait(.65f,t=>
+            {
+                float fade=Mathf.SmoothStep(0,1,t);
+                var tint=Color.Lerp(Color.white,dust,fade);
+                tint.a=1-fade;
+                piece.color=tint;
+                piece.transform.localScale=settled*(1-.22f*fade);
+            });
+            Retire(piece);
         }
     }
 }

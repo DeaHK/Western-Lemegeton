@@ -311,7 +311,9 @@ namespace WesternLemegeton
                 float baseSpeed = skill == 4 ? 3.1f : 5.6f;
                 float speed = Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, baseSpeed);
                 float minimum = baseSpeed * (1 - (Dungeon.I.Stigmas ? Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction : .5f));
-                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Mathf.Max(minimum, speed) * dt, .38f);
+                var judge=Dungeon.I.Judicator;
+                float groundSpeed=Mathf.Max(minimum,speed)*(judge && judge.InQuake(transform.position) ? .50f : 1);
+                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * groundSpeed * dt, .38f);
             }
         }
 
@@ -364,6 +366,7 @@ namespace WesternLemegeton
         public void Hit(Enemy e, float damage, int stage = 0, long attack = 0, bool isSkill = false, float extraCritChance = 0)
         {
             if (!Dungeon.I.Running || !e || e.Dead) return;
+            if (e is PaladinEncounter judge && judge.HitTrueBody()) return;
             var g = Dungeon.I;
             bool chain = stage > 0 && tracker.Hit(e.GetInstanceID(), stage, attack, g.RunTime);
             // Mark before damage; offer links and combo follow-ups after damage.

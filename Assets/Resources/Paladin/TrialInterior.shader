@@ -21,6 +21,8 @@ Shader "Western/Trial Interior"
             float _Dusk, _VerticalOffset;
             float2 _Extent;
             float4 _ParallelMap, _HunterCourt, _EchoCourt;
+            float4 _Ruin;
+            float _Island;
             struct paintedVertex { float4 position : SV_POSITION; float3 projection : TEXCOORD0; float3 room : TEXCOORD1; };
             paintedVertex vert(float4 vertex : POSITION)
             {
@@ -53,6 +55,17 @@ Shader "Western/Trial Interior"
                     float nearby=1-smoothstep(.4,3.2,distance(i.room.xz,_HunterCourt.xy));
                     float glint=(1-smoothstep(.05,.62,edge))*nearby*(1-_EchoCourt.z);
                     colour.rgb=lerp(colour.rgb,float3(1,.83,.48),glint*.52);
+                    if (_Ruin.w>0 || _Island>0)
+                    {
+                        float2 q=i.room.xz-_Ruin.xy;
+                        float breach=_Ruin.w>0 ? (q.x*_Ruin.z*.258819-abs(q.y)*.965926) : -999;
+                        if (_Island>0) breach=max(breach,length(i.room.xz)-_Island);
+                        float veins=sin(i.room.x*7.1+sin(i.room.z*5))+sin(i.room.z*8.2);
+                        float seam=breach+.085*veins;
+                        float3 abyss=lerp(float3(.035,.02,.075),float3(.17,.075,.23),saturate(.5+veins*.22));
+                        colour.rgb=lerp(colour.rgb,abyss,smoothstep(-.08,.14,seam));
+                        colour.rgb+=float3(.53,.18,.83)*(1-smoothstep(.015,.12,abs(seam)));
+                    }
                     if (_EchoCourt.z>0)
                     {
                         float2 side=float2(i.room.x,max(0,abs(i.room.z)-_EchoCourt.y));

@@ -130,12 +130,12 @@ namespace WesternLemegeton
             Vector2 start=Feet+dir*1.4f;
             float distance=PaladinArea.ToWall(Feet,dir,Center);
             Vector2 end=Feet+dir*distance;
-            const float width=2.475f;
-            var path=distance>1.4f ? Decal(PaladinArea.Lane(start,end,width),WarningColor) : null;
+            const float waveWidth=2.475f, waveScale=1.75f;
+            var path=distance>1.4f ? Decal(PaladinArea.Lane(start,end,waveWidth*waveScale),WarningColor) : null;
             yield return Warning(cut,.75f);
             rig.Visible=true; PoseAt(Pose.Slash);
             Retire(path); Strike(cut,NormalDamage); Flash(cut,Cue.Cut);
-            if (distance>1.4f) StartCoroutine(Wave(start,dir,11.5f,width,NormalDamage));
+            if (distance>1.4f) StartCoroutine(Wave(start,dir,11.5f,waveWidth,NormalDamage,waveScale));
             yield return Swing();
         }
 

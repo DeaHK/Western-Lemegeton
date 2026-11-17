@@ -54,3 +54,15 @@ Single top-down floor portal decal sprite for a hand-inked medieval western fant
 
 </details>
 
+## 심판받지 못한 자 · 2페이즈
+
+내장 ImageGen으로 투명 원화 시트 두 장을 제작했다. `Revealed.png`를 인물 기준으로 삼았고, `Assets/Resources/Paladin/Unjudged/`의 개별 셀에 발 피벗과 검 손잡이 위치를 맞췄다. 포즈 전환, 검 회전, 높이와 체중 이동은 `PaladinRig`와 공격의 코루틴 타이밍을 공유한다.
+
+**인물 동작 시트에 사용한 프롬프트**
+
+Create one production-ready transparent game animation key-pose atlas. Reference image supplies exact character identity and dark outlined graphic ink style. 4 columns x 3 rows, twelve separate complete full-body drawings of the SAME right-facing three-quarter view boss, no weapons included (an articulated sword is a separate game layer), short black gloves, bald purple head TWO curved purple horns, muscular bare violet torso, black pants belt and black boots. Each figure fully within its own equal-size rectangular cell and surrounded by transparent gutters. Arrange precise ordered key poses: row 1 combat guard fists up, deep rear sword swing anticipation with right hand pulled left, broad finished sweeping horizontal slash with forward gripping fist, long straight stabbing lunge with gripping fist. Row 2 palm-forward laser cast with fingers splayed, heavy straight punch leaning forward, high side kick, low two-handed grappling scoop. Row 3 midair pounce knees bent, landing ground slam fist down, chest recoiling in pain, exhausted kneel ONE knee planted torso bent with hand on imaginary pommel. Consistent face, tight ink contour, sparse cel-shading, full body shoes visible no cropping, individual coherent silhouettes, no duplicate limbs no text no shadows no lines between cells. Transparent background. Landscape 4:3 composition.
+
+**전투 이펙트 시트에 사용한 프롬프트**
+
+Production game VFX sprite atlas, RGBA clear transparent background, exact 4 columns by 3 rows, twelve isolated ink and cel painted violet supernatural effects. NO characters, no text, no grid lines, ample clear gutters, equal cell size. Each row is a 4-frame animation left-to-right, grows then dissipates. Top row: crescent sword slash purple with lavender white core sweeps, opening crescent -> wide arc -> tapering arc -> thin sparks. Middle row: vertical angular lightning bolt DESCENDING into ground with jagged electrical branches, each frame of impact from short narrow bolt to full height branching bolt to branching afterglow to sparks. Bottom row: horizontal punch impact burst, sharp asymmetrical violet white starburst and speed dashes toward the right. Flat sharp hand-inked Western fantasy 2D action game, graphical linework and deep plum outlines, vivid saturated violet and white cores, strong readable silhouettes, transparent empty space between all cells, no lettering, no backdrop. Landscape 4:3.
+

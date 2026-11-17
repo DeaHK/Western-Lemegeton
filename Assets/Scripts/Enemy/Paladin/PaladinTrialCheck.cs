@@ -42,7 +42,7 @@ namespace WesternLemegeton
         }
         void Update()
         {
-            if (done || (!failed && Time.realtimeSinceStartup-started<160)) return;
+            if (done || (!failed && Time.realtimeSinceStartup-started<235)) return;
             done=true; Time.timeScale=1;
             Debug.LogError("PALADIN_TRIAL_FAILED: exception or timeout");
             if (Batch) EditorApplication.Exit(1);
@@ -362,10 +362,12 @@ namespace WesternLemegeton
             game.Hero.DebugInvincibility=DebugInvincibilityMode.HealthOnly;
             while(knight.Dead) yield return null;
             knight.TakeDamage(knight.MaxHp*3);
-            while(game.TrialBoss) yield return null;
-            Check(game.State==RunState.Exit && knight.Hp==0 && !game.Hero.Stunned,"0% transformation complete");
-            Check(!music.isPlaying && !intro.isPlaying && Mathf.Approximately(music.volume,0),
-                "phase-one music fades out and stops at the armor transition");
+            while(!knight.SecondPhase) yield return null;
+            yield return null;
+            Check(game.State==RunState.Combat && knight.Hp==knight.UnjudgedHealth && game.TrialBossName=="심판받지 못한 자" &&
+                label.text==game.TrialBossName,"armor transition starts second health bar and renames the boss");
+            Check(music.isPlaying && music.clip==knight.IdentityMusic && music.clip.name=="The_identity" &&
+                !intro.isPlaying && music.volume<.03f,"phase two uses the identity recording with matched music gain");
             Check(GameObject.Find("Sanctuary Arena").GetComponent<TrialInterior>().Dusk == 1,
                 "phase transition replaces joined wall and floor artwork");
             game.Hero.transform.position=game.RoomCenter+Vector2.left*3;
@@ -373,6 +375,7 @@ namespace WesternLemegeton
             yield return new WaitForSeconds(.8f);
             if (Batch && SystemInfo.graphicsDeviceType!=UnityEngine.Rendering.GraphicsDeviceType.Null)
                 Capture(game,"Paladin-Reveal");
+            yield return CheckUnjudged(game,knight);
             game.Hero.transform.position=game.RoomCenter+Vector2.down*(court.y-2);
             Check(game.TryTravel() && !game.Cam.orthographic,"new southern portal returns to perspective gallery");
             game.StartTrialBattle();
@@ -400,6 +403,128 @@ namespace WesternLemegeton
             Debug.Log("PALADIN_TRIAL_PASSED: "+assertions+" checks");
             if(Batch) EditorApplication.Exit(0);
             else Destroy(this);
+        }
+
+        IEnumerator CheckUnjudged(Dungeon game,PaladinEncounter knight)
+        {
+            game.Hero.DebugInvincibility=DebugInvincibilityMode.Full;
+            var rig=knight.GetComponentInChildren<PaladinRig>();
+            while (!knight.IsHandMode) yield return null;
+            Check(!rig.Armed && GameObject.Find("Grounded sword"),"live rotation enters unarmed combat");
+            while (knight.IsHandMode) yield return null;
+            Check(rig.Armed && !GameObject.Find("Grounded sword"),"live rotation retrieves the sword");
+            knight.StopAllCoroutines();
+            foreach (var pose in Enum.GetValues(typeof(PaladinRig.Action)))
+                Check(Resources.Load<Sprite>("Paladin/Unjudged/"+pose),"authored animation cel "+pose);
+            foreach (PaladinEncounter.Move move in Enum.GetValues(typeof(PaladinEncounter.Move)))
+            {
+                if (move==PaladinEncounter.Move.BeamPunch)
+                {
+                    yield return knight.ChangeWeapon(true);
+                    Check(knight.IsHandMode && !rig.Armed && GameObject.Find("Grounded sword"),"throw plants the sword and enters fist mode");
+                }
+                if (move==PaladinEncounter.Move.DrawCircle)
+                {
+                    yield return knight.ChangeWeapon(false);
+                    Check(!knight.IsHandMode && rig.Armed && !GameObject.Find("Grounded sword"),"recall returns to armed combat");
+                }
+                knight.transform.position=game.RoomCenter;
+                game.Hero.transform.position=game.RoomCenter+Vector2.right*(move==PaladinEncounter.Move.Pillars?9:3);
+                float grabHealth=game.Hero.Hp;
+                if (move==PaladinEncounter.Move.SweepGrab)
+                {
+                    // Isolate the grab from the planted sword's persistent damage.
+                    Vector2 sword=GameObject.Find("Grounded sword").transform.position;
+                    Vector2 away=Vector2.right*Mathf.Sign(game.RoomCenter.x-sword.x);
+                    knight.transform.position=game.RoomCenter+away*11;
+                    game.Hero.transform.position=(Vector2)knight.transform.position+away*3;
+                    game.Hero.DebugInvincibility=DebugInvincibilityMode.Off;
+                    game.Hero.Hp=grabHealth=game.Hero.MaxHealth;
+                    yield return new WaitForSeconds(1.1f);
+                }
+                var attack=knight.StartCoroutine(knight.SecondAttack(move));
+                if (move==PaladinEncounter.Move.Ricochet)
+                {
+                    while (!GameObject.Find("Four-wall ricochet")) yield return null;
+                    float before=knight.Hp;
+                    knight.TakeEnvironmentDamage(20);
+                    Check(Mathf.Approximately(before-knight.Hp,10),"ricochet applies half damage during flight");
+                }
+                if (move==PaladinEncounter.Move.QuakeLeap)
+                {
+                    yield return null;
+                    Check(knight.InQuake(game.RoomCenter),"earthquake installs the slowing ground field");
+                }
+                yield return attack;
+                if (move==PaladinEncounter.Move.SweepGrab)
+                {
+                    Check(Mathf.Approximately(game.Hero.Hp,grabHealth-knight.UnjudgedDamage*2) && game.Hero.KnockedBack,
+                        "unarmed grab deals exactly two hits and ends in knockback");
+                    game.Hero.DebugInvincibility=DebugInvincibilityMode.Full;
+                }
+                if (move==PaladinEncounter.Move.DeathRay)
+                {
+                    yield return null; // Let the painted floor publish the breach before capturing it.
+                    var ruin=knight.RuinForPainting;
+                    Vector2 tip=game.RoomCenter+new Vector2(ruin.x,ruin.y);
+                    Vector2 lost=tip+Vector2.right*ruin.z*10;
+                    Check(ruin.w==1 && Mathf.Approximately(Mathf.Abs(ruin.x),13.5f) &&
+                        Vector2.Distance(Rules.ClampToRoom(lost),lost)>2,
+                        "beam destroys a thirty-degree wedge and shares the movement boundary");
+                    if (Batch && SystemInfo.graphicsDeviceType!=UnityEngine.Rendering.GraphicsDeviceType.Null)
+                        Capture(game,"Unjudged-RuinedFloor");
+                }
+                Check(game.TrialBoss==knight && rig.Visible,"completed phase-two move "+move);
+            }
+            // Breach duration is measured in combat time, including subsequent attacks.
+            yield return new WaitForSeconds(21.1f);
+            Check(knight.RuinForPainting.w==0,"temporary beam breach recovers");
+            for (int i=0;i<2;i++)
+            {
+                knight.TakeEnvironmentDamage(knight.Hp-knight.MaxHp*(i==0?.59f:.29f));
+                yield return null;
+                Check(knight.ShowingSummon && knight.HunterCount==i,"summon marker appears before the blade");
+                Vector2 marker=knight.SummonPosition;
+                yield return new WaitForSeconds(.5f);
+                Check(knight.ShowingSummon && knight.HunterCount==i,"summon point remains visible during the warning");
+                while (knight.ShowingSummon) yield return null;
+                var summoned=GameObject.Find("Pursuing verdict "+(i+1));
+                Check(knight.HunterCount==i+1 && summoned &&
+                    Vector2.Distance(marker,summoned.transform.position)<.8f,"blade materializes at its marked position");
+            }
+            yield return new WaitForSeconds(.35f);
+            knight.TakeEnvironmentDamage(knight.MaxHp*5);
+            knight.TakeDamage(knight.MaxHp*5);
+            Check(Mathf.Approximately(knight.Hp,knight.MaxHp*.01f),"overkill and repeat hits stop at one percent");
+            for(int round=0;round<2;round++)
+            {
+                while (!knight.TrueBodyOpen) yield return null;
+                yield return null;
+                Check(knight.HunterCount==0 && knight.ApparitionCount==(round==0?4:8) && knight.IslandRadius==6.5f &&
+                    Vector2.Distance(Rules.ClampToRoom(game.RoomCenter+Vector2.right*20),game.RoomCenter)<6.5f,
+                    "real attack window on the final island, round "+(round+1));
+                foreach (var other in FindObjectsByType<PaladinRig>(FindObjectsSortMode.None))
+                    if (other!=rig) Check(!other.Visible,"real charge arrives alone after the scatter");
+                float locked=knight.Hp;
+                knight.TakeEnvironmentDamage(9000);
+                Check(knight.TrueBodyOpen && knight.Hp==locked,"incidental damage cannot clear a final round");
+                if (Batch && SystemInfo.graphicsDeviceType!=UnityEngine.Rendering.GraphicsDeviceType.Null)
+                    Capture(game,"Unjudged-Final"+(round+1));
+                var torso=CombatBody.For(knight).Center;
+                var origin=CombatBody.For(game.Hero).Muzzle;
+                var direction=(torso-origin).normalized;
+                Check(ProjectileSpace.Sweep(game,origin,torso,false,.05f,out _,out var body,out _) && body==knight,
+                    "projectile can reach the real silhouette from the hunter's muzzle");
+                Bullet.SpawnWorld(origin,direction*85,12,false,.5f);
+                yield return new WaitForSeconds(.4f);
+                Check(!knight.TrueBodyOpen,"projectile registers before the incoming attack");
+            }
+            while(game.TrialBoss) yield return null;
+            Check(game.State==RunState.Exit && knight.Hp==0 && knight.IslandRadius==0 &&
+                knight.RuinForPainting.w==0 && GameObject.Find("Unjudged abandoned sword") && !rig.Visible,
+                "judge escapes, leaves his sword and restores the arena");
+            if (Batch && SystemInfo.graphicsDeviceType!=UnityEngine.Rendering.GraphicsDeviceType.Null)
+                Capture(game,"Unjudged-Departure");
         }
 
         static MeshRenderer WarningRenderer()

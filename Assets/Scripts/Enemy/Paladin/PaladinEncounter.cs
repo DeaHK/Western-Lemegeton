@@ -18,7 +18,7 @@ namespace WesternLemegeton
         [Min(0)] public float PerfectHeal = 6;
 
         internal enum Pattern { Light, Left, Right, Spin, Swords, Rush, Rain, Ambush, Judgment, Grab }
-        enum Break { None, Echo, Eclipse, Reveal }
+        enum Break { None, Echo, Eclipse, Reveal, LastStand }
         Dungeon game;
         BossTrialAudio audioBus;
         PaladinRig rig;
@@ -32,13 +32,18 @@ namespace WesternLemegeton
         internal PaladinEchoBarrier EchoBarrier { get; private set; }
         internal const float ChaseSpeed = 3.5f;
         Break pending;
-        Pattern previous = Pattern.Grab;
+        static readonly int PatternCount = System.Enum.GetValues(typeof(Pattern)).Length;
+        Pattern? previous;
         static readonly Color WarningColor = new Color(1,.075f,.115f,.53f);
         static readonly Color LightColor = new Color(1,.84f,.37f,.88f);
         static readonly Color CoreColor = new Color(1,.985f,.85f,.94f);
-        Vector2 Feet { get => transform.position; set => transform.position = value; }
+        Vector2 Feet
+        {
+            get => transform.position;
+            set => transform.position = SecondPhase && !lastStand && ruinEnd>clockTwo ? ClampFloor(value,.55f) : value;
+        }
         Vector2 Center => game.RoomCenter;
-        public override bool Dead => base.Dead || sealedHp || (begun && !rig.Visible);
+        public override bool Dead => base.Dead || (sealedHp && !TrueBodyOpen) || (begun && !rig.Visible);
         bool Playing => game && game.Running && game.Hero.Hp>0;
         internal void Begin(Dungeon dungeon, BossTrialAudio sound)
         {
@@ -75,7 +80,8 @@ namespace WesternLemegeton
         void UpdateAnchor()
         {
             var rotation = Quaternion.Euler(PaperWorld.Pitch,0,0);
-            hitAnchor.SetPositionAndRotation(PaperWorld.Point(Feet+Vector2.down*.35f)+rotation*Vector3.up*rig.Height*.50f,rotation);
+            hitAnchor.SetPositionAndRotation(PaperWorld.Point(Feet+Vector2.down*.35f)+rotation*Vector3.up*
+                (rig.Height*.50f+(SecondPhase?rig.Lift:0)),rotation);
         }
 
         public override void TakeStigmaDamage(float damage, StigmaOwner owner, bool slowed) => DamagePhase(damage);
@@ -83,6 +89,7 @@ namespace WesternLemegeton
         void DamagePhase(float damage)
         {
             if (!begun || !Playing || Dead || damage<=0) return;
+            if (SecondPhase) { DamageUnjudged(damage); return; }
             float floor = !enhanced ? MaxHp*.60f : !eclipseDone ? MaxHp*.20f : 0;
             Hp = Mathf.Max(floor,Hp-damage);
             Ink.Burst(Feet,Ink.Gold,4);
@@ -96,6 +103,7 @@ namespace WesternLemegeton
             if (!begun || !Playing) return;
             Stigma.Tick(Time.deltaTime);
             rig.Tick(Time.deltaTime);
+            if (SecondPhase) TickUnjudged(Time.deltaTime);
             if (pending != Break.None)
             {
                 var ritual = pending;
@@ -130,7 +138,7 @@ namespace WesternLemegeton
             if (bound && game && game.Hero) game.Hero.ReleaseTrialBind();
             bound=false;
         }
-        void OnDisable() { StopAllCoroutines(); ClearEffects(); FreeHunter(); }
+        void OnDisable() { StopAllCoroutines(); ClearEffects(); FreeHunter(); ClearUnjudged(); }
 
         IEnumerator Wait(float duration, System.Action<float> tick=null)
         {
@@ -138,7 +146,7 @@ namespace WesternLemegeton
             while (elapsed<duration)
             {
                 yield return null;
-                if (!Playing) continue;
+                if (!Playing || ShowingSummon) continue;
                 elapsed+=Time.deltaTime;
                 tick?.Invoke(Mathf.Clamp01(elapsed/duration));
             }
@@ -162,15 +170,11 @@ namespace WesternLemegeton
                     rig.Motion(0,distance>2.35f ? Mathf.Sin(t*interval*9)*2 : 0);
                 });
                 Pattern next;
-                if (Vector2.Distance(Feet,game.Pos)<=3.1f && Random.value<.40f) next=Pattern.Grab;
-                else
+                do
                 {
-                    // Draw uniformly among the other nine attacks, avoiding back-to-back duplicates.
-                    int size=(int)Pattern.Grab;
-                    int index=Random.Range(0,previous==Pattern.Grab ? size : size-1);
-                    if (previous!=Pattern.Grab && index>=(int)previous) index++;
-                    next=(Pattern)index;
+                    next=(Pattern)Random.Range(0,PatternCount);
                 }
+                while (next==previous);
                 previous=next;
                 yield return Attack(next);
                 rig.Motion(); rig.Ignite(0);
@@ -250,8 +254,10 @@ namespace WesternLemegeton
         }
         IEnumerator Glow(PaladinArea area)
         {
-            var d=Decal(area,CoreColor,-3700);
-            yield return Wait(.22f,t=>d.Paint(area,Color.Lerp(CoreColor,new Color(1,.67f,.12f,0),t),-3700,Center));
+            Color from=SecondPhase ? new Color(.94f,.82f,1,.87f) : CoreColor;
+            Color to=SecondPhase ? new Color(.58f,.19f,1,0) : new Color(1,.67f,.12f,0);
+            var d=Decal(area,from,-3700);
+            yield return Wait(.22f,t=>d.Paint(area,Color.Lerp(from,to,t),-3700,Center));
             Retire(d);
         }
 
@@ -337,7 +343,7 @@ namespace WesternLemegeton
         IEnumerator Grab()
         {
             Vector2 dir=Aim();
-            var lane=PaladinArea.Lane(Feet,Feet+dir*5.3f,1.12f);
+            var lane=PaladinArea.Lane(Feet,Feet+dir*5.3f,2.24f);
             PoseAt(Pose.Windup);
             yield return Warning(lane,.5f);
             PoseAt(Pose.Thrust); Flash(lane,Cue.Cut);

@@ -75,6 +75,16 @@ namespace WesternLemegeton
             properties.SetFloat("_EchoPreview",1);
             surface.SetPropertyBlock(properties);
         }
+        public void Electrify()
+        {
+            properties.SetFloat("_ElectricField",1);
+            surface.SetPropertyBlock(properties);
+        }
+        public void MarkRicochet()
+        {
+            properties.SetFloat("_Ricochet",1);
+            surface.SetPropertyBlock(properties);
+        }
         public void PaintWave(Vector2 p,Vector2 direction,float width,Vector2 center,float scale)
         {
             Vector2 half=direction*(.6f*scale);
@@ -88,6 +98,13 @@ namespace WesternLemegeton
             properties.SetVector("_Lights",new Vector4(hunter.x,hunter.y+.85f,judge.x,judge.y+1.65f));
             properties.SetVector("_LightRadii",new Vector4(2.65f,showJudge ? 3.45f : 0,0,0));
             properties.SetColor("_Tint",new Color(.025f,.016f,.052f,.975f*opacity));
+            surface.SetPropertyBlock(properties);
+        }
+        public void PaintBeam(PaladinArea area,Vector2 center,float t)
+        {
+            Paint(area,Color.white,3100,center);
+            properties.SetFloat("_DeathRay",1);
+            properties.SetFloat("_Pulse",t);
             surface.SetPropertyBlock(properties);
         }
         public void Paint(PaladinArea area, Color tint, int order, Vector2 room, bool clip = true, float feather = 0)

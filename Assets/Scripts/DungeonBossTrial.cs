@@ -40,7 +40,9 @@ namespace WesternLemegeton
             trialBosses[selection].Prefab is PaladinEncounter;
         bool AtBossSelector => InTrialGallery && (At(ArrowPoint(-1)) || At(ArrowPoint(1)));
         public Enemy TrialBoss => trialComplete ? null : trialBoss;
-        public string TrialBossName => trialBosses.Count==0 ? "" : trialBosses[selection].DisplayName;
+        internal PaladinEncounter Judicator => trialBoss as PaladinEncounter;
+        public string TrialBossName => Judicator && Judicator.SecondPhase ? "심판받지 못한 자" :
+            trialBosses.Count==0 ? "" : trialBosses[selection].DisplayName;
         public string TrialLocation => trialRoom == TrialRoom.Gallery ? "히르바 · 보스 시험실" : "보스 시험 · " + TrialBossName;
         Vector2 TrialCenter => trialRoom == TrialRoom.Gallery ? GalleryCenter : SanctuaryCenter;
         bool At(Vector2 point, float radius = 1.65f) => Vector2.Distance(LocalPos,point) <= radius;
