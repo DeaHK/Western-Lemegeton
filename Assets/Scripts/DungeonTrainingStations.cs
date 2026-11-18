@@ -52,7 +52,7 @@ namespace WesternLemegeton
             {
                 // The weapon room uses an authored obstacle layout. Place the plate
                 // on walkable ground using the same clearance as the player's body.
-                world = Rules.OutsideCover(world, .8f);
+                world = Rules.OutsideCover(practiceRoom.Placement(point), .8f);
                 point = world - center;
             }
             var station = new TrainingStation { Kind = kind, Seal = seal, World = world };

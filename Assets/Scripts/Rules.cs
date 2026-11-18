@@ -6,13 +6,28 @@ namespace WesternLemegeton
     public static class Rules
     {
         public static Vector2 RoomOrigin;
+        public static Vector2 RoomHalfSize
+        {
+            get
+            {
+                var game = Dungeon.I;
+                // Trial rooms are built in world units; authored rooms inherit their prefab scale.
+                if (game && game.InJudicatorArena) return PaladinArea.ArenaHalfSize;
+                if (game && game.InTrialGallery) return new Vector2(game.TrainingHalfWidth, 9);
+                if (game && game.InBossTrial) return new Vector2(15, 9);
+                if (game && game.InsideHouse) return new Vector2(6, 4) * Dungeon.HouseInteriorScale;
+                Transform root = null;
+                if (game)
+                    root = game.InPractice ? game.PracticeRoom.transform :
+                        game.IsTown ? (game.Scene && game.Scene.Hirva ? game.Scene.Hirva.transform : null) : game.CurrentRoom?.Layout.Root;
+                var scale = root ? root.lossyScale : Vector3.one;
+                return new Vector2(15 * Mathf.Abs(scale.x), 9 * Mathf.Abs(scale.z));
+            }
+        }
         public static int AmmoCost(int combo) => combo % 2 == 0 ? 1 : 2;
         public static Vector2 ClampToRoom(Vector2 p, float radius = .4f)
         {
-            bool house = Dungeon.I && Dungeon.I.InsideHouse;
-            var size = house ? new Vector2(6,4) : new Vector2(15,9);
-            if (Dungeon.I && Dungeon.I.InTrialGallery) size.x = Dungeon.I.TrainingHalfWidth;
-            if (Dungeon.I && Dungeon.I.InJudicatorArena) size = PaladinArea.ArenaHalfSize;
+            var size = RoomHalfSize;
             p = new Vector2(Mathf.Clamp(p.x, RoomOrigin.x-size.x+radius, RoomOrigin.x+size.x-radius),
                 Mathf.Clamp(p.y, RoomOrigin.y-size.y+radius, RoomOrigin.y+size.y-radius));
             var barrier = Dungeon.I ? Dungeon.I.EchoBarrier : null;
@@ -22,8 +37,8 @@ namespace WesternLemegeton
         }
         public static Vector2 CameraTarget(Vector2 p, float halfHeight, float aspect)
         {
-            float x = Mathf.Max(0, 15.8f - halfHeight * aspect);
-            float y = Mathf.Max(0, 9.8f - halfHeight);
+            float x = Mathf.Max(0, RoomHalfSize.x + .8f - halfHeight * aspect);
+            float y = Mathf.Max(0, RoomHalfSize.y + .8f - halfHeight);
             return new Vector2(Mathf.Clamp(p.x, -x, x), Mathf.Clamp(p.y, -y, y));
         }
         public static bool InCone(Vector2 origin, Vector2 direction, Vector2 target, float range, float dot)

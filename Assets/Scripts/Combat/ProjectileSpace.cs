@@ -48,8 +48,7 @@ namespace WesternLemegeton
                     new Vector3(r.xMax+radius,10000,r.yMax+radius), length, out float t)) nearest = Mathf.Min(nearest, t);
             // 방 경계 및 지면도 탄환을 막습니다.
             Vector2 room = Rules.RoomOrigin;
-            Vector2 extent = Dungeon.I && Dungeon.I.InJudicatorArena ?
-                PaladinArea.ArenaHalfSize-Vector2.one*.2f : new Vector2(14.8f,8.8f);
+            Vector2 extent = Rules.RoomHalfSize - Vector2.one * .2f;
             if (ray.origin.x < room.x-extent.x || ray.origin.x > room.x+extent.x ||
                 ray.origin.z < room.y-extent.y || ray.origin.z > room.y+extent.y || ray.origin.y < 0) return 0;
             if (ray.direction.x > 0) nearest = Mathf.Min(nearest, (room.x+extent.x-ray.origin.x)/ray.direction.x);
