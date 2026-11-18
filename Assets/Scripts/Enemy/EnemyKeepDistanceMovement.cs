@@ -18,6 +18,7 @@ namespace WesternLemegeton
 
         public override void Tick(Enemy owner, Dungeon game, Vector2 target, float speedMultiplier, float dt)
         {
+            if (TrySideDetour(owner, game, target, BodyRadius, Mathf.Max(0, Speed * speedMultiplier * dt))) return;
             Vector2 position = transform.position;
             Vector2 delta = target - position;
             float distance = delta.magnitude;

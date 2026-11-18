@@ -12,6 +12,12 @@ namespace WesternLemegeton
         [System.NonSerialized] public readonly List<Rect> RuntimeClearAreas = new List<Rect>();
         public Vector2 Center=>new Vector2(transform.position.x,transform.position.z);
         public static Vector2 Point(Transform t)=>new Vector2(t.position.x,t.position.z);
+        // Convert authored map offsets through the room scale exactly once.
+        public Vector2 Placement(Vector2 local)
+        {
+            var world = transform.TransformPoint(new Vector3(local.x, 0, local.y));
+            return new Vector2(world.x, world.z);
+        }
         public WesternEnvironment.Layout Capture()
         {
             var layout=new WesternEnvironment.Layout{Root=transform,Town=Town,Authored=this};

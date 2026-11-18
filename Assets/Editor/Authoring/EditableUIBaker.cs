@@ -19,7 +19,6 @@ namespace WesternLemegeton.EditorTools
    Button(title,"Start",new Rect(34,435,263,97),"",GameUIAction.EnterTown,-1,true);
    Button(title,"New_Game",new Rect(39,546,267,71),"",GameUIAction.EnterTown,-1,true);
    Button(title,"Title_Settings",new Rect(49,635,239,70),"",GameUIAction.OpenSettings,-1,true);
-   Label(title,"Title_Caption",new Rect(947,654,316,48),"히르바 · 저주받은 황야",18);
    HUD();Route();Cards();PauseAndSettings();Cinematic();
    var toast=Panel("Passive_Acquisition",false);view.ToastPanel=toast.gameObject;toast.gameObject.AddComponent<CanvasGroup>();
    Frame(toast,"ToastBorder",new Rect(458,104,430,91),Ink.Gold);Icon(toast,"ToastIcon",new Rect(472,117,65,65),"BulletIcon");Label(toast,"ToastName",new Rect(554,117,315,30),"악마카드 획득",19);Label(toast,"ToastDetail",new Rect(554,152,315,26),"일반 · 이벤트 보상",14,muted);
@@ -61,13 +60,13 @@ namespace WesternLemegeton.EditorTools
    for(int y=0;y<72;y++)for(int x=0;x<128;x++){float d=new Vector2((x-63.5f)/75,(y-35.5f)/43).magnitude;texture.SetPixel(x,y,new Color(.025f,.008f,.05f,Mathf.SmoothStep(0,.82f,Mathf.InverseLerp(.45f,1.15f,d))));}texture.Apply();
    var vignette=Rect(p,"Vignette",new Rect(0,0,1280,720)).gameObject.AddComponent<RawImage>();vignette.texture=EditableAssetStore.Save(texture);vignette.raycastTarget=false;
    Label(p,"Location",new Rect(25,20,840,36),"스테이지 01 · 방 1/6 / 붉은 바위 입구",27);Label(p,"Notice",new Rect(27,59,850,28),"문을 향해 이동하세요",14,muted);
-   Label(p,"PassiveCount",new Rect(27,98,460,24),"획득 패시브 0 · 성흔과 별도",14,muted);Label(p,"PassiveEmpty",new Rect(28,126,400,25),"획득한 아이템이 없습니다",14,muted);
-   var scroll=Rect(p,"Passive_Inventory",new Rect(25,124,425,67)).gameObject.AddComponent<ScrollRect>();scroll.horizontal=true;scroll.vertical=false;
-   var viewport=Rect(scroll.transform,"Viewport",new Rect(0,0,425,67));viewport.gameObject.AddComponent<RectMask2D>();scroll.viewport=viewport;
-   var content=Rect(viewport,"Owned_Passives",new Rect(0,0,425,54));view.PassiveContent=content;scroll.content=content;
+   Label(p,"PassiveCount",new Rect(940,462,320,24),"획득 패시브 0 · 성흔과 별도",14,muted);Label(p,"PassiveEmpty",new Rect(940,493,320,25),"획득한 아이템이 없습니다",14,muted);
+   var scroll=Rect(p,"Passive_Inventory",new Rect(938,491,320,67)).gameObject.AddComponent<ScrollRect>();scroll.horizontal=true;scroll.vertical=false;
+   var viewport=Rect(scroll.transform,"Viewport",new Rect(0,0,320,67));viewport.gameObject.AddComponent<RectMask2D>();scroll.viewport=viewport;
+   var content=Rect(viewport,"Owned_Passives",new Rect(0,0,320,54));view.PassiveContent=content;scroll.content=content;
    var layout=content.gameObject.AddComponent<HorizontalLayoutGroup>();layout.spacing=7;layout.childControlWidth=false;layout.childControlHeight=false;layout.childForceExpandHeight=false;layout.childForceExpandWidth=false;
    var fit=content.gameObject.AddComponent<ContentSizeFitter>();fit.horizontalFit=ContentSizeFitter.FitMode.PreferredSize;
-   view.PassiveTooltip=Label(p,"PassiveTooltip",new Rect(27,197,510,31),"",14);view.PassiveTooltip.gameObject.SetActive(false);
+   view.PassiveTooltip=Label(p,"PassiveTooltip",new Rect(938,558,325,44),"",14);view.PassiveTooltip.gameObject.SetActive(false);
    var mini=Frame(p,"Minimap",new Rect(1063,16,190,145),muted*.7f);Vector2[] points=new Vector2[6];
    for(int i=0;i<6;i++)points[i]=new Vector2(19+RoomGraph.Centers[i].x/120*147,121-RoomGraph.Centers[i].y/88*103);
    for(int i=0;i<RoomGraph.Links.GetLength(0);i++)Line(mini.transform,"MiniLink"+i,points[RoomGraph.Links[i,0]],points[RoomGraph.Links[i,1]],muted*.4f,2);

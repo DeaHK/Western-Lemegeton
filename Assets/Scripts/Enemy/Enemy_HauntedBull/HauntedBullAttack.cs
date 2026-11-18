@@ -146,6 +146,8 @@ namespace WesternLemegeton
             }
             if ((cooldown <= 0 || shortCooldown <= 0) && Vector2.Distance(transform.position, game.Pos) <= AttackRange)
             {
+                // Only gate the start of a full charge. Stomp/Lock above keep running once started.
+                if (cooldown <= 0 && ObstacleBetweenHunter(game.Pos)) return false;
                 // 재사용 가능하면 풀 차지가 우선입니다. 진행 중인 숏 차지는 끝까지 수행합니다.
                 CurrentCharge = cooldown <= 0 ? ChargeKind.FullCharge : ChargeKind.ShortCharge;
                 aim = ((Vector2)game.Pos - (Vector2)transform.position).normalized;
@@ -153,6 +155,18 @@ namespace WesternLemegeton
                 Action = ActionState.Stomp; timer = CurrentCharge == ChargeKind.FullCharge ? StompSeconds : ShortStompSeconds;
                 ShowLine(); StompStarted.Invoke(); return true;
             }
+            return false;
+        }
+
+        bool ObstacleBetweenHunter(Vector2 target)
+        {
+            Vector2 from = transform.position;
+            Vector2 delta = target - from;
+            if (delta.sqrMagnitude < .000001f) return false;
+            var ray = new Ray(ProjectileSpace.Direction(from), ProjectileSpace.Direction(delta.normalized));
+            foreach (Rect rect in Dungeon.Obstacles)
+                if (ProjectileSpace.RayBox(ray, new Vector3(rect.xMin, -1, rect.yMin),
+                    new Vector3(rect.xMax, 1, rect.yMax), delta.magnitude, out _)) return true;
             return false;
         }
 
@@ -190,6 +204,15 @@ namespace WesternLemegeton
             float length = CurrentWarningLength;
             owner.SetAttackWarning(true, (Vector2)transform.position + aim * length * .5f,
                 new Vector3(length, CurrentHitRadius * 2, 1), Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg);
+            // SetAttackWarning takes local scale; cancel inherited actor scale for world-sized warnings.
+            if (owner.AuthoredWarning)
+            {
+                var warningTransform = owner.AuthoredWarning.transform;
+                var parentScale = warningTransform.parent ? warningTransform.parent.lossyScale : Vector3.one;
+                warningTransform.localScale = new Vector3(
+                    length / Mathf.Max(.0001f, Mathf.Abs(parentScale.x)),
+                    CurrentHitRadius * 2 / Mathf.Max(.0001f, Mathf.Abs(parentScale.y)), 1);
+            }
         }
         // 취소·비활성화 시 표시를 숨깁니다.
         void HideWarning() { if (owner) owner.SetMeleeWarning(false, 1); }

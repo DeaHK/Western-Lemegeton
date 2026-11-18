@@ -7,6 +7,8 @@ namespace WesternLemegeton
         [System.Serializable]
         public sealed class ShotgunSettings
         {
+            [Tooltip("샷건 조준 중 2페이즈 이동 속도에 곱하는 배율")]
+            [Range(0, 1)] public float AimMoveMultiplier = .5f;
             [Range(0, 2)] public int CrowdControl = 1;
             [Tooltip("총 휘두르기 넉백·기절 전용 설정")]
             [Range(0, 2)] public int SwingCrowdControl = 2;
@@ -103,10 +105,17 @@ namespace WesternLemegeton
         public float WhipCooldownRemaining => whipCooldown;
         public float DynamiteCooldownRemaining => dynamiteCooldown;
         public float SkillMovementMultiplier => (Phase==2 ? Mathf.Max(0,PhaseTwoMoveMultiplier) : 1) *
-            (ActivePattern == Pattern.Whip && Action == ActionState.Active ? Mathf.Max(0,1-Whip.SlowFraction) : 1);
+            (ActivePattern == Pattern.Shotgun && Action == ActionState.Aim ? Mathf.Clamp01(Shotgun.AimMoveMultiplier) :
+             ActivePattern == Pattern.Whip && Action == ActionState.Active ? Mathf.Max(0,1-Whip.SlowFraction) : 1);
 
         bool WhipReady(Dungeon game) => EnableWhip && whipCooldown <= 0 && Vector2.Distance(transform.position,game.Pos) <= WhipRange;
-        bool CanThrowAt(Vector2 target) => (!EnableWhip || whipCooldown >= 1) || Vector2.Distance(transform.position,target) > Dynamite.ExplosionRadius;
+        bool CanThrowAt(Vector2 target)
+        {
+            float distance = Vector2.Distance(transform.position, target);
+            // 채찍을 사용 중이지 않고 헌터가 채찍 시작 범위 밖이면, 준비된 채찍이 투척을 막지 않습니다.
+            bool outsideIdleWhip = ActivePattern != Pattern.Whip && distance > WhipRange;
+            return outsideIdleWhip || !EnableWhip || whipCooldown >= 1 || distance > Dynamite.ExplosionRadius;
+        }
         bool DynamiteReady(Dungeon game) => EnableDynamite && dynamiteCooldown <= 0 &&
             Vector2.Distance(transform.position,game.Pos) <= Dynamite.TriggerRange && CanThrowAt(game.Pos);
         Pattern ReadySkill(Dungeon game) => WhipReady(game) ? Pattern.Whip : DynamiteReady(game) ? Pattern.Dynamite : Pattern.None;
@@ -199,6 +208,7 @@ namespace WesternLemegeton
                 elapsed+=dt;
                 if(elapsed>=Shotgun.AimSeconds)
                 {
+                    RestoreWhipMovement();
                     // 이미 시작한 샷건은 조준과 발사를 마친 뒤 다음 패턴을 선택합니다.
                     int count=Mathf.Max(1,Shotgun.PelletCount);
                     for(int i=0;i<count;i++)
@@ -208,8 +218,11 @@ namespace WesternLemegeton
                         FireGunBullet(LockedAim,speed,angle,Shotgun.Damage,Mathf.Max(.01f,Shotgun.BulletDistance)/speed,Shotgun.CrowdControl);
                     }
                     BeginRecovery();
+                    return true;
                 }
-                return true;
+                // 조준 중 추적 설정만 준비합니다. 이동과 감속 배율 적용은 Brain이 한 번 수행합니다.
+                if (!whipMovement && !whipKeepDistance) BeginWhipMovement();
+                return false;
             }
             if (ActivePattern == Pattern.Whip)
             {

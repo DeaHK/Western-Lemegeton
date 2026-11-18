@@ -21,7 +21,7 @@ namespace WesternLemegeton
         IEnumerator Start()
         {
             Application.runInBackground=true;output=Path.GetFullPath(Path.Combine(Application.dataPath,"../../../Logs"));Directory.CreateDirectory(output);
-            yield return new WaitForSeconds(.4f);game=Dungeon.I;game.StartRun();yield return null;game.Cinematics.Skip();
+            yield return new WaitForSeconds(.4f);game=Dungeon.I;game.StartRun();RuntimeSmoke.PassWeaponRoom(game);yield return null;game.Cinematics.Skip();
             hero=game.Hero;hero.enabled=false;game.Crow.enabled=false;
             foreach(var e in game.Enemies){e.enabled=false;e.transform.position=new Vector2(12,7);}
             target=game.Enemies[0];

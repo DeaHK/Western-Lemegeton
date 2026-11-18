@@ -10,7 +10,7 @@ namespace WesternLemegeton
         {
             public Vector2 Target;
             public float FlightTime;
-            public SpriteRenderer Visual, Warning;
+            public SpriteRenderer Visual, Warning, FuseFill;
             public PaperCard Card;
             public bool Landed, Exploded;
         }
@@ -21,6 +21,32 @@ namespace WesternLemegeton
         float age, damage, radius, fuse, height;
         bool hunterHit;
         int crowdControl;
+        static Sprite warningRing;
+        // 투명한 내부와 굵은 테두리를 가진 Logan 전용 원형 스프라이트입니다.
+        static Sprite WarningRing
+        {
+            get
+            {
+                if (warningRing) return warningRing;
+                const int size = 256;
+                var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                texture.name = "Logan dynamite warning ring";
+                texture.filterMode = FilterMode.Bilinear;
+                texture.wrapMode = TextureWrapMode.Clamp;
+                var pixels = new Color[size * size];
+                for (int y = 0; y < size; y++)
+                    for (int x = 0; x < size; x++)
+                    {
+                        float d = Vector2.Distance(new Vector2(x + .5f, y + .5f), Vector2.one * 128);
+                        // 반경의 약 2%인 얇은 테두리. 내부 도화선 표시는 별도로 유지합니다.
+                        float alpha = Mathf.Clamp01(128 - d) * Mathf.Clamp01(d - 124);
+                        pixels[y * size + x] = new Color(1, 1, 1, alpha);
+                    }
+                texture.SetPixels(pixels); texture.Apply();
+                warningRing = Sprite.Create(texture, new Rect(0, 0, size, size), Vector2.one * .5f, size);
+                return warningRing;
+            }
+        }
         public int BombCount => bombs.Count;
         // 비행 중인 폭탄도 고정된 착지 예정 범위를 위험 구역으로 제공합니다.
         public bool Threatens(Vector2 position, float margin)
@@ -65,13 +91,23 @@ namespace WesternLemegeton
                 {
                     bomb.Landed=true;
                     bomb.Warning=Ink.Shape("Logan / Explosion warning",transform,bomb.Target,Vector2.one*radius*2,
-                        new Color(1,.25f,.05f,.3f),-590,true);
+                        new Color(1,0,0,.9f),-589,true);
+                    bomb.Warning.sprite = WarningRing;
+                    bomb.FuseFill=Ink.Shape("Logan / Fuse progress",transform,bomb.Target,Vector2.zero,
+                        new Color(1,0,0,.35f),-590,true);
+                }
+                if (bomb.Landed && bomb.FuseFill)
+                {
+                    // 각 폭탄의 착지 시점부터 계산: 0이면 비어 있고 1이면 폭발 반경까지 찹니다.
+                    float progress = fuse > 0 ? Mathf.Clamp01((age - bomb.FlightTime) / fuse) : 1;
+                    bomb.FuseFill.transform.localScale = Vector3.one * (radius * 2 * progress);
                 }
                 if(age>=bomb.FlightTime+fuse)
                 {
                     bomb.Exploded=true;
                     if(bomb.Visual) bomb.Visual.enabled=false;
                     if(bomb.Warning) bomb.Warning.enabled=false;
+                    if(bomb.FuseFill) bomb.FuseFill.enabled=false;
                     Explode(game,bomb.Target);
                 }
                 else finished=false;

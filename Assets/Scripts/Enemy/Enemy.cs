@@ -101,7 +101,7 @@ namespace WesternLemegeton
 
         #region Update Orchestration
 
-        private void Update()
+        protected virtual void Update()
         {
             if (AuxiliaryTarget) return;
             var g = Dungeon.I;
@@ -146,7 +146,7 @@ namespace WesternLemegeton
             }
         }
 
-        void LateUpdate() { if (!AuxiliaryTarget) stigmaView.Show(this); }
+        protected virtual void LateUpdate() { if (!AuxiliaryTarget) stigmaView.Show(this); }
 
         #endregion
 
@@ -284,7 +284,7 @@ namespace WesternLemegeton
         }
 
         // 적의 독처럼 헌터나 까마귀의 공격이 아닌 피해입니다. 처치 시 소유자 성흔 효과를 발동하지 않습니다.
-        public void TakeEnvironmentDamage(float damage)
+        public virtual void TakeEnvironmentDamage(float damage)
         {
             if (damage <= 0 || !gameObject.activeInHierarchy || Dead || !Dungeon.I || !Dungeon.I.Running) return;
             if (AuxiliaryTarget)
@@ -306,7 +306,7 @@ namespace WesternLemegeton
             Ink.Burst(transform.position, Ink.Cyan, 5);
         }
 
-        public void TakeStigmaDamage(float damage, StigmaOwner owner, bool slowed)
+        public virtual void TakeStigmaDamage(float damage, StigmaOwner owner, bool slowed)
         {
             if (!gameObject.activeInHierarchy || Dead || Dungeon.I.State == RunState.Cinematic) return;
             if (AuxiliaryTarget)
@@ -418,7 +418,7 @@ namespace WesternLemegeton
             warning.transform.rotation = Quaternion.Euler(0, 0, angle);
         }
 
-        public bool Dead => Hp <= 0;
+        public virtual bool Dead => Hp <= 0;
         // Raven uses this for link target priority; charge contact damage remains 22.
         public float AttackPower => basicBrain ? basicBrain.AttackPower : Kind == 3 ? 25 : Kind == 1 ? 22 : 13;
         public bool Telegraphing => basicBrain ? basicBrain.Telegraphing : windup > 0;
@@ -438,6 +438,7 @@ namespace WesternLemegeton
         long attackId;
         SpriteRenderer sprite;
         PaperCard card;
+        internal bool IsHostile => hostile;
         public Vector3 WorldPosition => worldPosition;
         public Vector3 WorldVelocity => worldVelocity;
 

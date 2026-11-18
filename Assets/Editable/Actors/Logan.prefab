@@ -1122,7 +1122,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3775186189446952969}
@@ -1208,7 +1208,7 @@ MonoBehaviour:
     AimSeconds: 1
     Damage: 10
     ShotInterval: 0.15
-    Duration: 2
+    Duration: 1
     RecoverySeconds: 0.5
     BulletSpeed: 10
     BulletLifetime: 3
@@ -1241,11 +1241,15 @@ MonoBehaviour:
   DodgeSeconds: 0.4
   DodgeHeight: 0.7
   DodgeSafetyMargin: 0.2
+  ShowGunRanges: 1
+  GunRangeLineWidth: 0.06
+  GunRangeColor: {r: 1, g: 0, b: 0, a: 0.7}
   EnableShotgun: 1
   EnableWhip: 1
   EnableDynamite: 1
   PhaseTwoMoveMultiplier: 1.2
   Shotgun:
+    AimMoveMultiplier: 0.5
     CrowdControl: 0
     SwingCrowdControl: 2
     RecoverySeconds: 0.5

@@ -9,9 +9,19 @@ public class WesternArtImporter : AssetPostprocessor
         bool stigmaIcon = assetPath.StartsWith("Assets/Resources/Stigmas/Icons/");
         if (!stigmaIcon && !assetPath.StartsWith("Assets/Resources/Western/") && !assetPath.StartsWith("Assets/Resources/Combat/")) return;
         var importer = (TextureImporter)assetImporter;
-        // Catalog artwork is converted into sprites at runtime. Stigma SOs need imported Sprite subassets.
-        importer.textureType = stigmaIcon ? TextureImporterType.Sprite : TextureImporterType.Default;
-        if (stigmaIcon) importer.spriteImportMode = SpriteImportMode.Single;
+        // Catalog artwork is converted at runtime; direct prefab references need imported Sprite subassets.
+        bool robeManSprite = assetPath == "Assets/Resources/Combat/Enemy_RobeMan_temp.png";
+        bool importedSprite = stigmaIcon || robeManSprite;
+        importer.textureType = importedSprite ? TextureImporterType.Sprite : TextureImporterType.Default;
+        if (importedSprite) importer.spriteImportMode = SpriteImportMode.Single;
+        if (robeManSprite)
+        {
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.spriteAlignment = (int)SpriteAlignment.BottomCenter;
+            settings.spritePivot = new Vector2(.5f, 0);
+            importer.SetTextureSettings(settings);
+        }
         importer.npotScale = TextureImporterNPOTScale.None;
         importer.alphaSource = TextureImporterAlphaSource.FromInput;
         importer.alphaIsTransparency = true;

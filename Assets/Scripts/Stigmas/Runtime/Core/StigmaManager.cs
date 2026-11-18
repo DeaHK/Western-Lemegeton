@@ -21,7 +21,8 @@ namespace WesternLemegeton.Stigmas
         {
             if (combat == null || !Dungeon.I || !Dungeon.I.Running) return;
             combat.Tick(UnityEngine.Time.deltaTime);
-            if (UnityEngine.Input.GetKeyDown(Database.Rules.LinkSkillKey))
+            if (UnityEngine.Input.GetKeyDown(Database.Rules.LinkSkillKey) &&
+                (Database.Rules.LinkSkillKey != KeyCode.G || !Dungeon.I.AtTrainingInteraction))
             {
                 var target = PaperWorld.Mouse(Dungeon.I.Cam, UnityEngine.Input.mousePosition);
                 if (!combat.Skills.TryCast(target, out string error)) Dungeon.I.Tell(error);

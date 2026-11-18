@@ -7,7 +7,7 @@ namespace WesternLemegeton
 {
     public enum RunState { Title, Town, Combat, Reward, Exit, Paused, Dead, Victory, Route, WaveBreak, SigilChoice, CardChoice, Cinematic, Dialogue }
 
-    public class Dungeon : MonoBehaviour
+    public partial class Dungeon : MonoBehaviour
     {
         #region Fields and state by responsibility
 
@@ -30,7 +30,9 @@ namespace WesternLemegeton
         // 피격 처리의 foreach 도중에도 안전하게 생성된 적/밧줄을 등록합니다.
         public void QueueEnemy(Enemy enemy)
         {
-            if (enemy && !Enemies.Contains(enemy) && !pendingEnemies.Contains(enemy)) pendingEnemies.Add(enemy);
+            if (!enemy || Enemies.Contains(enemy) || pendingEnemies.Contains(enemy)) return;
+            if (!enemy.AuxiliaryTarget) enemy.Dying += RollMonsterSeal;
+            pendingEnemies.Add(enemy);
         }
         Transform actors;
 
@@ -66,7 +68,7 @@ namespace WesternLemegeton
         public ExplorationRoom CurrentRoom => IsTown || Rooms == null ? null : Rooms[MapIndex];
         public ExplorationRoomKind CurrentKind => IsTown ? ExplorationRoomKind.Combat : Progress.KindAt(MapIndex);
         public Vector2 Pos => Hero.transform.position;
-        public Vector2 RoomCenter => IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
+        public Vector2 RoomCenter => InBossTrial ? TrialCenter : InsideHouse ? HouseCenter : InPractice ? practiceRoom.Center : IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
         public Vector2 LocalPos => Pos - RoomCenter;
         public static readonly string[] MapNames = { "붉은 바위 입구", "마차 잔해 전투지", "성흔 제단", "악마카드 역참", "풍차 언덕", "스테이지 출구" };
         public static readonly string[] RoomNames = { "붉은 모래길", "버려진 마차길", "외딴 예배당", "메마른 풍차", "망자의 분지" };
@@ -174,7 +176,7 @@ namespace WesternLemegeton
                 HandleServiceInput();
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.M) && Running)
+            if (Input.GetKeyDown(KeyCode.M) && Running && !InsideHouse && !InPractice && !InBossTrial)
             {
                 OpenRoute();
                 return;
@@ -182,6 +184,11 @@ namespace WesternLemegeton
             HandlePauseInput();
             TickNotice();
             if (!Running) return;
+            if (HandleTrialInput()) return;
+            if (InPractice && Input.GetKeyDown(KeyCode.G) && UseTrainingStation()) return;
+            HandlePracticeWeaponInput();
+            if (Input.GetKeyDown(KeyCode.F) && TryEntryInteraction()) return;
+            if (InsideHouse || InPractice) return;
             if (Input.GetKeyDown(KeyCode.F) && TryInteractTownNpc()) return;
             if (Input.GetKeyDown(KeyCode.F) && TryTravel()) return;
             if (IsTown) return;
@@ -196,7 +203,7 @@ namespace WesternLemegeton
             RemoveDefeatedEnemies();
             if (State == RunState.Combat && Enemies.Count == 0)
             {
-                ClearTransient();
+                ClearTransient(keepHostileBullets: true);
                 if (!Progress.CompleteWave())
                 {
                     BeginWaveBreak();
@@ -230,6 +237,7 @@ namespace WesternLemegeton
 
         private void ResetRun()
         {
+            ResetEntrance();
             if (UsesGeneratedStage)
             {
                 if (Rooms != null) foreach (var room in Rooms) room.Layout.Root.gameObject.SetActive(false);
@@ -263,7 +271,7 @@ namespace WesternLemegeton
         {
             ResetRun();
             BuildStage();
-            ActivateRoom(-1);
+            BeginPractice();
         }
 
         #endregion
@@ -285,6 +293,8 @@ namespace WesternLemegeton
             Scene.Hirva.gameObject.SetActive(true);
             var l = Scene.Hirva.Capture();
             ApplyFootprints(l, Scene.Hirva.Center);
+            PrepareHouseEntrance();
+            PrepareTrialGate();
         }
 
         public void EnterTown()
@@ -323,7 +333,7 @@ namespace WesternLemegeton
             Rooms = new ExplorationRoom[6];
             for (int i = 0; i < 6; i++) Rooms[i] = authored[i].Bind();
             RouteTravel = false;
-            ActivateRoom(-1);
+            if (newRun) BeginPractice(); else ActivateRoom(-1);
         }
 
         #endregion
@@ -426,7 +436,7 @@ namespace WesternLemegeton
 
         public bool TryDoor(RoomDoor door)
         {
-            if (!Running || door == null || CurrentRoom == null || !CurrentRoom.Doors.Contains(door) || Vector2.Distance(Pos, door.Position) > 2.1f) return false;
+            if (InPractice || !Running || door == null || CurrentRoom == null || !CurrentRoom.Doors.Contains(door) || Vector2.Distance(Pos, door.Position) > 2.1f) return false;
             if (door.RunMapDestination >= 0)
             {
                 if (!UsesGeneratedStage || !Progress.SegmentComplete || GeneratedRouteSelectionRequested == null ||
@@ -468,6 +478,9 @@ namespace WesternLemegeton
 
         public bool TryTravel()
         {
+            if (InBossTrial || NearTrialGate) return Running && TravelTrial();
+            if (Running && (HousePrompt != null || InPractice)) return TryEntryInteraction();
+            if (InsideHouse || InPractice) return false;
             if (State == RunState.Town && Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f)
             {
                 if (GeneratedRunStartRequested != null) return GeneratedRunStartRequested();
@@ -486,7 +499,8 @@ namespace WesternLemegeton
                     return false;
                 }
                 if (CurrentKind == ExplorationRoomKind.DevilCards &&
-                    !PassiveOffers.PrepareOffer(PassiveAcquisitionSource.EventReward, Seed, Room, MapIndex, 3))
+                    !PassiveOffers.PrepareOffer(PassiveAcquisitionSource.EventReward, Seed, Room, MapIndex, 3,
+                        UsesGeneratedStage && Progress.GeneratedLayout.Rooms[MapIndex].Role == RoomRole.Shop))
                 {
                     Tell("카드 선택지를 준비하지 못했습니다 · 패시브 데이터 연결을 확인하세요");
                     Debug.LogError("Card room offer preparation failed; room state was preserved.", this);
@@ -500,7 +514,7 @@ namespace WesternLemegeton
 
         public bool TryInteractTownNpc()
         {
-            return Running && IsTown && State == RunState.Town && NpcDialogue && NpcDialogue.TryInteract();
+            return !InsideHouse && HousePrompt == null && Running && IsTown && State == RunState.Town && NpcDialogue && NpcDialogue.TryInteract();
         }
 
         #endregion
@@ -515,12 +529,14 @@ namespace WesternLemegeton
 
         public void CloseService()
         {
-            if (State == RunState.SigilChoice) Progress.CompleteService();
+            if (FinishEntryChoice(-1)) return;
+            if (State == RunState.SigilChoice && !InTrainingRoom) Progress.CompleteService();
             if (State == RunState.SigilChoice || State == RunState.CardChoice) State = RunState.Exit;
         }
 
         public bool ClaimCard(int choice)
         {
+            if (EntryChoiceActive) return choice >= 0 && choice < 3 && FinishEntryChoice(choice);
             if (State != RunState.CardChoice || CurrentKind != ExplorationRoomKind.DevilCards || Progress.MapComplete || choice < 0 || choice > 2) return false;
             if (!PassiveOffers.TryClaim(choice, out PassiveAcquireResult result) || !result.Success)
             {
@@ -590,6 +606,7 @@ namespace WesternLemegeton
             var enemy = Instantiate(prefab, at, Quaternion.identity, actors ? actors : Scene.EnemyContainer);
             enemy.Init(prefab.Kind, Room);
             Enemies.Add(enemy);
+            enemy.Dying += RollMonsterSeal;
             Ink.Ring(at,.9f,Ink.Gold,.6f);
             message = prefab.name + " 소환 완료. 창을 닫으면 몬스터가 행동합니다.";
             return true;
@@ -605,6 +622,7 @@ namespace WesternLemegeton
                 var e = Instantiate(Scene.EnemyPrefabs[kind], at, Quaternion.identity, actors);
                 e.Init(kind, Room);
                 Enemies.Add(e);
+                e.Dying += RollMonsterSeal;
                 Ink.Ring(at, .9f, Ink.Gold, .6f);
             }
         }
@@ -637,17 +655,20 @@ namespace WesternLemegeton
 
         private Vector2 SpawnPoint()
         {
+            var authoring = CurrentRoom.Layout.Authored;
             for (int i = 0; i < 180; i++)
             {
-                var authoring = CurrentRoom.Layout.Authored;
                 var points = authoring.EnemySpawnPoints;
-                Vector2 p = points != null && points.Length > 0 ? RoomAuthoring.Point(points[Random.Range(0, points.Length)]) + Random.insideUnitCircle * authoring.SpawnRadius : RoomCenter + new Vector2(Random.Range(-12f, 12f), Random.Range(-7f, 7f));
+                Vector2 offset = Random.insideUnitCircle * authoring.SpawnRadius;
+                Vector2 p = points != null && points.Length > 0
+                    ? RoomAuthoring.Point(points[Random.Range(0, points.Length)]) + authoring.Placement(offset) - authoring.Center
+                    : authoring.Placement(new Vector2(Random.Range(-12f, 12f), Random.Range(-7f, 7f)));
                 if (SpawnSafe(p)) return p;
             }
             for (float y = -7; y <= 7; y += 1.5f)
                 for (float x = -12; x <= 12; x += 1.5f)
                 {
-                    var p = RoomCenter + new Vector2(x, y);
+                    var p = authoring.Placement(new Vector2(x, y));
                     if (SpawnSafe(p)) return p;
                 }
             throw new System.InvalidOperationException("No safe spawn");
@@ -700,7 +721,7 @@ namespace WesternLemegeton
 
         public void OpenRoute(bool travel = false)
         {
-            if (!Running) return;
+            if (!Running || InsideHouse || InPractice || InBossTrial) return;
             if (UsesGeneratedStage) { GeneratedMapRequested?.Invoke(); return; }
             BeforeRoute = State;
             RouteTravel = travel && (IsTown ? Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f : AtStageExit());
@@ -734,6 +755,7 @@ namespace WesternLemegeton
 
         public void BeginDeath()
         {
+            if (InBossTrial) { retryTrial = true; return; }
             if (Stigmas) Stigmas.Combat?.OnDeath();
             if (!Cinematics.Play(CinematicKind.PlayerDeath)) State = RunState.Dead;
         }
@@ -766,7 +788,9 @@ namespace WesternLemegeton
 
         private void ResetCamera()
         {
-            Cam.transform.position = PaperWorld.CameraPosition(RoomCenter + new Vector2(Mathf.Clamp(LocalPos.x * .7f, -6, 6), Mathf.Clamp(LocalPos.y * .45f, -2.5f, 2.5f)));
+            Cam.orthographic = InJudicatorArena;
+            if (InJudicatorArena) Cam.orthographicSize = SanctuaryCameraSize();
+            Cam.transform.position = PaperWorld.CameraPosition(FollowFocus());
             cameraVelocity = Vector3.zero;
         }
 
@@ -783,9 +807,39 @@ namespace WesternLemegeton
 
         private void UpdateFollowCamera()
         {
-            Cam.fieldOfView = Cam.aspect < 1.5f ? 48 : 38;
-            Vector2 focus = RoomCenter + new Vector2(Mathf.Clamp(LocalPos.x * (IsTown ? .42f : .7f), -6, 6), Mathf.Clamp(LocalPos.y * .45f, -2.5f, 2.5f));
+            if (InJudicatorArena)
+                Cam.orthographicSize = Mathf.MoveTowards(Cam.orthographicSize, SanctuaryCameraSize(), 18 * Time.unscaledDeltaTime);
+            else Cam.fieldOfView = Cam.aspect < 1.5f ? 48 : 38;
+            Vector2 focus = FollowFocus();
             Cam.transform.position = Vector3.SmoothDamp(Cam.transform.position, PaperWorld.CameraPosition(focus), ref cameraVelocity, .24f, Mathf.Infinity, Time.unscaledDeltaTime);
+        }
+
+        Vector2 FollowFocus()
+        {
+            if (InJudicatorArena)
+            {
+                if (trialBoss is PaladinEncounter paladin && paladin.FramingSlam) return RoomCenter + LocalPos * .5f;
+                if (Judicator && Judicator.ShowingSummon) return (Pos+Judicator.SummonPosition)*.5f+Vector2.up;
+                if (Judicator && Judicator.IslandRadius>0) return RoomCenter+Vector2.up*.9f;
+                if (EchoBarrier) return RoomCenter + Vector2.up*1.2f + LocalPos*(.55f*(1-EchoBarrier.Closure));
+                return RoomCenter + Vector2.up*2 + Vector2.Scale(LocalPos,new Vector2(.65f,.55f));
+            }
+            float horizontalLimit = InTrainingRoom ? TrainingHalfWidth - 6 : 6;
+            return RoomCenter + new Vector2(Mathf.Clamp(LocalPos.x * (IsTown ? .42f : .7f), -horizontalLimit, horizontalLimit),
+                Mathf.Clamp(LocalPos.y * .45f, -2.5f, 2.5f));
+        }
+
+        float SanctuaryCameraSize()
+        {
+            float size = Mathf.Max(13f, 10 / Cam.aspect);
+            if (Judicator && Judicator.ShowingSummon)
+                return Mathf.Max(size,(Mathf.Abs(Pos.x-Judicator.SummonPosition.x)*.5f+3)/Cam.aspect);
+            // All eight silhouettes must clear the health bar and the lower skill HUD.
+            if (Judicator && Judicator.IslandRadius>0) return Mathf.Max(14.5f,13/Cam.aspect);
+            if (EchoBarrier) return Mathf.Lerp(size, Mathf.Max(8,6 / Cam.aspect), EchoBarrier.Closure);
+            if (trialBoss is PaladinEncounter paladin && paladin.FramingSlam)
+                size = Mathf.Max(size,(Mathf.Abs(LocalPos.x)*.5f+4)/Cam.aspect);
+            return size;
         }
 
         #endregion
@@ -825,7 +879,7 @@ namespace WesternLemegeton
 
         #region Utility / Query
 
-        internal void ClearTransient()
+        internal void ClearTransient(bool keepHostileBullets = false)
         {
             foreach (var rope in FindObjectsByType<CowboyRope>(FindObjectsSortMode.None)) rope.Release();
             foreach (var cowboy in FindObjectsByType<CowboyAttack>(FindObjectsSortMode.None)) cowboy.Cancel();
@@ -834,7 +888,11 @@ namespace WesternLemegeton
             foreach (var zone in FindObjectsByType<RobeManPoisonZone>(FindObjectsSortMode.None)) Destroy(zone.gameObject);
             foreach (var volley in FindObjectsByType<LoganDynamiteVolley>(FindObjectsSortMode.None)) Destroy(volley.gameObject);
             if (Stigmas) Stigmas.Combat?.Skills.ClearWorldObjects();
-            foreach (var b in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(b.gameObject);
+            foreach (var bullet in FindObjectsByType<Bullet>(FindObjectsSortMode.None))
+            {
+                if (keepHostileBullets && bullet.IsHostile) continue;
+                Destroy(bullet.gameObject);
+            }
             foreach (var f in FindObjectsByType<Fade>(FindObjectsSortMode.None)) Destroy(f.gameObject);
             foreach (var f in FindObjectsByType<SkillEffects>(FindObjectsSortMode.None)) Destroy(f.gameObject);
             foreach (var f in FindObjectsByType<WorldShotEffect>(FindObjectsSortMode.None)) Destroy(f.gameObject);

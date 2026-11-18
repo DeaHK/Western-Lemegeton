@@ -8,7 +8,7 @@ namespace WesternLemegeton
     /// </summary>
     public sealed class TownNpcDialogueController : MonoBehaviour
     {
-        public const float InteractionRange = 2.5f;
+        public const float InteractionRange = 1.45f;
 
         readonly List<Transform> npcs = new List<Transform>();
         Dungeon game;
@@ -94,13 +94,13 @@ namespace WesternLemegeton
 
             Transform nearest = null;
             float nearestDistance = InteractionRange;
-            Vector3 player = game.Hero.transform.position;
+            Vector2 player = game.Pos;
             for (int i = 0; i < npcs.Count; i++)
             {
                 var npc = npcs[i];
                 if (!npc || !npc.gameObject.activeInHierarchy || !IsTownNpc(npc)) continue;
                 Vector3 position = npc.position;
-                float distance = Vector2.Distance(new Vector2(player.x, player.z), new Vector2(position.x, position.z));
+                float distance = Vector2.Distance(player, new Vector2(position.x, position.z));
                 if (distance < nearestDistance)
                 {
                     nearest = npc;

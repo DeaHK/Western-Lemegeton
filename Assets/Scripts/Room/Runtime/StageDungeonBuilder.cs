@@ -29,13 +29,13 @@ namespace WesternLemegeton
             if (!Application.isPlaying || !controller || !dungeon) return;
             controller.OnStageReady.AddListener(EnterPreparedStage);
             controller.MapVisibilityChanged += MapVisibility;
-            dungeon.GeneratedMapRequested += controller.ShowMap;
+            dungeon.GeneratedMapRequested += OpenRunMap;
             dungeon.GeneratedMapCloseRequested += controller.HideMap;
             dungeon.GeneratedRunStartRequested += StartRunFromField;
             dungeon.GeneratedStageReleased += ReleaseActive;
             dungeon.GeneratedStageCompletionRequested += CompleteCurrentStageAtExit;
             dungeon.GeneratedRouteSelectionRequested += SelectFieldRoute;
-            controller.SetFieldRouteSelection(true);
+            controller.SetFieldRouteSelection(false);
             mapVisible = controller.View && controller.View.gameObject.activeInHierarchy;
             UpdateBlock();
             if (controller.HasPreparedStage) EnterPreparedStage(controller.Coordinator.Progress.CurrentNodeId);
@@ -49,7 +49,7 @@ namespace WesternLemegeton
             }
             if (dungeon)
             {
-                if (controller) dungeon.GeneratedMapRequested -= controller.ShowMap;
+                if (controller) dungeon.GeneratedMapRequested -= OpenRunMap;
                 if (controller) dungeon.GeneratedMapCloseRequested -= controller.HideMap;
                 dungeon.GeneratedRunStartRequested -= StartRunFromField;
                 dungeon.GeneratedStageReleased -= ReleaseActive;
@@ -196,6 +196,9 @@ namespace WesternLemegeton
             arrival.SetParent(room.transform, false);
             Vector2 pad = local - outward * 2;
             arrival.localPosition = new Vector3(pad.x, 0, pad.y); door.Arrival = arrival;
+            // Footprints and clear areas use world distances relative to the room center.
+            local = RoomAuthoring.Point(door.transform) - room.Center;
+            pad = RoomAuthoring.Point(arrival) - room.Center;
             room.RuntimeClearAreas.Add(Rect.MinMaxRect(Mathf.Min(local.x, pad.x) - 1.8f, Mathf.Min(local.y, pad.y) - 1.8f,
                 Mathf.Max(local.x, pad.x) + 1.8f, Mathf.Max(local.y, pad.y) + 1.8f));
             door.gameObject.SetActive(true);
@@ -263,6 +266,16 @@ namespace WesternLemegeton
             ActiveRoot = null; ActiveRooms = null; ActiveLayout = null; activeRunMap = null; InstalledNodeId = -1;
         }
 
+        private void OpenRunMap()
+        {
+            if (IsBuilding) return;
+            if (ActiveRoot && dungeon.Progress.SegmentComplete && !controller.Coordinator.Progress.CurrentStageCompleted)
+            {
+                if (!CompleteCurrentStageAtExit() || controller.Coordinator.Progress.RunCompleted) return;
+            }
+            controller.ShowMap();
+        }
+
         private bool CompleteCurrentStageAtExit()
         {
             if (!controller || !dungeon || !ActiveRoot || IsBuilding || InstalledNodeId < 0) return false;
@@ -295,7 +308,7 @@ namespace WesternLemegeton
             if (!controller || ActiveLayout == null || ActiveRooms == null || ActiveLayout.ExitIndex < 0 || ActiveLayout.ExitIndex >= ActiveRooms.Length) return;
             var room = ActiveRooms[ActiveLayout.ExitIndex];
             var exit = Array.Find(room.Doors, door => door && door.StageExit);
-            if (!exit) return;
+            if (!exit || Array.Exists(room.Doors, d => d && d.RunMapDestination >= 0)) return;
             var options = controller.Coordinator.GetAvailableNextNodes();
             if (options.Count == 0) return;
             exit.gameObject.SetActive(false);
@@ -321,10 +334,10 @@ namespace WesternLemegeton
                 room.Doors = Append(room.Doors, choice);
                 // Dungeon resolves F/proximity interactions from its bound ExplorationRoom,
                 // which snapshots RoomAuthoring.Doors at stage entry. Keep both indexes in sync.
-                if (dungeon.CurrentRoom != null && !dungeon.CurrentRoom.Doors.Contains(choice))
-                    dungeon.CurrentRoom.Doors.Add(choice);
+                var boundExitRoom = dungeon.Rooms[ActiveLayout.ExitIndex];
+                if (!boundExitRoom.Doors.Contains(choice)) boundExitRoom.Doors.Add(choice);
             }
-            controller.SetEntryProgress(false, "STAGE CLEAR  •  가까운 분기 표식으로 이동해 F를 누르세요. M: 지도");
+            controller.SetEntryProgress(false, "스테이지 완료 · 지도에서 다음 경로를 클릭하거나 출구의 분기 표식에서 F를 누르세요.");
         }
 
         private bool SelectFieldRoute(int nodeId)

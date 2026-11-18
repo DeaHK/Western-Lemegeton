@@ -35,6 +35,7 @@ namespace WesternLemegeton
 #endif
         public bool DebugInvincible => DebugInvincibility == DebugInvincibilityMode.Full;
         public bool DebugHealthProtected => DebugInvincibility != DebugInvincibilityMode.Off;
+        public bool TrainingDamageProtection { get; internal set; }
         public readonly BonusHealth BonusHp = new BonusHealth();
         public float MaxHealth => Dungeon.I && Dungeon.I.PassiveStats ? Mathf.Max(1, Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MaxHealth, MaxHp)) : MaxHp;
         float hitStun;
@@ -43,6 +44,26 @@ namespace WesternLemegeton
         Vector2 knockbackDirection;
         public float KnockbackHeight { get; private set; }
         public bool KnockedBack => knockbackDuration > 0;
+        public void BindForTrial(float seconds)
+        {
+            if (DebugInvincible || Hp <= 0) return;
+            ClearKnockback();
+            dashTime = buffer = 0;
+            FinishSkill();
+            CancelBasic();
+            chargeStun = Mathf.Max(chargeStun, seconds);
+        }
+
+        internal void TrialLift(float height)
+        {
+            if (!DebugInvincible) SetKnockbackHeight(height);
+        }
+
+        internal void ReleaseTrialBind()
+        {
+            chargeStun = 0;
+            SetKnockbackHeight(0);
+        }
         HauntedBullAttack bullCarrier;
         public bool IsCarriedBy(HauntedBullAttack carrier) => bullCarrier == carrier && Hp > 0;
         public bool Stunned => hitStun > 0 || chargeStun > 0 || bullCarrier || KnockedBack;
@@ -134,14 +155,27 @@ namespace WesternLemegeton
 
         // Weapon / Ammo / Reload
         public int Weapon, Ammo = 6;
+        public enum Firearm { Revolver, Shotgun, Rifle }
+        public Firearm Gun { get; private set; }
+        public static readonly string[] GunNames = { "리볼버", "소드오프 산탄총", "레버 액션 소총" };
+        public string WeaponLabel => Weapon == 0 ? "단검" : GunNames[(int)Gun];
+
+        public void SelectPracticeGun(Firearm gun)
+        {
+            if (SkillBusy || Stunned) return;
+            CancelBasic();
+            Weapon = Weapon == 1 && Gun == gun ? 0 : 1;
+            Gun = gun;
+            Combo = 0;
+        }
         public float TagCd, Reload;
         [Min(.01f)] public float BaseReloadSeconds = 2;
         bool reloadUsesAttackSpeed, reloadResetsDodge;
         int reloadEffectRevision;
         bool ReloadBonusValid => reloadUsesAttackSpeed && Dungeon.I && Dungeon.I.Stigmas &&
             Dungeon.I.Stigmas.Combat != null && Dungeon.I.Stigmas.Combat.EffectRevision == reloadEffectRevision;
-        public float ReloadSpeed => ReloadBonusValid
-            ? StigmaWeaponEffects.ReloadRate(Dungeon.I.PassiveStats.Evaluate(StigmaStats.PlayerSpeed, 1)) : 1;
+        public float ReloadSpeed => (Dungeon.I && Dungeon.I.PassiveStats ? Dungeon.I.PassiveStats.Evaluate("GunReload", 1) : 1) *
+            (ReloadBonusValid ? StigmaWeaponEffects.ReloadRate(Dungeon.I.PassiveStats.Evaluate(StigmaStats.PlayerSpeed, 1)) : 1);
         public float ReloadRemaining => Mathf.Max(0, Reload) / ReloadSpeed;
 
         // Skills (dashHits tracks Slash hits, not the dodge action)
@@ -277,7 +311,9 @@ namespace WesternLemegeton
                 float baseSpeed = skill == 4 ? 3.1f : 5.6f;
                 float speed = Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.MoveSpeed, baseSpeed);
                 float minimum = baseSpeed * (1 - (Dungeon.I.Stigmas ? Dungeon.I.Stigmas.Database.Rules.MaximumSlowFraction : .5f));
-                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * Mathf.Max(minimum, speed) * dt, .38f);
+                var judge=Dungeon.I.Judicator;
+                float groundSpeed=Mathf.Max(minimum,speed)*(judge && judge.InQuake(transform.position) ? .50f : 1);
+                transform.position = Rules.ResolveObstacles(transform.position, (Vector2)transform.position + move * groundSpeed * dt, .38f);
             }
         }
 
@@ -317,19 +353,25 @@ namespace WesternLemegeton
 
         #region Health / Damage / Invulnerability
 
-        private float EvaluateOutgoingDamage(float baseDamage)
+        private float EvaluateOutgoingDamage(float baseDamage, float extraCritChance)
         {
-            return Dungeon.I.PassiveStats.Evaluate(WesternPassiveStatKeys.PlayerAttack, baseDamage);
+            var stats = Dungeon.I.PassiveStats;
+            float damage = stats.Evaluate(WesternPassiveStatKeys.PlayerAttack, baseDamage);
+            float chance = stats.GetRawBonus(WesternPassiveStatKeys.CriticalRate) + extraCritChance;
+            if (chance > 0 && UnityEngine.Random.value < chance)
+                damage *= stats.Evaluate(WesternPassiveStatKeys.CriticalDamage, 1.5f);
+            return damage;
         }
 
-        public void Hit(Enemy e, float damage, int stage = 0, long attack = 0, bool isSkill = false)
+        public void Hit(Enemy e, float damage, int stage = 0, long attack = 0, bool isSkill = false, float extraCritChance = 0)
         {
             if (!Dungeon.I.Running || !e || e.Dead) return;
+            if (e is PaladinEncounter judge && judge.HitTrueBody()) return;
             var g = Dungeon.I;
             bool chain = stage > 0 && tracker.Hit(e.GetInstanceID(), stage, attack, g.RunTime);
             // Mark before damage; offer links and combo follow-ups after damage.
             g.Crow.Mark(e);
-            g.Stigmas.Combat.Hit(e, StigmaOwner.Player, isSkill ? StigmaAttackKind.Skill : StigmaAttackKind.Basic, EvaluateOutgoingDamage(damage));
+            g.Stigmas.Combat.Hit(e, StigmaOwner.Player, isSkill ? StigmaAttackKind.Skill : StigmaAttackKind.Basic, EvaluateOutgoingDamage(damage, extraCritChance));
             DamageEvents++;
             HitCombo++;
             hitTime = 3;
@@ -350,7 +392,8 @@ namespace WesternLemegeton
             bool applyDamage = invulnerable <= 0 || (!useHitInvulnerability && crowdControl < 2);
             if (!applyDamage && !applyControl) return;
             // 체력 보호 모드에서도 이후 피격 연출·경직·일반 피격 무적은 그대로 실행합니다.
-            if (applyDamage && !DebugHealthProtected) Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
+            if (applyDamage && !DebugHealthProtected && !TrainingDamageProtection)
+                Hp = Mathf.Max(0, Hp - BonusHp.Absorb(damage));
             if (Dungeon.I.Stigmas)
             {
                 if (applyControl) hitStun = Mathf.Max(hitStun, Dungeon.I.PassiveStats.Evaluate(StigmaStats.HitStun, Dungeon.I.Stigmas.Database.Rules.BaseHitStunSeconds));
@@ -370,7 +413,7 @@ namespace WesternLemegeton
         {
             var g = Dungeon.I;
             if (!g.Running || g.IsTown || Stunned || SkillBusy || dashTime > 0 || attackCd > 0) return false;
-            int cost = Rules.AmmoCost(Combo);
+            int cost = Gun == Firearm.Revolver ? Rules.AmmoCost(Combo) : 1;
             if (Weapon == 1 && Ammo < cost)
             {
                 if (Reload <= 0) BeginReload();
@@ -445,10 +488,28 @@ namespace WesternLemegeton
         {
             Ammo -= basicCost;
             if (Ammo <= 3 && Reload <= 0) BeginReload();
-            for (int i = 0; i < basicCost; i++)
+            if (Gun == Firearm.Rifle)
             {
-                float angle = (i - (basicCost - 1) * .5f) * 7;
-                Bullet.SpawnAimed(this, basicWorldAim, 21, angle, finisher ? 24 : 20, false, .23f, basicStage, basicId);
+                Vector3 muzzle = CombatBody.For(this).Muzzle;
+                Vector3 aim = (basicWorldAim - muzzle).normalized;
+                var ray = new Ray(muzzle, aim);
+                float range = ProjectileSpace.WallDistance(ray, 9f, .05f);
+                const float damage = 20f;
+                foreach (var enemy in Dungeon.I.Enemies.ToArray())
+                    if (enemy && !enemy.Dead && CombatBody.For(enemy).Cast(ray, range, .05f, out _))
+                        Hit(enemy, damage, basicStage, basicId, extraCritChance: .10f);
+                SkillEffects.WorldShot(muzzle, muzzle + aim * range);
+            }
+            else
+            {
+                bool shotgun = Gun == Firearm.Shotgun;
+                int rounds = shotgun ? 5 : basicCost;
+                for (int i = 0; i < rounds; i++)
+                {
+                    float angle = (i - (rounds - 1) * .5f) * 7;
+                    Bullet.SpawnAimed(this, basicWorldAim, 21, angle, shotgun ? 26f / 5 : finisher ? 24 : 20,
+                        false, (shotgun ? 4f : 6.5f) / 21f, basicStage, basicId);
+                }
             }
             Vector3 origin = CombatBody.For(this).Muzzle;
             Vector3 direction = (basicWorldAim-origin).normalized;
@@ -657,7 +718,7 @@ namespace WesternLemegeton
         private void HandleRavenInput(Dungeon g)
         {
             if (Input.GetKeyDown(KeyCode.LeftShift)) g.Crow.Command();
-            if (Input.GetKeyDown(KeyCode.F)) g.Crow.TryLink();
+            if ((!g.InPractice || Vector2.Distance(g.Pos, g.PracticeExit) >= 2f) && Input.GetKeyDown(KeyCode.F)) g.Crow.TryLink();
         }
 
         private void ResolveRavenFollowups(Dungeon g, Enemy e, int stage, long attack, bool isSkill, bool chain)
@@ -729,13 +790,33 @@ namespace WesternLemegeton
             Animate(Vector2.zero);
         }
 
+        public void ResetAfterPractice()
+        {
+            int selected = Weapon;
+            var gun = Gun;
+            bool protection = TrainingDamageProtection;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var debugMode = DebugInvincibility;
+#endif
+            ResetForRun();
+            TrainingDamageProtection = protection;
+            Hp = MaxHealth;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugInvincibility = debugMode;
+#endif
+            Weapon = selected;
+            Gun = gun;
+        }
+
         public void ResetForRun()
         {
+            TrainingDamageProtection = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             DebugInvincibility = DebugInvincibilityMode.Off;
 #endif
             Hp = MaxHp;
             BonusHp.Clear(); hitStun = 0;
+            Gun = Firearm.Revolver;
             Weapon = Combo = HitCombo = DamageEvents = 0;
             Ammo = 6;
             DashCd = TagCd = Reload = attackCd = comboTime = invulnerable = elapsed = buffer = hitTime = 0;
