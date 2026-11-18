@@ -80,7 +80,7 @@ namespace WesternLemegeton
         void PrepareTrialGate()
         {
             if (trialGate) return;
-            var point = Rules.OutsideCover(Scene.Hirva.Placement(new Vector2(-11.8f,0)));
+            var point = Rules.OutsideCover(Scene.Hirva.Center + new Vector2(-11.8f,0));
             trialGate = new GameObject("West Gate - Boss Trials");
             trialGate.transform.position = point;
             trialGate.transform.SetParent(Scene.Hirva.transform,true);

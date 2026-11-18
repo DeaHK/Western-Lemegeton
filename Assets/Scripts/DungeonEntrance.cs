@@ -36,8 +36,6 @@ namespace WesternLemegeton
         Vector2 houseDoor, practiceDoor;
         readonly Vector2[] gunPoints = new Vector2[3];
         static readonly Vector2 HouseCenter = new Vector2(-350, -350);
-        public const float HouseInteriorScale = 1f;
-        static Vector2 HousePoint(Vector2 local) => HouseCenter + local * HouseInteriorScale;
         static readonly string[] GunSprites = { "Gun_Frontier", "Gun_Heavy", "Gun_Light" };
         readonly Sprite[] gunIcons = new Sprite[3];
         public Sprite GunIcon(Player.Firearm gun)
@@ -48,7 +46,6 @@ namespace WesternLemegeton
         }
         public bool InsideHouse => house;
         public bool InPractice => practiceRoom;
-        public RoomAuthoring PracticeRoom => practiceRoom;
         public Vector2 PracticeExit => practiceDoor;
 
         void RollMonsterSeal(Enemy enemy)
@@ -103,7 +100,7 @@ namespace WesternLemegeton
         public bool ShowHouseSign => houseMarker && IsTown && !InsideHouse && State == RunState.Town;
 
         public string HousePrompt => !IsTown ? null : InsideHouse
-            ? (Vector2.Distance(Pos, HousePoint(new Vector2(0,-3.15f))) < 1.8f ? "F · 집 밖으로" : null)
+            ? (Vector2.Distance(Pos, HouseCenter + new Vector2(0,-3.15f)) < 1.8f ? "F · 집 밖으로" : null)
             : houseMarker && Vector2.Distance(Pos, houseDoor) < 1.8f ? "F · 사냥꾼의 집에 들어가기" : null;
 
         void EnterHouse()
@@ -113,7 +110,6 @@ namespace WesternLemegeton
             house = new GameObject("Hunter House Interior");
             var root = house.transform;
             root.position = HouseCenter;
-            root.localScale = Vector3.one * HouseInteriorScale;
             Ink.Shape("House backdrop",root,Vector2.zero,Vector2.one*100,new Color(.035f,.025f,.035f),-2000);
             Rules.RoomOrigin = HouseCenter;
             Obstacles = SolidObstacles = Array.Empty<Rect>();
@@ -129,8 +125,8 @@ namespace WesternLemegeton
             EntryArt(root,"Stove",new Vector2(-4.5f,-.2f),new Vector2(1,1.5f),5);
             EntryArt(root,"Rug",new Vector2(0,-.2f),new Vector2(4,2.2f),-1000,true);
             EntryArt(root,"Rug",new Vector2(0,-3.15f),new Vector2(1.6f,.7f),-700,true);
-            PlaceAt(HousePoint(new Vector2(0,-2.5f)));
-            Crow.transform.position = HousePoint(new Vector2(2.7f,1.15f));
+            PlaceAt(HouseCenter + new Vector2(0,-2.5f));
+            Crow.transform.position = HouseCenter + new Vector2(2.7f,1.15f);
         }
 
         void PlaceAt(Vector2 point)
@@ -153,13 +149,13 @@ namespace WesternLemegeton
             var center = practiceRoom.Center;
             for (int i=0; i<gunPoints.Length; i++)
             {
-                gunPoints[i] = Rules.OutsideCover(practiceRoom.Placement(new Vector2((i-1)*3,0)));
+                gunPoints[i] = Rules.OutsideCover(center + new Vector2((i-1)*3,0));
                 var icon = GunIcon((Player.Firearm)i);
                 float width = 1.35f + .35f * i;
                 EntryArt(practiceProps.transform,GunSprites[i],gunPoints[i],
                     new Vector2(width,width * icon.rect.height / icon.rect.width),2);
             }
-            Vector2 targetPos = Rules.OutsideCover(practiceRoom.Placement(new Vector2(0,3.4f)));
+            Vector2 targetPos = Rules.OutsideCover(center + new Vector2(0,3.4f));
             var visual = EntryArt(practiceProps.transform,"Training_Scarecrow",targetPos,new Vector2(1.5f,1.9f),-25);
             target = visual.gameObject.AddComponent<Enemy>();
             target.AuxiliaryTarget = true;
@@ -178,7 +174,7 @@ namespace WesternLemegeton
                 if (door && (!exit || door.Position.x > exit.Position.x)) exit = door;
             foreach (var door in practiceRoom.Doors)
                 if (door && door != exit) door.gameObject.SetActive(false);
-            practiceDoor = Rules.OutsideCover(exit ? exit.Position : practiceRoom.Placement(new Vector2(11,0)));
+            practiceDoor = Rules.OutsideCover(exit ? exit.Position : center + new Vector2(11,0));
             if (exit)
             {
                 exit.enabled = false;
@@ -187,7 +183,7 @@ namespace WesternLemegeton
             Ink.Shape("Practice exit",practiceProps.transform,practiceDoor,new Vector2(2,.65f),Ink.Cyan,-2,true);
             State = RunState.Exit;
             BuildTrainingStations(practiceProps.transform, center);
-            PlaceAt(Rules.OutsideCover(practiceRoom.Placement(new Vector2(0,-2.5f))));
+            PlaceAt(Rules.OutsideCover(center + new Vector2(0,-2.5f)));
             Tell("무기 테스트실 · 총 앞에서 T · 표적 시험 후 청록색 출구에서 F");
         }
 
