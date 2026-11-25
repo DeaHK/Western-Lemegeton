@@ -68,6 +68,10 @@ namespace WesternLemegeton
         RectTransform miniMapRect;
         Color miniLinkColor;
         bool generatedMiniMapActive;
+        readonly Image[] rounds = new Image[6];
+        BetaRoomMap roomMap;
+        readonly Sprite[] weaponGlyphs = new Sprite[4], stigmaGlyphs = new Sprite[3];
+        static readonly string[] combatExtras = { "ComboPlate", "CombatStatus", "SwapFrame", "SwapIcon", "SwapKeycap", "SwapKey", "SwapReady", "SwapLabel" };
         int generatedMiniEdgeCount;
         public bool GeneratedMinimapActive => generatedMiniMapActive;
         public int GeneratedMinimapEdgeCount => generatedMiniEdgeCount;
@@ -82,6 +86,13 @@ namespace WesternLemegeton
             foreach (var r in References)
                 if (r.Target) refs[r.Key] = r.Target;
             CacheMinimap();
+            for (int i = 0; i < rounds.Length; i++)
+                rounds[i] = HudPanel.transform.Find("Round" + i)?.GetComponent<Image>();
+            BuildWeaponSkillSlots();
+            string[] weapons = { "Dagger", "Revolver", "Shotgun", "Rifle" };
+            for (int i=0; i<weapons.Length; i++) weaponGlyphs[i]=Resources.Load<Sprite>("WesternBeta/Hud/Glyphs/"+weapons[i]);
+            string[] elements = { "WaterIcon", "FlameIcon", "SproutIcon" };
+            for (int i=0; i<elements.Length; i++) stigmaGlyphs[i]=Resources.Load<Sprite>("WesternBeta/Journey/"+elements[i]);
             PlaceBossBar();
             var font = FontOverride ? FontOverride : Font.CreateDynamicFontFromOSFont(SystemFonts, 18);
             foreach (var t in GetComponentsInChildren<Text>(true))
@@ -150,16 +161,28 @@ namespace WesternLemegeton
 
         private void UpdateCoreHud(Dungeon g, Player p)
         {
-            Show("Minimap", !g.InBossTrial);
-            Show("Map_Button", !g.InBossTrial);
-            Show("Supply_Panel", !g.InBossTrial);
-            Show("Supplies", !g.InBossTrial);
+            Show("Minimap", true);
+            Show("Map_Button", true);
+            Show("Supply_Panel", true);
+            Show("Supplies", true);
             Show("Wave", !g.InBossTrial && !g.InPractice && !g.IsTown && g.CurrentKind == ExplorationRoomKind.Combat);
             Text("WaveText", $"WAVE {g.WaveIndex+1} / {g.WavesInMap} · 남은 적 {g.Enemies.Count}");
             Show("WaveBreak", g.State == RunState.WaveBreak);
             Text("WaveBreakText", $"다음 WAVE {g.WaveIndex+1}\n{Mathf.CeilToInt(g.WaveCountdown)}초 후 적이 접근합니다");
-            string protection = p.TrainingDamageProtection ? "  ·  피해 무적" : "";
-            Text("CombatStatus", $"회피 {(p.DashCd>0?p.DashCd.ToString("F1")+"s":"●")}  COMBO {p.HitCombo}{protection}");
+            bool combat = !g.IsTown && !g.InsideHouse;
+            Text("CombatStatus", $"COMBO       {p.HitCombo}");
+            foreach (var key in combatExtras) Show(key,combat);
+            // The small "E ... R ..." strip above the weapon panel is replaced by the two slots left of dodge.
+            Show("WeaponSkillsPlate",false);
+            for (int i=2; i<6; i++)
+            {
+                Show("SkillFrame"+i,combat);
+                Show("Keycap"+i,combat);
+                Show("SkillIcon"+i,combat);
+                Show("SkillKey"+i,combat);
+                Show("SkillLabel"+i,combat);
+            }
+            Text("SwapReady",p.TagCd>0 ? $"{p.TagCd:F1}초" : "준비");
         }
 
         #endregion
@@ -169,9 +192,16 @@ namespace WesternLemegeton
         private void UpdatePlayerHealthAndAmmo(Player p)
         {
             Fill("HP", p.Hp / p.MaxHealth);
-            Text("HPText", $"{Mathf.CeilToInt(p.Hp)} / {p.MaxHealth:0}  <color=#F5DF8A>+{p.BonusHp.Current:0.#}</color>");
-            Fill("Ammo", p.Ammo / 6f);
-            Text("AmmoText", p.Reload > 0 ? $"장전 {p.ReloadRemaining:F1}s · {p.Ammo}/6" : $"{Player.GunNames[(int)p.Gun]} {p.Ammo}/6");
+            string bonus = p.BonusHp.Current>0 ? $"   +{p.BonusHp.Current:0.#}" : "";
+            Text("HPText", $"{Mathf.CeilToInt(p.Hp)} / {p.MaxHealth:0}{bonus}");
+            bool gun=p.Weapon==1;
+            for(int i=0;i<rounds.Length;i++)
+            {
+                Show("RoundSlot"+i,gun);
+                if(rounds[i]) rounds[i].enabled=gun && i<p.Ammo;
+            }
+            Text("AmmoText",gun ? $"{p.Ammo} <size=13>/ 6</size>" : "");
+            Text("ReloadStatus",gun && p.Reload>0 ? $"재장전 {p.ReloadRemaining:F1}초" : "");
         }
 
         #endregion
@@ -180,31 +210,92 @@ namespace WesternLemegeton
 
         private void UpdatePlayerSkillSlots(Player p)
         {
-            // Slot 0 represents the always-available primary attack while weapon swapping is paused.
-            Text("SkillKey0", "좌클릭");
-            Skill(0, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", 0, p.WeaponLabel);
-            if (p.Weapon == 1) SetPassiveImage("SkillIcon0", Dungeon.I.GunIcon(p.Gun));
-            Skill(1, "HunterDash", p.DashCd, "회피");
-            Skill(2, p.Weapon == 0 ? "SlashIcon" : "ShotIcon", p.Skill2Cd, p.Weapon == 0 ? "베어 가르기" : "원 샷");
-            Skill(3, p.Weapon == 0 ? "SlamIcon" : "BarrageIcon", p.Skill3Cd, p.Weapon == 0 ? "내려찍기" : "난사");
+            SetPassiveImage("SkillIcon0",weaponGlyphs[p.Weapon==0 ? 0 : (int)p.Gun+1]);
+            Text("SkillKey0","LMB");
+            Text("SkillLabel0",p.WeaponLabel);
+            Cooldown(1,p.DashCd);
+            Text("SkillLabel1","회피");
+            bool blade=p.Weapon==0;
+            SlotArt(2,blade ? "SlashIcon" : "ShotIcon",42);
+            Text("SkillLabel2",blade ? "베어 가르기" : "원 샷");
+            Cooldown(2,p.Skill2Cd);
+            SlotArt(3,blade ? "SlamIcon" : "BarrageIcon",42);
+            Text("SkillLabel3",blade ? "내려찍기" : "난사");
+            Cooldown(3,p.Skill3Cd);
+            // The primary attack has no cooldown. Left active, its old shade showed as a dark box
+            // with "0" between the dodge and weapon panels.
+            Show("SkillCooldown0",false);
         }
 
-        private void Skill(int i, string icon, float cooldown, string label)
+        // E and R weapon skills get their own slots to the left of the dodge slot.
+        // They are copies of the dodge slot, so the frame, key cap, label and cooldown bar match it exactly.
+        // To move them, change Pitch (distance between slot left edges, in canvas units).
+        void BuildWeaponSkillSlots()
         {
-            Image("SkillIcon" + i, icon);
-            Text("SkillLabel" + i, label);
-            Show("SkillCooldown" + i, cooldown > 0);
-            Text("SkillCooldownText" + i, cooldown.ToString("F1"));
+            const float Pitch=101;   // slot width 88 + the 13 gap the right-hand slots use
+            string[] parts={ "SkillFrame", "Keycap", "SkillKey", "SkillIcon", "SkillLabel", "SkillCooldown" };
+            for (int slot=2; slot<=3; slot++)
+            {
+                float shift=-Pitch*(4-slot);   // E sits two places left of dodge, R one place
+                foreach (string part in parts)
+                {
+                    if (TryRef(part+slot,out var old)) old.SetActive(false);   // the earlier authored piece, if any
+                    if (!TryRef(part+"1",out var source)) continue;
+                    var copy=Instantiate(source,source.transform.parent);
+                    copy.name=part+slot;
+                    copy.transform.SetSiblingIndex(source.transform.GetSiblingIndex()+1);
+                    ((RectTransform)copy.transform).anchoredPosition+=Vector2.right*shift;
+                    refs[part+slot]=copy;
+                    if (part=="SkillCooldown" && copy.GetComponentInChildren<Text>(true) is Text seconds)
+                        refs["SkillCooldownText"+slot]=seconds.gameObject;
+                    if (part=="SkillLabel" && copy.GetComponent<Text>() is Text label)
+                    {
+                        // Skill names are longer than "회피"; let them shrink a little rather than clip.
+                        label.resizeTextForBestFit=true;
+                        label.resizeTextMaxSize=label.fontSize;
+                        label.resizeTextMinSize=9;
+                    }
+                }
+                Text("SkillKey"+slot,slot==2 ? "E" : "R");
+            }
         }
 
-        #endregion
+        // Shows one of the game's own skill pictures in a slot instead of the placeholder glyph.
+        // The picture stays centred where the glyph was. Character art has wide empty margins,
+        // so it is given a larger box than the square skill icons.
+        void SlotArt(int slot,string icon,float size)
+        {
+            var image=Element<Image>("SkillIcon"+slot);
+            var sprite=Art ? Art.Get(icon) : null;
+            if (!image || !sprite) return;
+            var rect=image.rectTransform;
+            Vector2 change=Vector2.one*size-rect.sizeDelta;
+            rect.anchoredPosition+=new Vector2((rect.pivot.x-.5f)*change.x,(rect.pivot.y-.5f)*change.y);
+            rect.sizeDelta=Vector2.one*size;
+            image.sprite=sprite;
+            image.color=UnityEngine.Color.white;
+            image.preserveAspect=true;
+            image.enabled=true;
+        }
 
-        #region Raven Existing UI
+        void Cooldown(int index,float seconds)
+        {
+            Show("SkillCooldown"+index,seconds>0 && (index==1 || !Dungeon.I.IsTown));
+            if(seconds>0) Text("SkillCooldownText"+index,$"{seconds:F1}초");
+        }
 
         private void UpdateRavenSkillSlots(Dungeon g)
         {
-            Skill(4, "Raven", g.Crow.Cooldown, g.Crow.Active > 0 ? $"공격 {g.Crow.Active:F1}s" : "까마귀 명령");
-            Skill(5, "RavenPortrait", g.Crow.LinkCooldown, g.Crow.LinkWindow > 0 ? $"연계 {g.Crow.LinkWindow:F1}s" : "연계 대기");
+            SlotArt(4,"Raven",58);
+            SlotArt(5,"RavenPortrait",52);
+            Text("SkillLabel4","소환 · 코빈");
+            Text("SkillLabel5","연계 스킬");
+            Text("ActionStatus4",g.Crow.Active>0 ? $"소환 · {g.Crow.Active:F1}초" : "준비");
+            Text("ActionStatus5",g.Crow.LinkWindow>0 ? $"연계 · {g.Crow.LinkWindow:F1}초" : "대기");
+            Show("ActionStatus4",!g.IsTown && g.Crow.Cooldown<=0);
+            Show("ActionStatus5",!g.IsTown && g.Crow.LinkCooldown<=0);
+            Cooldown(4,g.Crow.Cooldown);
+            Cooldown(5,g.Crow.LinkCooldown);
         }
 
         private void UpdateRavenPrompt(Dungeon g)
@@ -223,7 +314,7 @@ namespace WesternLemegeton
             long acquired = 0;
             foreach (var item in passiveBuffer) if (g.PassiveOffers.Seals.Contains(item.Data)) acquired += item.Stack;
             Text("PassiveCount", $"획득 인장 {acquired} · 성흔과 별도");
-            Show("PassiveEmpty", passiveBuffer.Count == 0);
+            Show("PassiveEmpty", false);
             bool rebuild = slots.Count != passiveBuffer.Count || slotIds.Count != passiveBuffer.Count;
             if (!rebuild)
                 for (int i = 0; i < passiveBuffer.Count; i++)
@@ -266,7 +357,7 @@ namespace WesternLemegeton
             PassiveTooltip.gameObject.SetActive(selectedSlot);
         }
 
-        static string AppliedEffect(PassiveInstance item)
+        internal static string AppliedEffect(PassiveInstance item)
         {
             string value = item.Value.ToString("+0.##;-0.##;0");
             string amount = value + (item.ValueType == PassiveValueType.Percent ? "%" : "");
@@ -321,9 +412,12 @@ namespace WesternLemegeton
                     Text("CardRarity" + n, "까마귀 · 첫 획득 무료");
                     Text("CardName" + n, definition.DisplayName);
                     Text("CardEffect" + n, definition.Level(1)?.Description);
-                    SetPassiveImage("CardIcon" + n, definition.Icon ? definition.Icon : Art.Get(definition.FallbackIconKey));
+                    // Stigma choices show the beta medallion in the card's icon slot.
+                    if (!BetaUi.StigmaBadge(Element<Image>("CardIcon" + n), definition))
+                        SetPassiveImage("CardIcon" + n, definition.Icon ? definition.Icon : Art.Get(definition.FallbackIconKey));
                     continue;
                 }
+                BetaUi.StigmaBadge(Element<Image>("CardIcon" + n), null);   // seal cards use plain icons
                 var offer = g.PassiveOffers.GetOffer(n);
                 if (!offer)
                 {
@@ -355,14 +449,20 @@ namespace WesternLemegeton
             for (int i = 0; i < 2; i++)
             {
                 var equipment = state.Get((StigmaOwner)i);
-                string label = (i == 0 ? "플레이어" : "까마귀") + " " + (equipment.IsEquipped ? equipment.Definition.DisplayName + " " + equipment.Level : "미장착");
-                Text("Stack" + i, label); Text("RouteStack" + i, label);
-                if (equipment.IsEquipped) Image("StigmaIcon" + i, equipment.Definition.Icon ? equipment.Definition.Icon : Art.Get(equipment.Definition.FallbackIconKey));
-                Color("StigmaIcon" + i, equipment.IsEquipped ? UnityEngine.Color.white : new Color(.5f,.5f,.55f));
+                string name=i==0 ? "세브" : "코빈";
+                string item=equipment.IsEquipped ? equipment.Definition.DisplayName+" "+equipment.Level+"단계" : "미보유";
+                Text("Stack"+i,name+"\n"+item);
+                Text("RouteStack"+i,name+" · "+item);
+                var def=equipment.Definition;
+                while(def && def.BaseDefinition) def=def.BaseDefinition;
+                int kind=def ? def.Id=="humus" ? 2 : def.Id=="ardor" ? 1 : 0 : 1-i;
+                SetPassiveImage("StigmaIcon"+i,stigmaGlyphs[kind]);
+                Color("StigmaIcon"+i,equipment.IsEquipped ? UnityEngine.Color.white : new Color(.70f,.60f,.49f,.72f));
             }
             int charges = g.Stigmas.Combat?.Charges ?? 0;
             string chargeText = $"G · {charges}/{state.ChargeCapacity}";
-            Text("Stack2", chargeText); Text("RouteStack2", chargeText);
+            Text("Stack2",g.IsTown ? "" : state.Combination ? chargeText : "성흔 · 양쪽 장착 필요");
+            Text("RouteStack2",chargeText);
             Color("StigmaBorder2", state.Combination && charges >= state.Combination.ChargeCost ? ActiveColor : InactiveColor);
         }
 
@@ -372,11 +472,17 @@ namespace WesternLemegeton
 
         private void UpdateLocationAndSupplies(Dungeon g)
         {
-            Text("Location", g.InBossTrial ? g.TrialLocation : g.InsideHouse ? "히르바 · 사냥꾼의 집" : g.InPractice ? "던전 입구 · 무기 테스트실" : g.IsTown ? "HIRVA / 히르바" : $"스테이지 {g.Room+1:00} · 방 {g.MapIndex+1}/6 / {g.GetRoomName(g.MapIndex)}");
+            string location = g.InBossTrial ? g.TrialLocation : g.IsTown ? "히르바" : g.InPractice ? "붉은 모래길" : g.GetRoomName(g.MapIndex);
+            string kind = g.InPractice ? "무기 선택실" : g.InsideHouse ? "사냥꾼의 집" : g.IsTown ? "마을" : g.InBossTrial ? "시련" : $"방 {g.MapIndex+1:00}";
+            Text("Location",location);
+            Text("LocationKind",kind);
+            Text("PromptCaption",kind);
             Text("Notice", g.UsesGeneratedStage && !g.IsTown && g.Progress.SegmentComplete
                 ? "방 6/6 완료 · M으로 지도를 열고 다음 스테이지를 선택하세요" : g.Notice);
             UpdateHouseSign(g);
-            Text("Supplies", $"구리동전 {g.Wallet.Copper} · 보급품 {g.Supplies}\n방 완료 {g.MapsCleared} / 6");
+            Text("ObjectiveTitle",g.IsTown ? "마을 안내" : "진척도");
+            Text("Supplies",g.IsTown ? "구리동전\n보급품" : "완료한 방\n구리동전");
+            Text("ObjectiveValues",g.IsTown ? $"{g.Wallet.Copper}\n{g.Supplies}" : $"{g.MapsCleared} / 6\n{g.Wallet.Copper}");
         }
 
         void UpdateHouseSign(Dungeon g)
@@ -424,42 +530,52 @@ namespace WesternLemegeton
                     // 분기 표식은 방 번호가 아니라 다음 스테이지 노드를 가리킵니다.
                     if (door && door.RunMapDestination >= 0)
                         message = $"F · 다음 스테이지 ({door.RunMapDestinationType}) 이동";
-                    else if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {g.GetRoomName(door.Destination)} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
+                    else if (door) message = door.StageExit ? (g.Progress.SegmentComplete ? "F · 스테이지 출구 / 다음 여정 선택" : $"출구 봉인 · 미완료 방 {6-g.MapsCleared}개") : (g.Progress.CanLeave ? $"F · {door.Destination+1:00} {g.GetRoomName(door.Destination)} 이동" : "문 봉인 · 이 방의 모든 적을 처치하세요");
                     else if (g.CurrentKind != ExplorationRoomKind.Combat && g.CurrentKind != ExplorationRoomKind.Entry && Vector2.Distance(g.Pos, RoomAuthoring.Point(g.CurrentRoom.Layout.Authored.ServicePoint)) < 2.4f) message = g.CurrentKind == ExplorationRoomKind.Sigil ? "F · 성흔 획득 / 교체 / 강화" : g.Progress.MapComplete ? "이 방의 보상을 선택했습니다" : "F · 악마카드 진열대 / 카드 선택";
                 }
             }
             Show("Prompt", message != "");
             Text("PromptText", message);
+            if (message.Length > 0 && Element<RectTransform>("Prompt") is RectTransform banner)
+                banner.anchoredPosition = new Vector2(banner.anchoredPosition.x,
+                    g.InBossTrial || g.IsBossWave ? -125f : -19f);
         }
 
         private void Map(Dungeon g)
         {
-            if (g.UsesGeneratedStage) UpdateGeneratedMinimap(g.Progress.GeneratedLayout);
+            // The room map (M key) is drawn by BetaRoomMap. It is built the first time the panel opens.
+            if (RoutePanel.activeSelf) (roomMap ??= new BetaRoomMap(this)).Refresh(g);
+            bool field=!g.IsTown && !g.InPractice && !g.InBossTrial && !g.InsideHouse;
+            if (miniMapRect) Panel(miniMapRect.gameObject,field);
+            if (field && g.UsesGeneratedStage) UpdateGeneratedMinimap(g.Progress.GeneratedLayout);
             else RestoreFixedMinimap();
             for (int i = 0; i < 6; i++)
             {
                 bool current = !g.IsTown && g.MapIndex == i, done = !g.IsTown && g.Progress.Cleared(i), visited = !g.IsTown && g.Progress.Visited(i);
                 var color = current ? UnlockedColor : done ? ActiveColor : visited ? new Color(.97f, .89f, .72f) : InactiveColor;
                 Color("MiniNode" + i, color);
-                Color("RouteNode" + i, color);
                 if (g.UsesGeneratedStage && miniNodeFills[i]) miniNodeFills[i].color = GeneratedRoleColor(g.Progress.GeneratedLayout.Rooms[i].Role);
-                string kind = g.Progress.KindAt(i) == ExplorationRoomKind.Sigil ? "성흔 강화" : g.Progress.KindAt(i) == ExplorationRoomKind.DevilCards ? "악마카드 선택" : "전투";
-                Text("RouteNodeText" + i, $"{i+1:00} {g.GetRoomName(i)}\n{kind} · {(current?"현재 위치":done?"완료":visited?"미완료":"미방문")}");
             }
+            // The "next stage" button is the authored one, restyled and placed by BetaRoomMap.
             Show("RouteTravel", g.RouteTravel);
-            Text("RouteStage", g.IsTown ? "여정의 시작" : $"STAGE {g.Room+1:00}");
-            Text("RouteName", g.IsTown ? "히르바 → 붉은 모래길" : Dungeon.RoomNames[g.Room]);
-            Text("RouteProgress", $"방 완료 {g.MapsCleared}/6 · 방문 {g.Progress.VisitedMaps}/6");
-            Fill("RouteHP", g.Hero.Hp / 100);
-            Text("RouteHPText", $"HP {Mathf.CeilToInt(g.Hero.Hp)} / 100");
-            Text("RouteBuild", $"악마카드 {g.Passives.Count}장\n공격 {PassiveBonus(g, WesternPassiveStatKeys.PlayerAttack)} · 이동 {PassiveBonus(g, WesternPassiveStatKeys.MoveSpeed)}\n까마귀 공격 {PassiveBonus(g, WesternPassiveStatKeys.RavenAttack)}");
             Text("RouteTravelText", g.IsTown ? "황야로 출발" : g.Room == 4 ? "탐험 완료" : "다음 스테이지로 이동");
-            Text("RouteHint", g.RouteTravel ? g.Room == 4 && !g.IsTown ? "모든 봉인을 해제했습니다." : "다음: " + Dungeon.RoomNames[g.NextRoom] : "여섯 방을 완료한 뒤 출구 문에서 다음 스테이지로 이동할 수 있습니다.");
         }
 
         private void CacheMinimap()
         {
-            if (TryRef("Minimap", out var root)) miniMapRect = root.GetComponent<RectTransform>();
+            if (TryRef("Minimap", out var root))
+            {
+                miniMapRect=new GameObject("RoomLayout",typeof(RectTransform)).GetComponent<RectTransform>();
+                miniMapRect.SetParent(root.transform,false);
+                miniMapRect.anchorMin=miniMapRect.anchorMax=miniMapRect.pivot=Vector2.up;
+                miniMapRect.anchoredPosition=new Vector2(14,-33);
+                miniMapRect.sizeDelta=new Vector2(190,145);
+                miniMapRect.localScale=Vector3.one*.74f;
+                for(int i=0;i<5;i++)
+                    if(TryRef("MiniLink"+i,out var line)) line.transform.SetParent(miniMapRect,false);
+                for(int i=0;i<6;i++)
+                    if(TryRef("MiniNode"+i,out var room)) room.transform.SetParent(miniMapRect,false);
+            }
             for (int i = 0; i < 6; i++)
             {
                 if (TryRef("MiniNode" + i, out var node))
@@ -626,27 +742,28 @@ namespace WesternLemegeton
         {
             var bar = Element<RectTransform>("Boss");
             if (!bar) return;
-            bar.anchorMin = new Vector2(.20f,.845f);
-            bar.anchorMax = new Vector2(.80f,.845f);
+            bar.anchorMin = new Vector2(.26f,.91f);
+            bar.anchorMax = new Vector2(.74f,.91f);
             bar.pivot = Vector2.one * .5f;
             bar.anchoredPosition = Vector2.zero;
-            bar.sizeDelta = new Vector2(0,42);
+            bar.sizeDelta = new Vector2(0,26);
             var track = Element<Image>("BossHP_Background");
             var health = Element<Image>("BossHP");
-            // The bezel artwork has an inset opening between its two garnets.
-            FitBossLayer(track.rectTransform, new Vector2(.091f,.31f), new Vector2(.909f,.69f));
-            FitBossLayer(health.rectTransform, track.rectTransform.anchorMin, track.rectTransform.anchorMax);
-            track.color = new Color(.13f,.042f,.052f);
-            health.sprite = Resources.Load<Sprite>("Paladin/JudgmentVitality");
+            FitBossLayer(track.rectTransform, Vector2.zero, Vector2.one);
+            FitBossLayer(health.rectTransform, new Vector2(.014f,.23f), new Vector2(.985f,.78f));
+            track.sprite = Resources.Load<Sprite>("WesternBeta/Hud/BossHealthTrack");
+            track.color = UnityEngine.Color.white;
+            health.sprite = Resources.Load<Sprite>("WesternBeta/Hud/BossHealthFill");
             health.color = UnityEngine.Color.white;
             health.type = UnityEngine.UI.Image.Type.Filled;
             health.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
             health.fillOrigin = (int)UnityEngine.UI.Image.OriginHorizontal.Left;
-            var bezel = new GameObject("Engraved brass bezel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
+            var bezel = new GameObject("Boss emblem", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)).GetComponent<Image>();
             bezel.transform.SetParent(bar,false);
             bezel.raycastTarget = false;
-            bezel.sprite = Resources.Load<Sprite>("Paladin/JudgmentFrame");
-            FitBossLayer(bezel.rectTransform, Vector2.zero, Vector2.one);
+            bezel.sprite = Resources.Load<Sprite>("WesternBeta/Hud/BossIcon");
+            FitBossLayer(bezel.rectTransform, Vector2.up * .5f, Vector2.up * .5f);
+            bezel.rectTransform.sizeDelta = Vector2.one * 50;
             var name = Element<Text>("BossHPText");
             FitBossLayer(name.rectTransform, Vector2.up, Vector2.one);
             name.rectTransform.pivot = new Vector2(.5f,0);
@@ -675,7 +792,8 @@ namespace WesternLemegeton
             Show("Boss", boss);
             if (!boss) return;
             Fill("BossHP", boss.Hp / Mathf.Max(1, boss.MaxHp));
-            Text("BossHPText", g.InBossTrial ? g.TrialBossName : "봉인의 파수꾼");
+            string name = g.InBossTrial ? g.TrialBossName : "봉인의 파수꾼";
+            Text("BossHPText", $"{name}  ·  {Mathf.CeilToInt(100 * boss.Hp / Mathf.Max(1, boss.MaxHp))}%");
         }
 
         #endregion
@@ -800,15 +918,6 @@ namespace WesternLemegeton
 
         private static string SignedValue(float value, bool percent = false) =>
             (value >= 0 ? "+" : "") + value.ToString("0.##") + (percent ? "%" : "");
-
-        private static string PassiveBonus(Dungeon g, string statType)
-        {
-            float raw = g.PassiveStats.GetRawBonus(statType), percent = g.PassiveStats.GetPercentBonus(statType);
-            if (raw == 0 && percent == 0) return "+0";
-            if (raw == 0) return SignedValue(percent, true);
-            if (percent == 0) return SignedValue(raw);
-            return SignedValue(raw) + " / " + SignedValue(percent, true);
-        }
 
         #endregion
     }

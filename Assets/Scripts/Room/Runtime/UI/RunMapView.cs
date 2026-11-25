@@ -7,11 +7,16 @@ using UnityEngine.UI;
 namespace WesternLemegeton
 {
     /// <summary>Presentation only. Selection emits intent; it never advances Dungeon or the run.</summary>
+    // Layout follows Assets/UI/Beta/References/Journey/StageSelection.png (1920 x 1080).
+    // The shared frame (header, board, status panel, footer) is BetaJourneyShell; this class places the stage nodes.
     [RequireComponent(typeof(RectTransform))]
     public sealed class RunMapView : MonoBehaviour
     {
         [Serializable] public sealed class NodeEvent : UnityEvent<int> { }
         [SerializeField] private ExpeditionStageCoordinator coordinator;
+        // These authored values belonged to the first map layout. They stay serialized so existing
+        // scenes and prefabs keep loading unchanged, but the mockup layout below no longer reads them.
+#pragma warning disable 0414
         [SerializeField] private Font font;
         [SerializeField] private Vector2 nodeSize = new Vector2(156, 88);
         [SerializeField] private Vector2 spacing = new Vector2(224, 128);
@@ -19,6 +24,7 @@ namespace WesternLemegeton
         [SerializeField] private Color completedColor = new Color(.38f, .82f, .55f);
         [SerializeField] private Color availableColor = new Color(.3f, .85f, .95f);
         [SerializeField] private Color lockedColor = new Color(.36f, .39f, .45f);
+#pragma warning restore 0414
         [SerializeField] private NodeEvent onNodeSelected = new NodeEvent();
 
         public ExpeditionStageCoordinator Coordinator { get => coordinator; set { coordinator = value; UseCoordinator(); } }
@@ -33,17 +39,27 @@ namespace WesternLemegeton
         private sealed class NodeVisual
         {
             public Button Button;
-            public Image Border;
-            public Text State;
+            public Image Art, Emblem, Lock, Plate;
+            public Text Title, State;
+            public bool Boss;
         }
-        private sealed class LinkVisual { public int From, To; public Image Image; }
+        private sealed class LinkVisual { public int From, To; public List<Image> Dashes; }
+
+        // Centre of the board area the stages may use, and the widest spacing from the mockup.
+        private static readonly Vector2 BoardCenter = new Vector2(688, 606);
+        private const float MaxStepX = 270, MaxStepY = 224, BoardWidth = 1100, BoardHeight = 520;
+        private static readonly Color Selectable = new Color32(31,128,118,255), Travelled = new Color32(247,191,77,255),
+            Locked = new Color32(122,94,72,255), TravelledRoute = new Color32(190,134,38,255);
+
         private readonly Dictionary<int, NodeVisual> nodes = new Dictionary<int, NodeVisual>();
         private readonly List<LinkVisual> links = new List<LinkVisual>();
         private RunMapLayout boundMap, renderedMap;
         private RunExpeditionProgress boundProgress;
         private bool explicitBinding;
-        private RectTransform ownedRoot, graph;
-        private Text status;
+        private BetaJourneyShell shell;
+        private RectTransform routeLayer, stageLayer;
+        private Sprite stageArt, currentArt, bossArt, plateArt, currentPlateArt;
+        private int pending = -1, layerCount = 1;
         private float nextRefresh;
 
         private RunMapLayout Map => explicitBinding ? boundMap : coordinator ? coordinator.CurrentMap : null;
@@ -99,10 +115,24 @@ namespace WesternLemegeton
             return true;
         }
 
+        private static string StageTitle(RunMapNode node) =>
+            node.Layer >= 0 && node.Layer < Dungeon.RoomNames.Length ? Dungeon.RoomNames[node.Layer] : BetaUi.StageName(node.Type) + " 스테이지";
+
+        private static string StageNotes(StageType type) => type switch
+        {
+            StageType.Basic => "황야를 가로지르는 전투 스테이지입니다.\n방 여섯 곳을 돌파하면 다음 경로가 열립니다.",
+            StageType.Boss => "보스가 기다리는 스테이지입니다.\n준비를 마친 뒤 입장하세요.",
+            StageType.Sigil => "성흔 제단이 있는 스테이지입니다.",
+            StageType.Shop => "상점이 있는 스테이지입니다.",
+            StageType.Event => "특별한 사건이 일어나는 스테이지입니다.",
+            _ => "인장을 고를 수 있는 스테이지입니다."
+        };
+
         public void Refresh()
         {
             if (!Application.isPlaying) return;
-            if (!ownedRoot) BuildShell();
+            if (shell == null) BuildShell();
+            shell.Fit();
             var map = Map;
             var progress = Progress;
             if (renderedMap != map)
@@ -110,65 +140,134 @@ namespace WesternLemegeton
                 ClearGraph();
                 renderedMap = map;
                 SelectedNodeId = -1;
+                pending = -1;
                 if (map != null) BuildGraph(map);
             }
+            shell.ShowRun(Dungeon.I);
             if (map == null || progress == null || progress.Map != map)
             {
-                status.text = StatusOverride ?? "Waiting for run data — assign Coordinator and start a run.";
+                string waiting = StatusOverride ?? "원정 시작을 기다리는 중";
                 foreach (var node in nodes.Values) node.Button.interactable = false;
+                shell.SetAction("스테이지 입장", false);
+                shell.ChapterNumber.text = "00"; shell.ChapterTotal.text = "/ 00"; shell.ChapterName.text = "황야";
+                shell.PlateKicker.text = "TERRITORY 01"; shell.PlateName.text = Dungeon.RoomNames[0];
+                shell.Kicker.text = "원정 대기"; shell.Title.text = "황야의 여정"; shell.Sub.text = "히르바  →  " + Dungeon.RoomNames[0];
+                shell.BoxKicker.text = "안내"; shell.BoxTitle.text = "원정 준비"; shell.BoxBody.text = waiting; shell.BoxFooter.text = "";
+                shell.CounterLabelA.text = "클리어"; shell.CounterValueA.text = "- / -";
+                shell.CounterLabelB.text = "입장"; shell.CounterValueB.text = "- / -";
+                shell.Hint.text = waiting;
                 return;
             }
             if (SelectedNodeId >= 0 && !CanSelectNode(SelectedNodeId)) SelectedNodeId = -1;
+            if (!CanSelectNode(pending)) pending = -1;
+
             foreach (var pair in nodes)
             {
                 bool current = pair.Key == progress.CurrentNodeId;
                 bool done = progress.CompletedNodeIds.Contains(pair.Key);
                 bool available = CanSelectNode(pair.Key);
+                bool spotlight = current || pair.Key == pending;
                 var visual = pair.Value;
                 visual.Button.interactable = available;
-                visual.Border.color = current ? currentColor : done ? completedColor : available ? availableColor : lockedColor;
-                visual.State.text = current ? (done ? "CURRENT / COMPLETE" : "CURRENT") :
-                    done ? "COMPLETE" : available ? (SelectedNodeId == pair.Key ? "SELECTED / AVAILABLE" : "AVAILABLE") : "LOCKED";
-                visual.State.color = visual.Border.color;
+                // The teal medallion marks where you are and what you may pick; it is larger for the spotlighted stage.
+                if (spotlight) SetArt(visual.Art, currentArt, 138, 138);
+                else if (available) SetArt(visual.Art, currentArt, 108, 108);
+                else if (visual.Boss) SetArt(visual.Art, bossArt, 118, 121);
+                else SetArt(visual.Art, stageArt, 104, 107);
+                visual.Art.color = done && !spotlight ? new Color(1, .86f, .52f) : Color.white;
+                visual.Emblem.enabled = !spotlight && !available;   // the teal medallion already carries a skull
+                visual.Lock.enabled = !available && !done && !current;
+                float plateY = spotlight ? 152 : 137;
+                visual.Plate.sprite = spotlight ? currentPlateArt : plateArt;
+                visual.Plate.rectTransform.anchoredPosition = new Vector2(0, -plateY);
+                visual.Title.color = spotlight ? BetaUi.Cream : BetaUi.Ink;
+                visual.State.text = current ? "현재 위치" : pair.Key == pending ? "선택됨" : "";
+                visual.State.rectTransform.anchoredPosition = new Vector2(-30, -(plateY + 40));
             }
             foreach (var link in links)
-                link.Image.color = progress.CompletedNodeIds.Contains(link.From) && progress.CompletedNodeIds.Contains(link.To)
-                    ? completedColor : link.From == progress.CurrentNodeId && CanSelectNode(link.To) ? availableColor : lockedColor * new Color(1, 1, 1, .55f);
-            status.text = StatusOverride ?? (progress.RunCompleted ? "RUN COMPLETE" : SelectedNodeId >= 0
-                ? $"Node {SelectedNodeId} selected — entering the next stage."
-                : progress.CurrentStageCompleted ? "다음 스테이지로 이동할 경로를 선택하세요."
-                : $"Current node: {progress.CurrentNodeId}  •  Complete this stage to unlock the next route.");
+            {
+                bool travelled = progress.CompletedNodeIds.Contains(link.From) &&
+                    (progress.CompletedNodeIds.Contains(link.To) || link.To == progress.CurrentNodeId);
+                var color = travelled ? TravelledRoute : link.From == progress.CurrentNodeId && CanSelectNode(link.To) ? Selectable : Locked;
+                foreach (var dash in link.Dashes) dash.color = color;
+            }
+
+            var here = progress.CurrentNode;
+            var shown = pending >= 0 ? map.Find(pending) : here;
+            var flow = GetComponentInParent<RunStageSelectionController>();
+            bool retry = flow && flow.HasPreparedStage && !string.IsNullOrEmpty(flow.LastError);
+            bool failedEntry = flow && flow.HasPreparedStage && StatusOverride != null && StatusOverride.StartsWith("Entry failed:");
+            string status = retry || failedEntry ? StatusOverride : progress.RunCompleted ? "원정을 완료했습니다."
+                : pending >= 0 ? "스테이지 입장을 누르면 선택한 스테이지로 출발합니다."
+                : progress.CurrentStageCompleted ? "연결된 목적지를 선택한 뒤 출발하세요." : "현재 스테이지를 완료하면 다음 경로가 열립니다.";
+
+            if (here != null)
+            {
+                shell.ChapterNumber.text = (here.Layer + 1).ToString("00");
+                shell.ChapterName.text = BetaUi.StageName(here.Type);
+                shell.PlateKicker.text = $"TERRITORY {here.Layer + 1:00}";
+                shell.PlateName.text = StageTitle(here);
+            }
+            shell.ChapterTotal.text = "/ " + layerCount.ToString("00");
+            if (shown != null)
+            {
+                shell.Kicker.text = (pending >= 0 ? "선택한 스테이지" : "현재 스테이지") + $"  /  STAGE {shown.Layer + 1:00}";
+                shell.Title.text = StageTitle(shown);
+                shell.Sub.text = pending >= 0 && here != null ? StageTitle(here) + "  →  " + StageTitle(shown)
+                    : BetaUi.StageName(shown.Type) + " 스테이지";
+                shell.BoxKicker.text = "스테이지 정보  /  " + BetaUi.StageName(shown.Type);
+                shell.BoxTitle.text = $"{shown.Layer + 1:00}  ·  {BetaUi.StageName(shown.Type)}";
+                shell.BoxBody.text = StageNotes(shown.Type);
+                shell.BoxFooter.text = pending >= 0 ? "입장 준비 완료" : progress.CurrentStageCompleted ? "다음 경로 선택 가능" : "진행 중";
+                shell.CounterValueB.text = $"{shown.Layer + 1} / {layerCount}";
+            }
+            shell.CounterLabelA.text = "클리어";
+            shell.CounterValueA.text = $"{progress.CompletedNodeIds.Count} / {layerCount}";
+            shell.CounterLabelB.text = "입장";
+            shell.SetAction(retry || failedEntry ? "다시 입장" : "스테이지 입장", pending >= 0 || retry || failedEntry);
+            shell.Hint.text = status;
+        }
+
+        private static void SetArt(Image image, Sprite sprite, float width, float height)
+        {
+            image.sprite = sprite;
+            image.rectTransform.sizeDelta = new Vector2(width, height);
+            // Node boxes are 150 wide and the medallion is centred 75 below the top.
+            image.rectTransform.anchoredPosition = new Vector2((150 - width) * .5f, -(75 - height * .5f));
         }
 
         private void BuildShell()
         {
-            if (!font) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            ownedRoot = Rect("RunMapContent", transform);
-            Stretch(ownedRoot);
-            var bg = ownedRoot.gameObject.AddComponent<Image>();
-            bg.color = new Color(.055f, .065f, .085f, .98f);
-            Label("Title", ownedRoot, "WESTERN LEMEGETON  /  RUN MAP", 26, new Vector2(.03f, .90f), new Vector2(.97f, .98f));
-            Label("Legend", ownedRoot, "GOLD: CURRENT     GREEN: COMPLETE     CYAN: AVAILABLE     GRAY: LOCKED", 16, new Vector2(.03f, .83f), new Vector2(.97f, .90f));
-            status = Label("Status", ownedRoot, "", 17, new Vector2(.03f, .02f), new Vector2(.97f, .12f));
-            var viewport = Rect("Viewport", ownedRoot);
-            viewport.anchorMin = new Vector2(.025f, .14f);
-            viewport.anchorMax = new Vector2(.975f, .82f);
-            viewport.offsetMin = viewport.offsetMax = Vector2.zero;
-            viewport.gameObject.AddComponent<RectMask2D>();
-            var background = viewport.gameObject.AddComponent<Image>();
-            background.color = new Color(.08f, .095f, .12f);
-            var scroll = viewport.gameObject.AddComponent<ScrollRect>();
-            graph = Rect("Graph", viewport);
-            graph.anchorMin = graph.anchorMax = graph.pivot = new Vector2(.5f, .5f);
-            scroll.content = graph;
-            scroll.viewport = viewport;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 24;
+            stageArt = BetaUi.Art("Journey/StageNode"); currentArt = BetaUi.Art("Journey/CurrentStageNode");
+            bossArt = BetaUi.Art("Journey/BossStageNode");
+            plateArt = BetaUi.Art("Journey/StageNameplate"); currentPlateArt = BetaUi.Art("Journey/CurrentStageNameplate");
+            shell = new BetaJourneyShell((RectTransform)transform, Enter, Close);
+            shell.Subtitle.text = "다음 스테이지를 선택하세요";
+            shell.SetLegend("경로 안내", (Selectable, "선택 가능"), (Travelled, "선택 / 지나온 경로"), (Locked, "잠김"));
+            routeLayer = BetaUi.Box(shell.Graph, "Routes", 0, 0, 1920, 1080);
+            stageLayer = BetaUi.Box(shell.Graph, "Stages", 0, 0, 1920, 1080);
+        }
+
+        private void Enter()
+        {
+            if (pending >= 0) { TrySelectNode(pending); return; }
+            var flow = GetComponentInParent<RunStageSelectionController>();
+            if (flow) flow.RequestStageEntry();
+        }
+
+        private void Close()
+        {
+            var flow = GetComponentInParent<RunStageSelectionController>();
+            if (flow) flow.HideMap();
         }
 
         private void ClearGraph()
         {
-            foreach (Transform child in graph) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
+            if (shell != null)
+            {
+                foreach (Transform child in routeLayer) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
+                foreach (Transform child in stageLayer) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
+            }
             nodes.Clear();
             links.Clear();
         }
@@ -183,81 +282,60 @@ namespace WesternLemegeton
                 slots[node.Layer] = Mathf.Max(slots.TryGetValue(node.Layer, out int count) ? count : 0, node.Slot + 1);
                 maxSlots = Mathf.Max(maxSlots, slots[node.Layer]);
             }
-            Vector2 gap = new Vector2(Mathf.Max(spacing.x, nodeSize.x + 32), Mathf.Max(spacing.y, nodeSize.y + 24));
-            graph.sizeDelta = new Vector2(maxLayer * gap.x + nodeSize.x + 64, (maxSlots - 1) * gap.y + nodeSize.y + 64);
-            graph.anchoredPosition = Vector2.zero;
+            layerCount = maxLayer + 1;
+            // Stages spread across the board at the mockup spacing, and tighten only when the run is larger.
+            float stepX = maxLayer > 0 ? Mathf.Min(MaxStepX, BoardWidth / maxLayer) : 0;
+            float stepY = maxSlots > 1 ? Mathf.Min(MaxStepY, BoardHeight / (maxSlots - 1)) : 0;
+            float scale = Mathf.Min(1, maxLayer > 0 ? stepX / 190f : 1, maxSlots > 1 ? stepY / 170f : 1);
             var positions = new Dictionary<int, Vector2>();
             foreach (var node in map.Nodes)
-                positions[node.Id] = new Vector2((node.Layer - maxLayer * .5f) * gap.x, ((slots[node.Layer] - 1) * .5f - node.Slot) * gap.y);
+                positions[node.Id] = BoardCenter + new Vector2((node.Layer - maxLayer * .5f) * stepX,
+                    (node.Slot - (slots[node.Layer] - 1) * .5f) * stepY);
+
             foreach (var node in map.Nodes)
                 foreach (int next in node.NextIds)
                 {
                     if (!positions.TryGetValue(next, out var end)) continue;
-                    Vector2 start = positions[node.Id] + Vector2.right * nodeSize.x * .5f;
-                    end -= Vector2.right * nodeSize.x * .5f;
-                    Vector2 delta = end - start;
-                    var rect = Rect($"Link_{node.Id}_{next}", graph);
-                    rect.anchoredPosition = (start + end) * .5f;
-                    rect.sizeDelta = new Vector2(delta.magnitude, 3);
-                    rect.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
-                    var line = rect.gameObject.AddComponent<Image>();
-                    line.raycastTarget = false;
-                    links.Add(new LinkVisual { From = node.Id, To = next, Image = line });
+                    links.Add(new LinkVisual { From = node.Id, To = next,
+                        Dashes = Dashed($"Link_{node.Id}_{next}", positions[node.Id], end, scale) });
                 }
+
+            var skull = BetaUi.Art("Journey/SkullIcon");
+            var padlock = BetaUi.Art("Journey/LockIcon");
             foreach (var node in map.Nodes)
             {
                 int id = node.Id;
-                var rect = Rect($"Node_{id}_{node.Type}", graph);
-                rect.anchoredPosition = positions[id];
-                rect.sizeDelta = nodeSize;
-                var border = rect.gameObject.AddComponent<Image>();
-                var inner = Rect("Face", rect);
-                Stretch(inner);
-                inner.offsetMin = Vector2.one * 3;
-                inner.offsetMax = Vector2.one * -3;
-                var face = inner.gameObject.AddComponent<Image>();
-                face.color = new Color(.12f, .14f, .18f);
-                face.raycastTarget = false;
-                var button = rect.gameObject.AddComponent<Button>();
-                button.targetGraphic = face;
-                var colors = button.colors;
-                colors.normalColor = face.color;
-                colors.highlightedColor = new Color(.22f, .29f, .36f);
-                colors.selectedColor = colors.highlightedColor;
-                colors.pressedColor = new Color(.16f, .24f, .3f);
-                colors.disabledColor = new Color(.095f, .11f, .14f);
-                button.colors = colors;
-                button.navigation = new Navigation { mode = Navigation.Mode.Automatic };
-                button.onClick.AddListener(() => TrySelectNode(id));
-                Label("Type", rect, node.Type.ToString().ToUpperInvariant(), 21, new Vector2(0, .49f), Vector2.one);
-                Label("Id", rect, $"{id:00}  /  STAGE {node.Layer + 1}", 13, new Vector2(0, .27f), new Vector2(1, .52f));
-                var state = Label("State", rect, "", 12, Vector2.zero, new Vector2(1, .28f));
-                nodes.Add(id, new NodeVisual { Button = button, Border = border, State = state });
+                var rect = BetaUi.Box(stageLayer, $"Node_{id}_{node.Type}", 0, 0, 150, 150);
+                rect.pivot = new Vector2(.5f, .5f);
+                rect.anchoredPosition = new Vector2(positions[id].x, -positions[id].y);
+                rect.localScale = Vector3.one * scale;
+                var area = rect.gameObject.AddComponent<Image>();
+                area.color = Color.clear;
+                var button = BetaUi.Press(area, () => { if (CanSelectNode(id)) { pending = id; Refresh(); } });
+                var visual = new NodeVisual { Button = button, Boss = node.Type == StageType.Boss };
+                visual.Art = BetaUi.Picture(rect, "Medallion", 23, 22, 104, 107, stageArt);
+                visual.Emblem = BetaUi.Picture(rect, "Skull", 53, 51, 44, 44, skull);
+                visual.Lock = BetaUi.Picture(rect, "Lock", 96, 92, 30, 30, padlock);
+                visual.Plate = BetaUi.Picture(rect, "Nameplate", 0, 137, 150, 38, plateArt);
+                visual.Title = BetaUi.Label(visual.Plate.transform, "Type", 4, 0, 142, 37, 21, BetaUi.Ink, true, TextAnchor.MiddleCenter);
+                visual.Title.text = $"{node.Layer + 1:00}  ·  {BetaUi.StageName(node.Type)}";
+                visual.State = BetaUi.Label(rect, "State", -30, 177, 210, 24, 16, BetaUi.Ink, true, TextAnchor.MiddleCenter);
+                nodes.Add(id, visual);
             }
         }
 
-        private static RectTransform Rect(string name, Transform parent)
+        // A dashed route between two stages. The dashes stop short of both medallions.
+        private List<Image> Dashed(string name, Vector2 from, Vector2 to, float scale)
         {
-            var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
-            return rect;
-        }
-        private static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-        }
-        private Text Label(string name, Transform parent, string value, int size, Vector2 min, Vector2 max)
-        {
-            var rect = Rect(name, parent);
-            rect.anchorMin = min; rect.anchorMax = max;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            var text = rect.gameObject.AddComponent<Text>();
-            text.font = font; text.text = value; text.fontSize = size;
-            text.alignment = TextAnchor.MiddleCenter; text.color = new Color(.91f, .89f, .83f);
-            text.raycastTarget = false;
-            return text;
+            var dashes = new List<Image>();
+            Vector2 delta = to - from;
+            float length = delta.magnitude, inset = 58 * scale, dash = 20 * scale, gap = 13 * scale, thickness = 5 * scale;
+            var holder = BetaUi.Box(routeLayer, name, from.x, from.y, length, thickness);
+            holder.pivot = new Vector2(0, .5f);
+            holder.localRotation = Quaternion.Euler(0, 0, -Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+            for (float at = inset; at + dash <= length - inset; at += dash + gap)
+                dashes.Add(BetaUi.Block(holder, "Dash", at, 0, dash, thickness, Locked));
+            return dashes;
         }
     }
 }

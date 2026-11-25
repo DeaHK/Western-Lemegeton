@@ -41,6 +41,28 @@ namespace WesternLemegeton.Stigmas
         string selectedId;
         int page;
         bool wired;
+        BetaManagementView beta;
+        internal bool CloseSealCollection()
+        {
+            if (beta == null) return false;
+            if (!beta.InventoryOpen) return beta.Stigma.ClosePopup();
+            beta.CloseInventory();
+            return true;
+        }
+        internal void SelectEquippedOwner(StigmaOwner value)
+        {
+            SelectOwner(value);
+            var equipment = manager.Loadout.Get(value);
+            if (!equipment.IsEquipped) return;
+            var acquired = manager.Loadout.GetAcquired(value);
+            for (int i = 0; i < acquired.Count; i++)
+                if (acquired[i] == equipment.Definition)
+                {
+                    SetPage(i / StigmaRulesSO.VisibleSlots);
+                    SelectSlot(i % StigmaRulesSO.VisibleSlots);
+                    return;
+                }
+        }
         string transactionMessage;
         bool showOffers;
         int selectedOffer = -1;
@@ -53,11 +75,12 @@ namespace WesternLemegeton.Stigmas
             Wire();
             if (Dungeon.I && Dungeon.I.Stigmas) Bind(Dungeon.I.Stigmas);
         }
-        void OnDisable() { if (manager) manager.Changed -= OnChanged; }
+        void OnDisable() { if (manager) manager.Changed -= OnChanged; beta?.CloseInventory(); beta?.Stigma.ResetSelection(); }
         void Wire()
         {
             if (wired) return;
             wired = true;
+            if (Application.isPlaying && GetComponentInParent<GameUIView>()) beta = new BetaManagementView(this);
             PlayerButton.onClick.AddListener(() => SelectOwner(StigmaOwner.Player));
             RavenButton.onClick.AddListener(() => SelectOwner(StigmaOwner.Raven));
             PreviousButton.onClick.AddListener(() => SetPage(page - 1));
@@ -88,6 +111,15 @@ namespace WesternLemegeton.Stigmas
             manager = value;
             if (manager) manager.Changed += OnChanged;
             showOffers = manager && manager.Room.IsOpen && !manager.Room.HasClaimedCard && manager.Room.GetOffers().Count > 0;
+            if (beta != null && manager)
+            {
+                var player = manager.Loadout.Get(StigmaOwner.Player);
+                owner = player.IsEquipped || !manager.Loadout.Get(StigmaOwner.Raven).IsEquipped ? StigmaOwner.Player : StigmaOwner.Raven;
+                var equipped = manager.Loadout.Get(owner);
+                page = 0;
+                selectedId = equipped.Definition ? equipped.Definition.Id : null;
+                if (equipped.IsEquipped) showOffers = false;
+            }
             selectedOffer = -1;
             Refresh();
         }
@@ -165,7 +197,22 @@ namespace WesternLemegeton.Stigmas
             owner = cards[index].Owner; selectedId = cards[index].Definition.Id;
             page = 0; transactionMessage = null; Refresh();
         }
-        void LateUpdate() { if (manager) Refresh(); }
+        int displayedCopper;
+        float displayedShield;
+        bool displayedService;
+
+        void LateUpdate()
+        {
+            if (!manager) return;
+            if (displayedCopper != (Dungeon.I ? Dungeon.I.Wallet.Copper : 0) ||
+                displayedShield != (manager.Combat?.Shield.Current ?? 0) || displayedService != manager.Room.IsOpen)
+                Refresh();
+            if (beta != null && !beta.InventoryOpen)
+            {
+                beta.Stigma.Fit();
+                if (Input.GetKeyDown(KeyCode.E)) beta.Stigma.Confirm();
+            }
+        }
 
         public void Refresh()
         {
@@ -265,6 +312,9 @@ namespace WesternLemegeton.Stigmas
                 SetDetailText(StigmaDescriptions.Detail(selected, level, mine, other, preview, manager.Database.Rules, OwnerName(owner)));
             }
             int copper = Dungeon.I ? Dungeon.I.Wallet.Copper : 0;
+            displayedCopper = copper;
+            displayedService = service;
+            displayedShield = manager.Combat?.Shield.Current ?? 0;
             bool canEquip = manager.Room.Quote(owner, selectedId, false, out int cost, out string equipError);
             EquipButton.interactable = showOffers ? manager.Room.CanClaimCard(selectedOffer, out _) : canEquip && copper >= cost;
             ActionText.text = showOffers ? OwnerName(owner) + "용 카드 획득" : state.IsSuperseded(owner, selected) ? "강화 보유 · 하위 장착 불가" : !service ? "성흔방에서 장착 가능" : canEquip ? (cost == 0 ? "장착 / 교체 · 무료" : $"교체 · {cost} 동전") : mine.IsEquipped ? "장착 중" : "획득한 성흔 없음";
@@ -277,6 +327,7 @@ namespace WesternLemegeton.Stigmas
             if (UpgradeText) UpgradeText.text = !selectedEquipped ? "선택 성흔 장착 후 강화" : canUpgrade ? $"강화 Lv.{mine.Level + 1} · {upgradeCost}" : mine.Level == 3 ? "최대 단계" : "장착 후 강화";
             StatusText.text = $"구리동전 {copper} · 가상체력 {manager.Combat?.Shield.Current ?? 0:0.#}\n" +
                 (transactionMessage ?? (showOffers ? "카드 1장을 선택하고 획득 버튼으로 확정하세요. 첫 성흔·장착 중인 하위의 강화는 자동 장착됩니다." : service ? "보유 성흔은 무료로 교체할 수 있습니다. 레벨 강화는 현재 장착 성흔에 적용됩니다." : "장착 정보 조회 · 교체와 강화는 성흔방에서 가능합니다."));
+            beta?.Stigma.Refresh(manager, showOffers, transactionMessage);
         }
 
         void SetDetailText(string text)
@@ -298,6 +349,7 @@ namespace WesternLemegeton.Stigmas
 
         void SetIcon(Image image, StigmaDefinitionSO data)
         {
+            if (BetaUi.StigmaBadge(image, data)) return;
             image.sprite = data ? data.Icon ? data.Icon : Art ? Art.Get(data.FallbackIconKey) : null : null;
             image.enabled = image.sprite;
         }

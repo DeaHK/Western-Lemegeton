@@ -141,9 +141,10 @@ namespace WesternLemegeton
             var ui=game.Scene.UI;
             Check(ui.Element<RectTransform>("Boss").gameObject.activeInHierarchy,"boss HUD visible");
             var label = ui.Element<UnityEngine.UI.Text>("BossHPText");
-            Check(label.text == "심판관" && label.GetComponent<UnityEngine.UI.Outline>() &&
-                label.rectTransform.anchorMin.y == 1 && label.transform.parent.Find("Engraved brass bezel"),
-                "outlined boss name above illustrated frame");
+            // The boss bar shows "name  ·  remaining %" next to a boss emblem (GameUIView.PlaceBossBar / Boss).
+            Check(label.text.StartsWith("심판관  ·  ") && label.text.EndsWith("%") && label.GetComponent<UnityEngine.UI.Outline>() &&
+                label.rectTransform.anchorMin.y == 1 && label.transform.parent.Find("Boss emblem"),
+                "outlined boss name and health percent above the boss bar");
             var music=Array.Find(game.GetComponents<AudioSource>(),source=>source.loop && source.clip);
             var intro=Array.Find(game.GetComponents<AudioSource>(),s=>!s.loop && s.clip && s.clip.name=="ReversalIntro");
             Check(music && music.clip.name=="ReversalLoop" && music.clip.samples==4468364 && music.clip.frequency==48000 &&
@@ -538,8 +539,10 @@ namespace WesternLemegeton
         IEnumerator CheckTrainingStations(Dungeon game)
         {
             var root = GameObject.Find("Training stations").transform;
-            Check(root.childCount == game.PassiveOffers.Seals.Count + 3, "one station per seal and three utilities");
-            foreach (var seal in game.PassiveOffers.Seals)
+            // Only the trial gallery lays out seal plates; the weapon room has the three utilities alone.
+            bool seals = game.InTrialGallery;
+            Check(root.childCount == (seals ? game.PassiveOffers.Seals.Count : 0) + 3, "one station per seal and three utilities");
+            if (seals) foreach (var seal in game.PassiveOffers.Seals)
             {
                 var plate = root.Find(seal.NameStringKey.Replace("인장 · ",""));
                 var point = (Vector2)plate.position;

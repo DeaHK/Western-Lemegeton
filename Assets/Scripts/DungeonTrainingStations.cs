@@ -29,15 +29,14 @@ namespace WesternLemegeton
             var root = new GameObject("Training stations").transform;
             root.SetParent(parent, false);
             root.position = center;
-            var seals = new List<PassiveSO>(PassiveOffers.Seals);
-            seals.Sort((a,b) => a.PassiveID.CompareTo(b.PassiveID));
-            for (int i = 0; i < seals.Count; i++)
+            // Seal plates exist only in the boss trial gallery. The weapon room (start room) keeps its left side clear.
+            if (InTrialGallery)
             {
+                var seals = new List<PassiveSO>(PassiveOffers.Seals);
+                seals.Sort((a,b) => a.PassiveID.CompareTo(b.PassiveID));
                 // Keep the central lane from the entrance to the combat portal clear.
-                Vector2 point = InTrialGallery
-                    ? new Vector2(-9 - 3.35f * (i / 3), 4.5f - 3.6f * (i % 3))
-                    : new Vector2(-6.0f - 3.35f * (i / 4), 5.8f - 3.5f * (i % 4));
-                AddStation(root, center, point, StationKind.Seal, seals[i]);
+                for (int i = 0; i < seals.Count; i++)
+                    AddStation(root, center, new Vector2(-9 - 3.35f * (i / 3), 4.5f - 3.6f * (i % 3)), StationKind.Seal, seals[i]);
             }
             Vector2 first = InTrialGallery ? new Vector2(4.1f,3.6f) : new Vector2(3.5f,-4.6f);
             AddStation(root, center, first, StationKind.Altar);

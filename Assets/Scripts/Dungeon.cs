@@ -46,7 +46,22 @@ namespace WesternLemegeton
         public event System.Action GeneratedStageReleased;
         public event System.Func<bool> GeneratedStageCompletionRequested;
         public event System.Func<int, bool> GeneratedRouteSelectionRequested;
-        public string GetRoomName(int index) => UsesGeneratedStage ? $"{Progress.GeneratedLayout.Rooms[index].Role} {index + 1:00}" : MapNames[index];
+        public string GetRoomName(int index) => UsesGeneratedStage ? GeneratedRoomName(Progress.GeneratedLayout, index) : MapNames[index];
+        // Display names for generated rooms, shared by the HUD, door prompts and the room map.
+        static string GeneratedRoomName(StageLayout layout, int index)
+        {
+            switch (layout.Rooms[index].Role)
+            {
+                case RoomRole.Entry: return "스테이지 입구";
+                case RoomRole.Combat: return index == layout.ExitIndex ? "스테이지 출구" : "전투 구역";
+                case RoomRole.Sigil: return "성흔 제단";
+                case RoomRole.Shop: return "신비주의자 캠프";
+                case RoomRole.CardMerchant: return "카드 상인";
+                case RoomRole.Boss: return "보스의 방";
+                case RoomRole.Event: return "이벤트 구역";
+                default: return "갈림길";
+            }
+        }
         public int Room => Progress.Segment;
         public int MapIndex => Progress.Map;
         public int WaveIndex => Progress.Wave;
@@ -160,6 +175,7 @@ namespace WesternLemegeton
                 return;
             }
             if (hud && hud.StigmaDebugOpen) return;
+            if (Input.GetKeyDown(KeyCode.Escape) && hud && hud.View && hud.View.StigmaView && hud.View.StigmaView.CloseSealCollection()) return;
             if (State == RunState.Cinematic)
             {
                 HandleCinematicInput();
@@ -733,7 +749,7 @@ namespace WesternLemegeton
         public void OpenRoute(bool travel = false)
         {
             if (!Running || InsideHouse || InPractice || InBossTrial) return;
-            if (UsesGeneratedStage) { GeneratedMapRequested?.Invoke(); return; }
+            if (UsesGeneratedStage && (travel || Progress.SegmentComplete)) { GeneratedMapRequested?.Invoke(); return; }
             BeforeRoute = State;
             RouteTravel = travel && (IsTown ? Vector2.Distance(Pos, RoomAuthoring.Point(Scene.Hirva.TownExit)) < 2.1f : AtStageExit());
             State = RunState.Route;
