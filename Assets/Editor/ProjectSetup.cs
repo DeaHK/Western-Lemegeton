@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -10,16 +11,28 @@ public static class ProjectSetup
     [MenuItem("Western Lemegeton/Configure Build Settings")]
     public static void CreateScene()
     {
+        if(File.Exists(WesternLemegeton.EditorTools.SceneSeparationSetup.SessionPath))
+        {
+            EditorBuildSettings.scenes=WesternLemegeton.EditorTools.SceneSeparationSetup.Paths.Select(p=>new EditorBuildSettingsScene(p,true)).ToArray();
+            WesternLemegeton.EditorTools.SceneSeparationSetup.Validate();
+            ApplyPlayerSettings();
+            AssetDatabase.SaveAssets();
+            return;
+        }
         if(!File.Exists("Assets/Scenes/Main.unity"))throw new Exception("Editable Main scene is missing.");
         if(!Application.isBatchMode&&!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())throw new Exception("Build settings cancelled; unsaved scene preserved.");
         if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path!="Assets/Scenes/Main.unity")EditorSceneManager.OpenScene("Assets/Scenes/Main.unity");
         if(!UnityEngine.Object.FindFirstObjectByType<GameSceneBindings>())throw new Exception("Run EditableProjectSetup.CreateEditableProject once to migrate the legacy scene.");
         EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene("Assets/Scenes/Main.unity",true)};
+        ApplyPlayerSettings();
+        AssetDatabase.SaveAssets();
+    }
+    static void ApplyPlayerSettings()
+    {
         PlayerSettings.companyName="Team ARS Prototype";PlayerSettings.productName="Western Lemegeton";
         PlayerSettings.defaultScreenWidth=1280;PlayerSettings.defaultScreenHeight=720;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.runInBackground=false;
         PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
         ConfigureSplash();
-        AssetDatabase.SaveAssets();
     }
     static void ConfigureSplash()
     {
@@ -43,7 +56,7 @@ public static class ProjectSetup
     {
         CreateScene();WesternLemegeton.EditorTools.EditableValidation.ValidateImportedProject();ValidateRules();ValidateWesternArt();ValidateCombat();ValidateExpedition();ValidateRoomAccess();TimelineSetup.Validate();MotionSetup.Validate();
         Directory.CreateDirectory("Builds/Windows");
-        var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Scenes/Main.unity"},locationPathName="Builds/Windows/Western Lemegeton.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
+        var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray(),locationPathName="Builds/Windows/Western Lemegeton.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
         if(result.summary.result!=UnityEditor.Build.Reporting.BuildResult.Succeeded)throw new Exception("Build failed: "+result.summary.result);
         Debug.Log("WNN_BUILD_SUCCESS");
     }

@@ -1,17 +1,28 @@
 # 몬스터 도감
 
-최종 갱신일: 2026-11-17
+최종 갱신일: 2026-11-25
 
 일반 / 엘리트 / 보스 몬스터의 행동과 현재 구현 정보를 기록한다. 수치는 별도 표시가 없는 한 유니티 월드 단위와 초 단위이며, 프리팹의 저장값을 기준으로 한다. 씬 인스턴스에서 별도로 변경한 값은 다를 수 있다.
 
 ## 등록 및 갱신 규칙
 
 - 새 몬스터를 처음 제작할 때 일반 / 엘리트 / 보스 중 어디에 넣을지 사용자에게 묻고, 정해진 분류에 등록한다. 이미 지정한 분류는 다시 묻지 않는다.
-- 등록된 모든 몬스터는 수정 작업마다 도감도 최신화할지 사용자에게 묻는다. 동의한 경우에만 변경 사항과 갱신일을 반영한다. 갱신을 명시적으로 요청한 작업은 재확인하지 않는다.
+- 등록된 모든 몬스터는 코드·프리팹·능력치·행동·외형·연출 변경과 같은 작업에서 도감을 함께 갱신한다. 매번 다시 묻지 않으며, 사용자가 해당 변경의 갱신 제외를 명시하면 따른다.
 - 각 항목은 이름, 분류, 행동, 능력치, 구현 상태, 관련 파일, 변경 이력을 기록한다. 임시값과 확정 조건을 구별한다.
 - 작업 지침은 프로젝트 루트의 `AGENTS.md`에도 기록되어 있다.
 
 ## 공통 스킬 분류
+
+### 씬 분리 — 2026-11-25
+
+게임을 MainMenu / Lobby / Game / Debug 네 씬과 공용 세션 프리팹(`Assets/Resources/Session/GameSession.prefab`)으로 나눴다. **몬스터의 전투 수치·패턴·프리팹은 수정하지 않았다.** 몬스터에 영향을 주는 변경은 수명과 소속 씬뿐이다.
+
+- 일반 몬스터와 생성형 던전의 방은 Game 씬에, 보스 선택실·보스 전투장·시험 보스는 Debug 씬에 만들어지고 그 씬과 함께 사라진다. 씬을 떠날 때 `DungeonSceneRouting.cs`의 `ReleaseContent`가 적·투사체·장판·구속·보스 음악을 먼저 정리한다.
+- `DungeonBossTrial.cs`: 히르바 서쪽 관문은 로딩 화면을 거쳐 Debug 씬을 열고, 선택실 남쪽 포탈은 Lobby 씬으로 돌아와 관문 옆에 선다. 선택실↔전투장 이동과 재도전은 같은 Debug 씬 안에서 기존 코드 그대로 동작한다.
+- `PaperCard.cs`: 실행 중에 만드는 표시용 카드를 원본과 같은 씬에 두도록 했다(위치·크기·정렬 계산은 기존과 동일).
+- 몬스터 프리팹 목록(`Enemy Prefabs`)과 시험실 추가 보스 목록은 이제 GameSession 프리팹 안의 `Game_Systems`에서 편집한다. 기존 `Assets/Scenes/Main.unity`는 검사용으로 그대로 남아 있다.
+
+검증: Play 모드 자동 검사(`SceneSplitCheck`)에서 디버그 진입·보스 생성·재도전·전투 중 메인 이탈·귀환 후 잔여 적/탄환/음악 없음을 확인했고, 기존 Main의 심판관 플레이 검사 230항목과 RobeMan 검사 30항목이 통과했다. 기존 에디터 검사 중 CrowdControl·EnemyModule·EnemyPair·Logan 네 가지는 실패하는데, EnemyModule과 EnemyPair는 씬 분리 전 커밋(69e070e)에서도 같은 지점에서 실패함을 확인했다. 나머지 둘은 프리팹 값 검사(샷건 설정, 로건 체력 350)이며 이번 작업은 몬스터 코드·프리팹을 바꾸지 않았다. 보스 패턴을 사람이 직접 플레이해 보는 확인은 하지 않았다. 자세한 내용은 [씬 분리 결과](SceneReview/IMPLEMENTATION_RESULT.md).
 
 ### Crowd Control — 2026-11-12
 
@@ -120,7 +131,7 @@ Hunter에게 주는 독 피해는 보호막을 적용하지만 일반 피격·�
 - 독 구역: `Assets/Scripts/Enemy/Enemy_RobeMan/RobeManPoisonZone.cs` — 원형 표시, 지속 시간, Hunter 및 RobeMan 외 적의 개별 주기 피해를 처리한다. 적 피해는 `Enemy.TakeEnvironmentDamage`를 사용하며 헌터·까마귀의 처치 성흔 효과를 발동하지 않는다. 기존 사망 처리와 처치 수·기본 보상은 유지한다.
 - 프리팹: `Assets/Editable/Actors/RobeMan.prefab`.
 - 상세 설명: `Assets/Scripts/Enemy/Enemy_RobeMan/README.md`.
-- Main 씬의 `Game_Systems → Game Scene Bindings → Enemy Prefabs → Element 0`에 RobeMan 프리팹이 연결되어 있다.
+- `Assets/Resources/Session/GameSession.prefab`(게임이 실제로 쓰는 공용 세션)의 `Game_Systems → Game Scene Bindings → Enemy Prefabs → Element 0`에 RobeMan 프리팹이 연결되어 있다.
 - 전용 동작 검사: `Assets/Scripts/Enemy/Enemy_RobeMan/Editor/RobeManChecks.cs`. 실제 Play 화면에서의 비행 연출은 별도 확인이 필요하다.
 
 #### 변경 이력
@@ -182,7 +193,7 @@ Hunter에게 주는 독 피해는 보호막을 적용하지만 일반 피격·�
 - 공통 이동: `EnemyKeepDistanceMovement`. 올가미 감속은 공통 슬로우 무브먼트 규칙으로 `EnemyBasicBrain`이 적용한다.
 - `CowboyRope.cs`: 밧줄 표시, 적 판정 등록, 끌림, 피격 해제.
 - 프리팹: `Assets/Editable/Actors/Cowboy.prefab`.
-- Main 씬의 `Game_Systems → Game Scene Bindings → Enemy Prefabs → Element 2`에 연결되어 기존 원거리형 자리에서 생성된다.
+- `Assets/Resources/Session/GameSession.prefab`(게임이 실제로 쓰는 공용 세션)의 `Game_Systems → Game Scene Bindings → Enemy Prefabs → Element 2`에 연결되어 기존 원거리형 자리에서 생성된다.
 - 올가미 회전·사격 애니메이션은 별도 아트 작업이 필요하다. 현재 준비 올가미는 머리 위를 공전하는 작은 노란 고리, 날아가는 올가미는 노란 원으로 표현한다.
 
 #### 변경 이력
@@ -256,7 +267,7 @@ Hunter에게 주는 독 피해는 보호막을 적용하지만 일반 피격·�
 - 공통 이동: `EnemyChaseMovement`.
 - 헌터 피격: `Assets/Scripts/Player.cs` — 시간에 따른 넉백 이동과 아치형 표시 높이, 붙잡힘·기절을 처리한다.
 - 프리팹: `Assets/Editable/Actors/HauntedBull.prefab`.
-- Main 씬의 `Game_Systems → Game Scene Bindings → Enemy Prefabs → Element 1`에 연결되어 기존 돌진형 자리에서 생성된다.
+- `Assets/Resources/Session/GameSession.prefab`(게임이 실제로 쓰는 공용 세션)의 `Game_Systems → Game Scene Bindings → Enemy Prefabs → Element 1`에 연결되어 기존 돌진형 자리에서 생성된다.
 - `StompStarted`, `ChargeStarted`, `Stunned` 이벤트를 애니메이션 연결 지점으로 제공한다. 애니메이션 클립 및 Animator 연결 작업은 아직 필요하다.
 - 분류의 '엘리트'는 도감 분류다. 기존 `Kind` 번호는 프리팹 생성 슬롯/레거시 호환용이며 엘리트 분류를 의미하지 않는다.
 - 상세 설명: `Assets/Scripts/Enemy/Enemy_HauntedBull/README.md`.
@@ -444,11 +455,11 @@ Logan은 아직 폭발하지 않은 다이너마이트의 착지 예정 범위�
 
 **관련 파일.** `Assets/Resources/Paladin/SanctuaryPaladin.prefab`에서 체력·피해·회복·패턴 간격·키 배율을 조절한다. 공격과 애니메이션은 `Assets/Scripts/Enemy/Paladin/`, 시험실 동선은 `Assets/Scripts/DungeonBossTrial.cs`, 스프라이트·전투 배경·음원은 `Assets/Resources/Paladin/`에 있다.
 
-**시험실 설정.** 심판관과 로건은 기본으로 선택할 수 있다. 이후 보스를 추가하려면 Main 씬에서 `Game_Systems → Dungeon → Additional Trial Bosses`에 보스 프리팹과 초상화, 표시 이름을 넣는다. 같은 컴포넌트의 `Trial Music Override`에 음원 클립을 연결하면 기본 성당 음악을 교체할 수 있다.
+**시험실 설정.** 심판관과 로건은 기본으로 선택할 수 있다. 이후 보스를 추가하려면 `Assets/Resources/Session/GameSession.prefab`을 열어 `Game_Systems → Dungeon → Additional Trial Bosses`에 보스 프리팹과 초상화, 표시 이름을 넣는다. 같은 컴포넌트의 `Trial Music Override`에 음원 클립을 연결하면 기본 성당 음악을 교체할 수 있다.
 
 보스 시험실 서쪽에는 인장 12종이 있다. 원하는 인장 앞에서 G를 누를 때마다 한 개씩 중첩된다. 동쪽 바닥에는 성흔 제단, 구리동전 10,000개 지급 장치, 무적 스위치가 나란히 있다. 제단에서는 성흔을 획득·장착하고 실제 비용으로 강화한다. 무적을 켜면 일반·지속 피해로 체력과 보호막이 줄지 않으며, 경직·구속·던지기는 그대로 적용된다. 준비한 상태는 보스전과 재도전까지 유지된다. 던전 입구의 무기 테스트실에서도 같은 장치를 사용할 수 있다.
 
-**플레이 검사.** Main 씬에서 Play 후 `Western Lemegeton → Tests → Run Paladin Trial (Play Mode)`를 선택한다. 두 시험실의 장치, 포탈 왕복, 보스 선택과 체력바, 열 가지 공격, 탄환 피격, 잡기·던지기, 심판 추가 피해·완전 회피 회복, 암전, 갑주 전환, 재도전을 검사한다. 미술 제작 기록은 [심판관 리소스 제작 기록](PaladinArtPrompts.md)에 있다.
+**플레이 검사.** 기존 `Assets/Scenes/Main.unity`(씬 분리 전 구조로 남겨 둔 검사용 씬)에서 Play 후 `Western Lemegeton → Tests → Run Paladin Trial (Play Mode)`를 선택한다. 두 시험실의 장치, 포탈 왕복, 보스 선택과 체력바, 열 가지 공격, 탄환 피격, 잡기·던지기, 심판 추가 피해·완전 회피 회복, 암전, 갑주 전환, 재도전을 검사한다. 미술 제작 기록은 [심판관 리소스 제작 기록](PaladinArtPrompts.md)에 있다.
 
 **변경 이력 / 최종 갱신일.** 2026-11-17 — 보스 002 신규 등록. 1페이즈와 전환 연출을 보스 시험실에 연결했다.
 

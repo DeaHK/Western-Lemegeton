@@ -24,8 +24,7 @@ namespace WesternLemegeton
         public void Initialize(Dungeon owner, GameUIView view)
         {
             game = owner;
-            if (game && game.Scene && game.Scene.Hirva)
-                game.Scene.Hirva.GetComponentsInChildren<Transform>(true, npcs);
+            Rebind();
 
             if (!view)
             {
@@ -43,6 +42,15 @@ namespace WesternLemegeton
             this.view.SetFont(Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "Arial" }, 24));
             this.view.BindActions(Advance, Close);
             this.view.Hide();
+        }
+
+        // 마을 씬이 바뀔 때마다 NPC 목록만 새로 읽습니다. 글꼴과 버튼 연결은 Initialize에서 한 번만 합니다.
+        public void Rebind()
+        {
+            Close();
+            npcs.Clear();
+            if (game && game.Scene && game.Scene.Hirva)
+                game.Scene.Hirva.GetComponentsInChildren<Transform>(true, npcs);
         }
 
         public bool TryInteract()

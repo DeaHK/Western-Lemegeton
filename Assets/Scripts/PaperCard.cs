@@ -13,7 +13,7 @@ namespace WesternLemegeton
         void Start()
         {
             visible=Visible;
-            if(!visible&&Application.isPlaying){visible=new GameObject("Card / "+name,typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();Visible=visible;}
+            if(!visible&&Application.isPlaying){visible=new GameObject("Card / "+name,typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();SceneOwnership.Follow(visible.gameObject,gameObject);Visible=visible;}
             if(!visible)return;
             group=GetComponentInParent<SortingGroup>();
             var landscape=GetComponent<LandscapeParallax>();
@@ -21,7 +21,7 @@ namespace WesternLemegeton
             bool scenery=asset.StartsWith("Wnn")||asset.StartsWith("OBJ")||asset.StartsWith("Deco")||asset.StartsWith("Fence");
             // Dust veils and skill effects are also cards, but must never cast prop shadows.
             if(Application.isPlaying&&scenery && !Flat && Source.sprite && Source.sprite.bounds.size.y*Mathf.Abs(transform.lossyScale.y)>.75f && !group && (!landscape || landscape.Factor<=0))
-                grounding=new PropGrounding(Source);
+                {grounding=new PropGrounding(Source);SceneOwnership.Follow(grounding.Root.gameObject,gameObject);}
         }
         void LateUpdate()
         {

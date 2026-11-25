@@ -60,6 +60,7 @@ namespace WesternLemegeton
             StopAllCoroutines();
             DiscardPending();
             IsBuilding = false;
+            if (GameManager.I) GameManager.I.FinishPreparation();
             if (controller) controller.SetEntryProgress(false, null);
         }
         private void OnDestroy() { ReleaseActive(); }
@@ -87,8 +88,15 @@ namespace WesternLemegeton
             catch (Exception ex) { error = ex.Message; }
             if (error != null) { Fail(error); yield break; }
 
+            if (dungeon.ManagedSession)
+            {
+                // 방을 만들 Game 씬이 준비될 때까지 기다립니다. 실패하면 이전 공간(마을)에 그대로 남습니다.
+                yield return GameManager.I.PrepareGameScene(RetryEntry);
+                if (!GameManager.I.InGameScene) { Fail(GameManager.I.LastError ?? "게임 공간을 준비하지 못했습니다."); yield break; }
+                UpdateBlock();
+            }
             pendingRoot = new GameObject($"Generated Stage {nodeId} Seed {layout.Seed}");
-            SceneManager.MoveGameObjectToScene(pendingRoot, dungeon.gameObject.scene);
+            SceneManager.MoveGameObjectToScene(pendingRoot, dungeon.ManagedSession ? GameManager.I.Content.gameObject.scene : dungeon.gameObject.scene);
             pendingRoot.SetActive(false);
             var authored = new RoomAuthoring[6];
             foreach (var data in controller.PreparedRooms)
@@ -118,6 +126,7 @@ namespace WesternLemegeton
             IsBuilding = false;
             controller.SetEntryProgress(false, $"ENTERED  •  Node {nodeId} / {layout.StageType}  •  {authored.Length} rooms");
             controller.HideMap(); UpdateBlock();
+            if (dungeon.ManagedSession) GameManager.I.FinishPreparation();
             Debug.Log($"Generated Dungeon entered: Node={nodeId} Seed={layout.Seed} Rooms={authored.Length} Entry={layout.EntryIndex} Player={dungeon.Pos}", this);
         }
 
@@ -255,10 +264,14 @@ namespace WesternLemegeton
         }
         private void Fail(string error)
         {
+            // 씬을 옮겨 온 직후의 실패는 플레이할 방이 없으므로 로딩 화면의 재시도/메인 버튼이 처리합니다.
+            bool handled = dungeon.ManagedSession && GameManager.I && GameManager.I.FailPreparation(error, RetryEntry);
             DiscardPending(); LastError = error; IsBuilding = false;
             controller.SetEntryProgress(false, "Entry failed: " + error + "  Choose Enter stage to retry.");
-            controller.ShowMap(); UpdateBlock(); Debug.LogError("Generated Dungeon entry failed: " + error, this);
+            if (!handled) controller.ShowMap();
+            UpdateBlock(); Debug.LogError("Generated Dungeon entry failed: " + error, this);
         }
+        private void RetryEntry() { if (controller) controller.RequestStageEntry(); }
         private void DiscardPending() { if (pendingRoot) { pendingRoot.SetActive(false); Destroy(pendingRoot); } pendingRoot = null; }
         private void ReleaseActive()
         {

@@ -11,6 +11,8 @@ namespace WesternLemegeton.EditorTools
   [MenuItem("Western Lemegeton/Authoring/Validate Saved Scene")]
   public static void ValidateImportedProject()
   {
+   // Scene separation moved every check below into SceneSeparationSetup.Validate (session prefab + four scenes).
+   if(SceneSeparationSetup.Separated){SceneSeparationSetup.Validate();Debug.Log("WNN_EDITABLE_IMPORT_VALIDATION_PASSED");return;}
    if(!Application.isBatchMode&&!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())throw new OperationCanceledException("Validation cancelled; unsaved edits preserved.");
    EditorSceneManager.OpenScene("Assets/Scenes/Main.unity");var game=UnityEngine.Object.FindFirstObjectByType<Dungeon>();Require(game&&game.Scene,"Main scene contains serialized game systems");
    var scene=game.Scene;Require(scene.Rooms.Length==6&&scene.Hirva&&scene.Hunter&&scene.Raven&&scene.UI,"All scene references persist");

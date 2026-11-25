@@ -13,7 +13,7 @@ namespace WesternLemegeton.EditorTools
  {
   const string Root=EditableAssetStore.Root;
   [MenuItem("Western Lemegeton/Authoring/Open Editable Main Scene")]
-  public static void Open(){if(EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())EditorSceneManager.OpenScene("Assets/Scenes/Main.unity");}
+  public static void Open(){if(EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())EditorSceneManager.OpenScene(File.Exists(SceneSeparationSetup.SessionPath)?"Assets/Scenes/MainMenu.unity":"Assets/Scenes/Main.unity");}
   // One-time migration only. Regular builds never invoke this generator.
   public static void CreateEditableProject()
   {

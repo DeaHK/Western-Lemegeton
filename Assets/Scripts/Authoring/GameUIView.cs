@@ -101,6 +101,12 @@ namespace WesternLemegeton
             bool cinematic = g.State == RunState.Cinematic;
 
             UpdatePanelVisibility(g, h, cinematic);
+            if (g.ManagedSession && (g.State == RunState.Title || (GameManager.I && GameManager.I.IsLoading)))
+            {
+                // 타이틀·로딩 중에는 콘텐츠가 없으므로 HUD 갱신을 건너뛰고, 남아 있을 수 있는 알림만 숨깁니다.
+                if (ToastPanel) ToastPanel.SetActive(false);
+                return;
+            }
             UpdateLocationAndSupplies(g);
             UpdateCoreHud(g, p);
             UpdatePlayerHealthAndAmmo(p);

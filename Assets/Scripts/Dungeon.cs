@@ -59,7 +59,7 @@ namespace WesternLemegeton
         public float RunTime;
         public bool RouteTravel;
         public readonly bool[] Events = new bool[5];
-        public bool Running => !RunMapInputBlocked && (!hud || (!hud.SettingsOpen && !hud.StigmaDebugOpen)) && (State == RunState.Town || State == RunState.Combat || State == RunState.Exit || State == RunState.WaveBreak);
+        public bool Running => !ChangingScene && !RunMapInputBlocked && (!hud || (!hud.SettingsOpen && !hud.StigmaDebugOpen)) && (State == RunState.Town || State == RunState.Combat || State == RunState.Exit || State == RunState.WaveBreak);
 
         // Room / Logical XY footprints
         public static Rect[] Obstacles = System.Array.Empty<Rect>(), SolidObstacles = System.Array.Empty<Rect>();
@@ -68,7 +68,7 @@ namespace WesternLemegeton
         public ExplorationRoom CurrentRoom => IsTown || Rooms == null ? null : Rooms[MapIndex];
         public ExplorationRoomKind CurrentKind => IsTown ? ExplorationRoomKind.Combat : Progress.KindAt(MapIndex);
         public Vector2 Pos => Hero.transform.position;
-        public Vector2 RoomCenter => InBossTrial ? TrialCenter : InsideHouse ? HouseCenter : InPractice ? practiceRoom.Center : IsTown ? Scene.Hirva.Center : CurrentRoom.Center;
+        public Vector2 RoomCenter => InBossTrial ? TrialCenter : InsideHouse ? HouseCenter : InPractice ? practiceRoom.Center : IsTown && Scene.Hirva ? Scene.Hirva.Center : CurrentRoom != null ? CurrentRoom.Center : Vector2.zero;
         public Vector2 LocalPos => Pos - RoomCenter;
         public static readonly string[] MapNames = { "붉은 바위 입구", "마차 잔해 전투지", "성흔 제단", "악마카드 역참", "풍차 언덕", "스테이지 출구" };
         public static readonly string[] RoomNames = { "붉은 모래길", "버려진 마차길", "외딴 예배당", "메마른 풍차", "망자의 분지" };
@@ -97,7 +97,7 @@ namespace WesternLemegeton
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
         {
-            if (!FindAnyObjectByType<Dungeon>()) Debug.LogError("Open Assets/Scenes/Main.unity: this game uses serialized scene objects.");
+            if (!FindAnyObjectByType<Dungeon>() && !FindAnyObjectByType<SceneContent>()) Debug.LogError("Open a game content scene or the authored Main scene.");
         }
 
         private void Awake()
@@ -121,9 +121,17 @@ namespace WesternLemegeton
             InitializeAudio();
             Cinematics = GetComponent<CinematicDirector>();
             actors = Scene.EnemyContainer;
-            BuildTown();
             NpcDialogue = gameObject.AddComponent<TownNpcDialogueController>();
             NpcDialogue.Initialize(this, Scene.UI);
+            if (ManagedSession)
+            {
+                // 명령줄 스모크 테스트는 한 프레임 안에 공간이 바뀐다고 가정하므로 기존 Main 씬에서만 동작합니다.
+                foreach (var arg in System.Environment.GetCommandLineArgs())
+                    if (arg.StartsWith("--") && arg.EndsWith("-test"))
+                        Debug.LogError("Smoke tests (" + arg + ") run only in the legacy Assets/Scenes/Main.unity scene, not in the separated scenes.");
+                return;
+            }
+            BuildTown();
             Hero.transform.position = RoomAuthoring.Point(Scene.Hirva.InitialSpawn);
             Crow.ResetAt(Pos);
             ResetCamera();
@@ -144,6 +152,7 @@ namespace WesternLemegeton
 
         private void Update()
         {
+            if (ChangingScene) return;
             if (RunMapInputBlocked)
             {
                 if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.M))
@@ -269,6 +278,7 @@ namespace WesternLemegeton
 
         public void StartRun()
         {
+            if (ManagedSession && GameManager.I.Route(GameSpace.Game, StartRun)) return;
             ResetRun();
             BuildStage();
             BeginPractice();
@@ -281,8 +291,8 @@ namespace WesternLemegeton
         private void ClearEnvironment()
         {
             if (Rooms != null) foreach (var room in Rooms) if (room.Layout.Root) room.Layout.Root.gameObject.SetActive(false);
-            Scene.Hirva.gameObject.SetActive(false);
-            foreach (var room in Scene.Rooms) room.gameObject.SetActive(false);
+            if (Scene.Hirva) Scene.Hirva.gameObject.SetActive(false);
+            foreach (var room in Scene.Rooms) if (room) room.gameObject.SetActive(false);
             Rooms = null;
         }
 
@@ -299,6 +309,7 @@ namespace WesternLemegeton
 
         public void EnterTown()
         {
+            if (ManagedSession && GameManager.I.Route(GameSpace.Lobby, EnterTown)) return;
             ResetRun();
             BuildTown();
             State = RunState.Town;
@@ -796,6 +807,7 @@ namespace WesternLemegeton
 
         private void LateUpdate()
         {
+            if (ChangingScene || ManagedSession && State == RunState.Title) return;
             if (!Hero) return;
             if (Cinematics && Cinematics.IsPlaying)
             {

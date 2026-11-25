@@ -121,6 +121,7 @@ namespace WesternLemegeton
 
         internal void OpenTrialGallery()
         {
+            if (ManagedSession && GameManager.I.Route(GameSpace.Debug, OpenTrialGallery)) return;
             ChangeTrialRoom(TrialRoom.Gallery);
             if (trialAudio) trialAudio.StopMusic();
             trialBosses.Clear();
@@ -264,10 +265,15 @@ namespace WesternLemegeton
             if (trialRoom == TrialRoom.Arena) OpenTrialGallery();
             else
             {
-                EnterTown();
-                PlaceAt(Rules.OutsideCover((Vector2)trialGate.transform.position + Vector2.right*2));
+                if (!ManagedSession || !GameManager.I.Route(GameSpace.Lobby, ReturnFromTrial)) ReturnFromTrial();
             }
             return true;
+        }
+
+        void ReturnFromTrial()
+        {
+            EnterTown();
+            if (trialGate) PlaceAt(Rules.OutsideCover((Vector2)trialGate.transform.position + Vector2.right*2));
         }
 
         void ClearBossTrial()
