@@ -41,7 +41,9 @@ namespace WesternLemegeton
             var player = GetComponent<Player>();
             SpriteRenderer source = player ? player.Presentation : enemy ? (enemy.Presentation ? enemy.Presentation : enemy.AuthoredSprite) : null;
             var presentation = GetComponent<ActorPresentation>();
-            if (presentation && presentation.UseCustomVisual && presentation.CustomVisual)
+            // TEMP(spine-run-only): 달리기만 스파인인 동안에는 총구/피격 영역을 기존 스프라이트 기준으로 유지한다.
+            // 전체 스파인 교체 후 "&& !presentation.SpineRunOnly"를 지우고 BodyAnchor/MuzzlePoint를 지정한다.
+            if (presentation && presentation.UseCustomVisual && !presentation.SpineRunOnly && presentation.CustomVisual)
             {
                 // 커스텀 외형에는 BodyAnchor를 지정하면 정확한 영역을 직접 조절할 수 있습니다.
                 center = presentation.CustomVisual.position;

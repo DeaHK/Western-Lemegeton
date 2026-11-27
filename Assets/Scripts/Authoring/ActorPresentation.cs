@@ -11,6 +11,11 @@ namespace WesternLemegeton
     {
         [Tooltip("Enable after placing a Spine/Animator visual in the Custom Visual slot.")]
         public bool UseCustomVisual;
+        // TEMP(spine-run-only): 달리기 스파인만 먼저 받은 동안 쓰는 임시 스위치.
+        // 켜면 "Run" 상태에서만 Custom Visual(스파인)을 보이고, 나머지 상태는 기존 스프라이트를 보인다.
+        // 모든 동작이 스파인으로 교체되면 이 필드와 아래 TEMP 블록을 지우고 showCustom을 UseCustomVisual로 되돌린다.
+        [Tooltip("임시: 달리는 동안에만 Custom Visual을 보이고, 그 외에는 기존 스프라이트를 쓴다.")]
+        public bool SpineRunOnly;
         public Transform CustomVisual;
         public SpriteRenderer SpriteFrames;
         public PaperCard SpriteCard;
@@ -30,8 +35,14 @@ namespace WesternLemegeton
             else if(raven)state=raven.CurrentState.ToString();else if(enemy)state=enemy.Dead?"Death":enemy.Telegraphing?"Attack":"Run";
             if(g&&g.Cinematics&&g.Cinematics.IsPlaying&&(player||enemy&&g.IsBossWave))state=g.Cinematics.Kind==CinematicKind.PlayerDeath?"Death":"Entrance";
             CurrentMotion=state;
-            if(SpriteCard)SpriteCard.OverrideHidden=UseCustomVisual;
-            if(!CustomVisual)return;CustomVisual.gameObject.SetActive(UseCustomVisual);if(!UseCustomVisual)return;
+            // TEMP(spine-run-only) 시작 ── 전체 스파인 교체 후 이 블록을 지우고 아래 두 줄의 showCustom을 UseCustomVisual로 바꾼다.
+            // 방향키를 바꿔 누르는 순간처럼 입력이 한두 프레임 비면 이동 상태가 잠깐 Settling(멈추는 중, 0.12초)이 된다.
+            // 그때마다 스프라이트로 바뀌면 깜빡여 보이므로, Settling 동안에는 계속 달리기로 취급한다.
+            if(SpineRunOnly&&player&&state=="Idle"&&player.Locomotion.State==LocomotionState.Settling)state="Run";
+            bool showCustom=UseCustomVisual&&(!SpineRunOnly||state=="Run");
+            // TEMP(spine-run-only) 끝
+            if(SpriteCard)SpriteCard.OverrideHidden=showCustom;
+            if(!CustomVisual)return;CustomVisual.gameObject.SetActive(showCustom);if(!showCustom)return;
             CustomVisual.position=PaperWorld.Point(SpriteFrames.transform.position)+VisualOffset;
             CustomVisual.rotation=Quaternion.Euler(PaperWorld.Pitch,0,0)*Quaternion.Euler(0,0,SpriteFrames.transform.eulerAngles.z);
             var scale=customScale;scale.x*=SpriteFrames.flipX?-1:1;CustomVisual.localScale=scale;
